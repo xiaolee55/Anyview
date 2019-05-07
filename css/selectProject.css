@@ -1,0 +1,231 @@
+html{
+    height: 100%;
+    overflow:hidden;
+}
+body{
+    position: relative;
+    height: 100%;
+    font: 500 16px/32px "Microsoft yahei";
+    margin: 0;
+    padding: 0;
+    background-color: #F6F6F6;
+}
+.w{
+    width: 90%;
+    margin: 0 auto;
+}
+ a{
+    color: black;
+    text-decoration: none; 
+}
+button{
+    border-color: rgba(0,0, 0,0);
+    border-radius: 10%;
+    color: white;
+    outline: none;
+ }
+/*顶部导航栏开始*/
+.nav-bar {
+    font: 500 20px/32px "Microsoft yahei";
+    position: fixed;
+    top: 0;
+    height: 70px;
+    line-height: 35px;
+    width: 100%;
+    background-color: #FFFFFF;
+    box-shadow:10px 5px 5px #888888;
+    z-index: 50;
+}
+.nav-logo{
+    float: left;
+    margin-right: 70px;
+}
+
+.nav-bar li{
+    float: left;
+    list-style: none;
+    overflow: hidden;
+    margin-right: 40px;
+}
+.nav-bar li a:hover{
+    color: #4cb0f9;
+    border-bottom: 2px #4cb0f9 solid;
+    transition: all 0.1s ease;
+}
+.nav-search input{
+    float: left;
+    height: 25px;
+    margin-left: 80px;
+    background-color: transparent;     /* 让输入框变透明*/
+    border-color: rgba(0,0, 0,0);     /*让边框变透明*/
+    border-bottom: 2px black solid;
+    color: black;
+    outline: none;
+}
+
+.nav-search button{
+   float: left;
+   color: black;
+   background-color: rgba(0,0, 0,0);
+   font: 900 20px/35px "Microsoft yahei";
+}
+.nav-search button:hover{
+    border-color: #4cb0f9;
+    background-color: #4cb0f9;
+    color: white;
+    transition: all 0.1s ease;
+}
+.user-name{
+    float: right;
+    margin-right: 10px;
+    color: #8d2113;
+}
+ .user-icon{
+     float: right;
+     border-radius: 50%;
+     width: 30px;
+    height: 30px;
+     background: url(../images/logo.png);
+     color: black;
+ }
+ .user-icon{
+     background-color: rgba(0,0, 0,0.4);
+ }
+ /*顶部导航栏结束*/
+ /* 视频背景开始 */
+ /* .bg{
+    position: fixed;  
+    right: 0px;  
+    bottom: 0px;  
+    min-width: 100%;  
+    min-height: 100%;  
+    height: auto;  
+    width: auto;    
+    z-index:-5;
+ } */
+ /* 视频背景结束*/
+
+ /*继续代码开始*/
+ /* .h1ForBefore{
+    margin-top: 10%;
+    margin-left: 5%;
+}
+.beforeCode{
+    margin-left: 20%; 
+    width: 400px;
+    height: 200px;
+   color: #FFF;
+   background-color: rgba(0,0, 0,0.4); 
+}
+.beforeCode div{
+    float: left;
+    margin-top: 0;
+    width: 25%;
+    height: 100%;
+    text-align: center;
+    line-height: 50px;
+}
+.beforeCode a{
+    float: left;
+    margin-top: 0;
+    width: 25%;
+    height: 100%;
+    text-align: center;
+    line-height: 40px;
+}
+.beforeCode a:hover{
+    background-color: royalblue;
+}
+.beforeCode .course{
+    background-color: #4cb0f9; 
+}
+.beforeCode .section{
+    background-color: yellowgreen; 
+}
+.beforeCode .topic{
+    background-color: coral; 
+} */
+/*继续代码结束*/
+
+ /* 全部课程开始 */
+ .h1ForAll{
+    margin-top: 10%;
+    margin-left: 5%;
+}
+ .course{
+   margin-top: 1%;
+ }
+ .course div[id^=c]{
+     float: left;
+     height: 270px;
+     width: 270px;
+     background-color: white;
+     margin-right: 80px;
+     margin-top: 30px;
+     border-radius: 20px;
+     box-shadow: 10px 10px  5px 5px grey;
+ }
+ .course>div:nth-child(4n){
+    margin-right: 20px;
+ }
+ /* 设置各个科目的标题 */
+ .course .title{
+     width: 100%;
+     height: 20%;
+     border-bottom-left-radius: 20px;
+     border-bottom-right-radius: 20px;
+     text-align: center;
+     font: 900 30px/50px "Microsoft yahei";
+ }
+ .course .title a{
+     float: left;
+     width: 100%;
+     height: 100%;
+ }
+ .course .title:hover{
+     transition: all 0.5s ease;
+    background-color: #4cb0f9;
+ }
+ .course .title a:hover{
+    color: white;
+    border-bottom: none;
+ }
+ /* 设置科目介绍 */
+ .course div[id^=c] .der{
+     float: left;
+     opacity: 0;
+     color: #FFF;
+     width: 100%;
+     height: 80%;
+     background-color: rgba( 176,196,222,0.5);
+     border-top-left-radius: 20px;
+     border-top-right-radius: 20px;
+ }
+ .course div[id^=c] .der:hover{
+     transition: all 0.5s ease;
+    opacity: 1;
+ }
+ /* 设置各个科目的背景图片 */
+ .course div[id^=c] .img{
+    width: 100%;
+    height: 80%;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+ .course #c1 .img{
+     background: url(../images/C语言.jpg) -90px no-repeat;
+}
+.course #c2 .img{
+    background: url(../images/数据结构.jpg) -90px no-repeat;
+}
+.course #c3 .img{
+    background: url(../images/Java.jpg) -150px no-repeat;
+}
+.course #c4 .img{
+    background: url(../images/离散数学.jpg) -500px -10px no-repeat;
+}
+ .course div[id^=c] h1{
+    text-align: center;
+    line-height: 20px;
+}
+/* 全部课程结束*/

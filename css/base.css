@@ -1,0 +1,265 @@
+@charset "UTF-8";
+html{
+    height: 100%;
+    overflow:hidden;
+}
+body{
+    display: flex;
+    height: 100%;
+    font: 500 16px/32px "Microsoft yahei";
+    margin: 0;
+    padding: 0;
+    background-color: #F6F6F6;
+}
+.w{
+    width: 90%;
+    margin: 0 auto;
+}
+ a{
+    color: black;
+    text-decoration: none; 
+}
+button{
+    border-color: rgba(0,0, 0,0);
+    border-radius: 10%;
+    color: white;
+    outline: none;
+ }
+ li{
+     list-style: none;
+ }
+ ::-webkit-scrollbar {
+    width: 10px;
+    background-color: white;
+}
+
+::-webkit-scrollbar-track {
+    background-color: white;
+}
+
+::-webkit-scrollbar-thumb {
+    background: grey;
+}
+
+::-webkit-scrollbar-button:start {
+    background-size: 10px 10px;
+}
+
+::-webkit-scrollbar-button:end {
+    background-size: 10px 10px;
+}   
+
+/*工具栏开始*/
+.tool-bar{
+    position: fixed;
+    width: 20px;
+    height: 60px;
+    right: 0;
+    top: 100px;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.4s ease;
+    font: 500 13px/20px "Microsoft yahei";
+    background-color: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+.tool-bar-list{
+    position: fixed;
+    top: 0;
+    right: -120px;
+    width: 120px;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    z-index: 99;
+    transition: all 0.4s ease;
+}
+.tool-bar-list a{
+    color: white;
+    padding: 5px;
+    display: block;
+    text-align: center;
+}
+.tool-bar-list a:hover{
+    background-color: rgba(0,0,0,0.8);
+}
+/*工具栏结束*/
+
+
+/*题目列表开始*/
+ .topic-title{
+    position: fixed;
+     height: 100%;
+     width: 13%;
+     left: -17%;
+     padding: 30px;
+     transition: all 0.8s;
+     background-color: white;
+     box-shadow: 5px 5px 5px #888888;
+     z-index: 1;
+ }
+ .topic-title .course{
+    font: 900 32px/32px "Microsoft yahei";
+    line-height: 50px;
+    border-bottom: 1px solid;
+    margin-bottom: 20px;
+ }
+
+ .topic-title a{
+     font: 400 16px/32px "Microsoft yahei";
+ }
+ .topic-title a:hover{
+    color: #4cb0f9;
+    border-bottom: 2px #4cb0f9 solid;
+    transition: all 0.1s ease;
+}
+ .topic-title a:before{
+    content:url(/Anyview/images/notDone.svg);
+ }
+  a.correct:before{
+    content:url(/Anyview/images/correct.svg);
+ }
+  a.error:before{
+     content:url(/Anyview/images/error.svg);
+ }
+/*题目列表结束*/
+
+/*操作栏开始*/
+.handle-bar{
+    position: fixed;
+    left: 0px;
+    bottom: 0px;
+    height: 45px;
+    width: 21.2%;
+    background-color: rgba(255,255,255,0.9);
+    /* box-shadow: 0 -3px 3px grey; */
+    z-index: 1;
+}
+#openList{
+    float: left;
+    margin-left: 20px;
+    margin-top: 5px;
+    /* height: 50px; */
+    font: 900 14px/28px "Microsoft yahei";
+}
+#nextBt,#lastBt{
+    float: right;
+    width: 80px;
+    height: 35px;
+    margin: 3px 15px 3px 0;
+    border-radius: 50px 50px 50px 50px;
+    background-color: MediumAquamarine;
+    font: 900 14px/28px "Microsoft yahei";
+}
+/*操作栏结束*/
+
+ /*题目内容区开始*/
+ .topic-title-content{
+     /* position: absolute; */
+     width: 20%;
+     height: 95%;
+     /* top: 0;
+     left: 0; */
+     float: left;
+     padding: 20px;
+     overflow-y: scroll;
+     transition: all 0.8s 0.2s;
+}
+ .example1,.example2{
+    margin: 5px;
+    padding: 5px;
+    border-radius: 20px;
+    border: 1px grey solid;
+    background-color: rgba(0,0,0,0);
+    transition: all 0.8s;
+ }
+ /*题目内容区结束*/
+
+ /*编辑与展示区开始*/
+ .show{   
+    /* position: absolute; */
+    height: 99%;
+    width: 76%;
+    /* left:23% ;
+    top:0; */
+    float: left;
+    border-right: 1px solid black; 
+    background-color: 	black;
+}
+.head{
+    width: 100%;
+    background-color: 	black;
+}
+.head div{
+    height: 100%;
+    float: left;
+}
+.editor{
+    overflow: hidden;
+}
+.gutter-horizontal:hover{
+    cursor:w-resize;
+}
+.gutter-vertical:hover{
+    cursor:s-resize;
+}
+.editor{
+    position: relative;
+}
+.editor .editor-head{
+    height: 20px;
+    overflow: hidden;
+    font: 500 13px "Microsoft yahei";
+}
+.editor-span{
+    color: white;
+}
+.editor-span:hover{
+    cursor: pointer;
+}
+.thisTitle{
+    background-color:rgba(255,255,255,0.4);
+}
+.otherTitle{
+    background-color: #000;
+}
+.editor-i{
+    color: wheat;
+    margin-right: 10px;
+}
+.editor-i:hover{
+    cursor: pointer;
+}
+.editor-main{
+    width: 100%;
+}
+.editor .function-bar{
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 20%;
+    height:16px;
+}
+.function-bar a{
+    float: right;
+    color: white;
+    padding: 1px;
+    margin-right: 20px;
+    font: 300 14px/14px "Microsoft yahei";
+}
+.function-bar a:hover{
+    border-bottom: none;
+    background-color: rgba(255,255,255,0.3);
+}
+.stack,.visual{ 
+    overflow: hidden;
+    border-top: 5px solid 	black;
+    background-color: white;
+}
+.out-in{
+    width: 100%;
+    color: black;
+    resize:none;
+    background-color: white;
+}
+/*编辑与展示区结束*/
