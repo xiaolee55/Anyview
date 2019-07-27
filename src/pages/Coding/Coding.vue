@@ -1,10 +1,8 @@
 <template>
   <div class="father">
-      <!-- <div class="cycle"></div> -->
         <div class="question-list" ref="questList">
           <h3>{{questListName}}</h3>
           <button @click="common('input')">3</button>
-          <button @click="test">测试</button>
           <el-collapse>
             <el-collapse-item :title="`第${index+1}章`" v-for="(chap,index) in questions" :key="index" class="collapse-font">
               <div v-for="(question,i) in chap" :key="i" class="question-name" @click="sendQuestContentReq(question.eid,question.name)">
@@ -16,14 +14,14 @@
           <div class="close-btn"><el-button @click="hideQuestList" >关闭</el-button></div>
         </div>
     <splitpanes class="default-theme"  :push-other-panes="true" watch-slots>
-      <div splitpanes-size="20" class="question-content">
-        <div class="question-menu-top">
+      <div splitpanes-size="20" class="question-content" @scroll="fixButton">
+        <div class="question-menu-top" ref="topMenu">
           <i class="iconfont icon-zidingyi"></i>
           <i class="iconfont icon-geren13" style="margin-left:20px;cursor:pointer" ></i>
           <i class="iconfont icon-list_icon" style="cursor:pointer" @click="showQuestList"></i>
         </div>
          <div class="question-desc"><p>{{questDesc}}</p></div>
-         <div class="question-menu-bottom">
+         <div class="question-menu-bottom" ref="bottomMenu">
           <el-button type="primary" round style="margin-right:20px">上一题</el-button>
            <el-button type="primary" round style="margin-right:20px">下一题</el-button>
         </div>
@@ -125,13 +123,9 @@ export default {
       }
     },
     methods: {
-      test(){
-        let quesC=document.getElementsByClassName("question-content")[0]
-        console.log(quesC);    
-      quesC.addEventListener('scroll', this.handleScroll)  
-      },
-      handleScroll(){
-        console.log(quesC.scrollTop);  
+      fixButton(event){
+        this.$refs.topMenu.style.top=event.target.scrollTop+'px';
+        this.$refs.bottomMenu.style.bottom=-event.target.scrollTop+'px';
       },
       common(flag){  //所有按钮的总入口
         let sendMsg=''
