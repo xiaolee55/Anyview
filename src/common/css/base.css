@@ -1,0 +1,46 @@
+@charset "UTF-8";
+html{
+    height: 100%;
+    overflow:hidden;
+}
+body{
+    height: 100%;
+    font: 500 16px/32px "Microsoft yahei";
+    margin: 0;
+    padding: 0;
+}
+button{
+    border-color: rgba(0,0, 0,0);
+    border-radius: 10%;
+    color: white;
+    outline: none;
+ }
+ ::-webkit-scrollbar {/*滚动条整体样式*/
+    width: 10px;     /*高宽分别对应横竖滚动条的尺寸*/
+    height: 1px;
+}
+::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
+        border-radius: 10px;
+        background-color: MediumAquamarine;
+        background-image: -webkit-linear-gradient(45deg, rgba(255, 255, 255, .2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, .2) 75%, transparent 75%, transparent);
+    }
+::-webkit-scrollbar-track {/*滚动条里面轨道*/
+        background: #EDEDED;
+    }
+.w{
+    width: 90%;
+    margin: 0 auto;
+}
+ a{
+    color: black;
+    text-decoration: none; 
+}
+button{
+    border-color: rgba(0,0, 0,0);
+    border-radius: 10%;
+    color: white;
+    outline: none;
+ }
+ li{
+     list-style: none;
+ }
