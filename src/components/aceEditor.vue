@@ -1,8 +1,7 @@
 
 <template>
-  <div class="ace-container">
+  <div class="ace-container" ref="ace" @click="setBP">
     <!-- 官方文档中使用 id，这里禁止使用，在后期打包后容易出现问题，使用 ref 或者 DOM 就行 -->
-    <div class="ace-editor" ref="ace" @click="setBP"></div>
   </div>
 </template>
 
@@ -17,9 +16,7 @@
   export default {
     mounted () {
       this.aceEditor = ace.edit(this.$refs.ace, {
-        autoScrollEditorIntoView: true,
-        maxLines: 60, // 最大行数，超过会自动出现滚动条
-        minLines: 44, // 最小行数，还未到最大行数时，编辑器会自动伸缩大小
+        autoScrollEditorIntoView: false,
         fontSize: 14, // 编辑器内字体大小
         theme: this.themePath, // 默认设置的主题
         mode: this.modePath, // 默认设置的语言模式
@@ -57,5 +54,7 @@
 </script>
 
 <style>
-
+.ace-container{
+  height: 300%!important;
+}
 </style>

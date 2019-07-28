@@ -14,19 +14,19 @@
           <div class="close-btn"><el-button @click="hideQuestList" >关闭</el-button></div>
         </div>
     <splitpanes class="default-theme"  :push-other-panes="true" watch-slots>
-      <div splitpanes-size="20" class="question-content" @scroll="fixButton">
-        <div class="question-menu-top" ref="topMenu">
+      <div splitpanes-size="20" class="question-content" :class="{'questContent-color': isQuestListOpen}" @scroll="fixButton">
+        <div class="question-menu-top" ref="topMenu" :class="{'menu-color': isQuestListOpen}">
           <i class="iconfont icon-zidingyi"></i>
           <i class="iconfont icon-geren13" style="margin-left:20px;cursor:pointer" ></i>
           <i class="iconfont icon-list_icon" style="cursor:pointer" @click="showQuestList"></i>
         </div>
-         <div class="question-desc"><p>{{questDesc}}</p></div>
-         <div class="question-menu-bottom" ref="bottomMenu">
+         <div class="question-desc" ><p>{{questDesc}}</p></div>
+         <div class="question-menu-bottom" ref="bottomMenu" :class="{'menu-color': isQuestListOpen}">
           <el-button type="primary" round style="margin-right:20px">上一题</el-button>
            <el-button type="primary" round style="margin-right:20px">下一题</el-button>
         </div>
       </div>
-      <splitpanes horizontal :push-other-panes="true" splitpanes-size="60" watch-slots>
+      <splitpanes horizontal :push-other-panes="true" splitpanes-size="60" watch-slots  @resize="modifyDiv">
         <el-tabs v-model="editableTabsValue" type="card" closable splitpanes-size="85" class="code-pane" @tab-remove="removeTab">
             <el-tab-pane
               v-for="item in editableTabs"
@@ -34,8 +34,7 @@
               :label="item.title"
               :name="item.name"
             >
-               <ace v-model="msg.questionContent.studentAnswer" ref="ace" @createBP="createBP">
-               </ace>
+               <ace v-model="msg.questionContent.studentAnswer" ref="ace" @createBP="createBP"></ace>
               <div class="funMenu"  @mousedown="mouseEvent('down')" @mouseup="mouseEvent('up')">
                   <ul class="horizontal-list">
                     <li v-for="item in horFunIcon" :key="item.name"><i :class="item.class" :title="item.title"  @click="common(item.name)"></i></li>
@@ -49,12 +48,16 @@
             </el-tab-pane>
         </el-tabs> 
         <div splitpanes-size="15">
-           执行状态：<span class="showStyle success">{{compileRes}}</span><br><br>
-           {{runRes}}
-           <span class="showStyle success">{{debugRes}}</span>
+            <div class="showResult" ref="resShow" :style="{height: initHeight}">
+              <p  :class="{success:item.content.includes('成功'),fail:item.content.includes('失败')}" 
+                   v-for="(item,index) in result" 
+                  :key="index" 
+                  v-html="item.content">
+              </p>
+           </div>
         </div>
       </splitpanes>
-        <div splitpanes-size="10"><el-tree :data="data" :props="defaultProps"></el-tree></div>
+        <div splitpanes-size="10"><el-tree :data="variate" :props="defaultProps"></el-tree></div>
         <div splitpanes-size="10"></div>
     </splitpanes>
   </div>
@@ -69,6 +72,8 @@ export default {
     created () {
       this.user=JSON.parse(this.$route.query.user)
       this.sendQuestListReq()
+       this.initHeight = `${document.documentElement.clientHeight*0.15}px`
+      console.log( this.initHeight);
     },
     data () {
       return {
@@ -76,23 +81,22 @@ export default {
           {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
           {name:'runGroup',class:'iconfont icon-polygon',title:'运行'},
           {name:'startDebug',class:'iconfont icon-tiaoshi',title:'调试'},
-          {name:'stepInto',class:'iconfont icon-xiayibu',title:'下一步(进入函数)'},
+          {name:'stepOver',class:'iconfont icon-down',title:'下一步(不进入函数)'},
           {name:'more',class:'iconfont icon-gengduo',title:'更多'},
         ],
         verFunIcon:[
           {name:'runSiginal',class:'iconfont icon-danzuyunxing',title:'单组运行'},
           {name:'quitDebug',class:'iconfont icon-tingzhi',title:'停止调试'},
           {name:'continueDebug',class:'iconfont icon-jixu',title:'继续调试'},
-          {name:'stepOver',class:'iconfont icon-down',title:'下一步(不进入函数)'},
+          {name:'stepInto',class:'iconfont icon-xiayibu',title:'下一步(进入函数)'},
           {name:'repeatDebug',class:'iconfont icon-zhongfujianli',title:'重复调试'},
           {name:'fillScreen',class:'iconfont icon-quanping',title:'全屏'},
         ],
+        initHeight: 1,
+        isSuccess: false,
+        isFail: false,
+        isQuestListOpen: false,
         showVerList: false,
-        data: [],
-        defaultProps: {
-          children: 'children',
-          label: 'label'
-        },
         bpRow: '',
         activeIcon:{
           compile: 1,
@@ -117,12 +121,20 @@ export default {
         questDesc: '',
         studentAnswer: '',
         fileName: '',
-        compileRes: '...',
-        runRes: '...',
-        debugRes: '...'
+        lineNum:1,
+        result:[],
+        variate:[],  //用于存放堆栈结构要显示的数据
+        defaultProps: {
+          children: 'children',
+          label: 'label'
+        },
       }
     },
     methods: {
+      modifyDiv(e){   
+        //这个地方通过修改vue中的data再绑定到style不行，会导致拉伸条不能动，只能通过ref的方式直接操作DOM，原因未知，猜测是拉伸库的源码做了限制
+        this.$refs.resShow.style.height=e[1].width*document.documentElement.clientHeight/100+'px'
+      },
       fixButton(event){
         this.$refs.topMenu.style.top=event.target.scrollTop+'px';
         this.$refs.bottomMenu.style.bottom=-event.target.scrollTop+'px';
@@ -236,36 +248,51 @@ export default {
       sendReq(sendMsg,fun){
         if(sendMsg===''&&fun==='')
         return
-        console.log(sendMsg);
          this.socket.sendSock(sendMsg,fun)
       },
       getCompileRes(e){
-        this.compileRes=e.content
+         this.result.push({name:'compileRes',content:e.content+'!'})
       },
-      getRunGroupRes(){
-
+      getRunGroupRes(e){
+        this.result.push({name:'runGroupRes',content:e.content.output})
       },
       getRunSiginalRes(e){
-        // console.log(e);
-        
+        this.result.push({name:'runSiginalRes',content:e.content})
       },
-      getStartDebugRes(){
-
+      getStartDebugRes(e){
+        this.result.push({name:'startDebugRes',content:`开启调试 ：${e.content.output}`})
+        this.lineNum=e.content.lineNum
+        this.updateVariate(e.content.variate)
       },
-      getStepOverRes(){
-
+      getStepOverRes(e){
+        this.result.push({name:'stepOverRes',content:`下一行：${e.content.lineNum}`})
+        this.lineNum=e.content.lineNum
+        this.updateVariate(e.content.variate)
+        console.log(e);  
       },
-      getStepIntoRes(){
-
+      getStepIntoRes(e){
+        this.result.push({name:'stepIntoRes',content:e.content})
       },
       getQuitDebugRes(e){
-        // console.log("停止调试"+e);
+        console.log(e);
+        this.result.push({name:'quitDebugRes',content:"终止程序！"})
       },
       getContinueDebugRes(){
-
+        this.result.push({name:'continueDebugRes',content:e.content})
       },
       getInputRes(e){
         // console.log(e);
+      },
+      updateVariate(arr){
+        this.variate=[]
+        for(let item of arr){
+          let temp={}
+          temp.label=item.name
+          temp.children=new Array({},{})
+          temp.children[0].label=`type: ${item.type}`
+          temp.children[1].label=`value: ${item.value}`
+          this.variate.push(temp)
+        }
       },
       createBP(){   //添加或者移除断点（用了lowB的DOM操作）
         if(event.target.tagName==="CANVAS")
@@ -341,9 +368,11 @@ export default {
       handleChange(val) {
       },
       showQuestList(){
+          this.isQuestListOpen=true;
           this.$refs.questList.style.left='0'
       },
       hideQuestList(){
+          this.isQuestListOpen=false;
           this.$refs.questList.style.left='-20%'
       },
       addTab(targetName) {      //增加标签
@@ -393,15 +422,13 @@ export default {
    components: {
       Splitpanes,
       ace
-   },
-   watch: {
    }
 }
 </script>
 
 <style>
 /*基本样式开始*/
-  html{
+html{
     height: 100%;
     /* overflow:hidden; */
 }
@@ -416,13 +443,24 @@ ul{
    list-style: none;
    padding: 0;
 }
-  .father{
+.father{
     height: 100%;
     width: 100%;
   }
 .splitpanes.default-theme .splitpanes__pane{
     background-color: white;
   }
+  /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
+::-webkit-scrollbar
+{
+	width: 10px;
+	background-color: white;
+}
+/*定义滑块 内阴影+圆角*/
+::-webkit-scrollbar-thumb
+{
+	background-color: rgba(0,0,0,0.4);
+}
 /*基本样式结束*/
 
 /* 问题内容板块开始 */
@@ -431,10 +469,7 @@ ul{
      height: 100%;
      overflow-y: scroll;
      overflow-x: hidden;
-}
-.assist{
-  position: fixed;
-  height: 100%;
+     transition: all 0.5s ease;
 }
 .question-desc{
   position: absolute;
@@ -450,14 +485,15 @@ ul{
 }
 .question-menu-top,.question-menu-bottom{
   position: absolute;
-  /* position: fixed; */
   left: 0;
   width: 100%;
   height: 5%;
   background-color: white;
+  transition: background-color 1s ease;
   display: flex;
   align-items: center;
   justify-content: space-around;
+  z-index: 5;
 }
 .question-menu-top{
   top: 0;
@@ -466,6 +502,12 @@ ul{
 .question-menu-bottom{
   bottom: 0;
   padding-bottom: 10px;
+}
+.questContent-color{
+  background-color: rgba(0,0,0,0.5);
+}
+.menu-color{
+  background-color: rgba(0,0,0,0);
 }
 /* 问题内容板块结束 */
 
@@ -501,32 +543,38 @@ ul{
 /* 问题列表结束 */
 
 /* 编码面板开始 */
+.el-tabs__header{
+  margin-bottom: 0px;
+  border-bottom: 1px solid transparent!important;
+}
+.el-tabs__item{
+  height: 30px;
+  line-height: 30px;
+  font-size: 12px;
+}
+.code-pane,.el-tabs__content,.el-tab-pane{
+  height: 100%;
+}
+.el-tab-pane,.code-pane{ 
+  overflow-y: scroll;
+}
+  /*将大滚动条调小，因为如果大的话会和编辑器的滚动条相近，效果不好*/
+.code-pane::-webkit-scrollbar   
+  {
+	width: 1px;
+	background-color: white;
+}
 canvas{
   position: absolute;
   left: -10px;
   z-index: 33;
 }
-.cycle{
-  position: fixed;
-  background-color: #a94442;
-  border-radius: 50%;
-  height: 15px;
-  width: 15px;
-  top: 500px;
-  left: 500px;
-}
-.code-pane{
-  position: relative;
-  /* height: 100%; */
-}
 .funMenu{
   position: absolute;
-  width: 100%;
+  width: 50%;
   height: 25px;
   top: 0;
-}
-.funMenu i:hover{
-  background-color: rgba(255,255,255,0.5)
+  right: 0;
 }
 .horizontal-list{
   height: 30px;
@@ -551,23 +599,18 @@ canvas{
 .vertical-list i{
   margin: 0;
 }
-.el-tabs__header{
-  margin-bottom: 3px;
-}
-/* .el-tabs__content,.el-tab-pane{
-      height: 100%;
-} */
-.showStyle{
-  padding: 5px 20px;
-  margin: 5px;
-   white-space: pre-wrap;
+.showResult{
+  width: 98%;
+  padding: 0px 10px;
+  margin: 0px;
+  overflow-y: scroll;
 }
 .fail{
   background-color: #f2dede;
   color: #a94442;
 }
 .success{
-  color: #67C23A;
+  color: green;
 }
 .ace_gutter-cell,#breakPoint{
   cursor: pointer;

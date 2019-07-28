@@ -1,27 +1,35 @@
 <template>
 <div>
- <el-dropdown trigger="click">
-      <span class="el-dropdown-link">
-        <i class="el-icon-arrow-down el-icon--right"></i>
-      </span>
-      <el-dropdown-menu slot="dropdown">
-        <el-dropdown-item>黄金糕</el-dropdown-item>
-        <el-dropdown-item>狮子头</el-dropdown-item>
-        <el-dropdown-item>螺蛳粉</el-dropdown-item>
-        <el-dropdown-item>双皮奶</el-dropdown-item>
-        <el-dropdown-item>蚵仔煎</el-dropdown-item>
-      </el-dropdown-menu>
-    </el-dropdown>
+<splitpanes class="default-theme" horizontal :push-other-panes="false" style="height:400px">
+  <span>1</span>
+  <splitpanes :push-other-panes="false">
+    <span>2</span>
+    <span>3</span>
+    <span>4</span>
+  </splitpanes>
+  <span>5</span>
+</splitpanes>
+<div id="a" style="background-color:green; width:100px;height:100px" ref="a"></div>
 </div>
 </template>
 <script>
+import Splitpanes from 'splitpanes'
+import 'splitpanes/dist/splitpanes.css'
   export default {
     data() {
       return {
+        a:100
       }
     },
+  components: {
+      Splitpanes,
+   },
     methods: {
-
+      test(e){
+        this.$refs.a.style.width=e[0].width*document.documentElement.clientWidth/100+'px';
+        console.log(e);
+        
+      }
     }
   }
 </script>
