@@ -2,7 +2,6 @@
   <div class="father">
         <div class="question-list" ref="questList">
           <h3>{{questListName}}</h3>
-          <button @click="common('input')">3</button>
           <el-collapse>
             <el-collapse-item :title="`第${index+1}章`" v-for="(chap,index) in questions" :key="index" class="collapse-font">
               <div v-for="(question,i) in chap" :key="i" class="question-name" @click="sendQuestContentReq(question.eid,question.name)">
@@ -14,11 +13,11 @@
           <div class="close-btn"><el-button @click="hideQuestList" >关闭</el-button></div>
         </div>
     <splitpanes class="default-theme"  :push-other-panes="true" watch-slots>
-      <div splitpanes-size="20" class="question-content" :class="{'questContent-color': isQuestListOpen}" @scroll="fixButton">
+      <div :splitpanes-size="pan_1" class="question-content" :class="{'questContent-color': isQuestListOpen}" @scroll="fixButton">
         <div class="question-menu-top" ref="topMenu" :class="{'menu-color': isQuestListOpen}">
           <i class="iconfont icon-zidingyi"></i>
-          <i class="iconfont icon-geren13" style="margin-left:20px;cursor:pointer" ></i>
-          <i class="iconfont icon-list_icon" style="cursor:pointer" @click="showQuestList"></i>
+          <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" ></i>
+          <i class="iconfont icon-liebiao" style="cursor:pointer" @click="showQuestList"></i>
         </div>
          <div class="question-desc" ><p>{{questDesc}}</p></div>
          <div class="question-menu-bottom" ref="bottomMenu" :class="{'menu-color': isQuestListOpen}">
@@ -26,28 +25,39 @@
            <el-button type="primary" round style="margin-right:20px">下一题</el-button>
         </div>
       </div>
-      <splitpanes horizontal :push-other-panes="true" splitpanes-size="60" watch-slots  @resize="modifyDiv">
-        <el-tabs v-model="editableTabsValue" type="card" closable splitpanes-size="85" class="code-pane" @tab-remove="removeTab">
+      <splitpanes horizontal :push-other-panes="true" :splitpanes-size="pan_2" watch-slots  @resize="modifyDiv">
+        <el-tabs
+        v-model="editableTabsValue" 
+        type="card" 
+        closable 
+        :splitpanes-size="pan_2_1" 
+        class="code-pane" 
+        @tab-remove="removeTab"
+        >
             <el-tab-pane
               v-for="item in editableTabs"
               :key="item.name"
               :label="item.title"
               :name="item.name"
             >
-               <ace v-model="msg.questionContent.studentAnswer" ref="ace" @createBP="createBP"></ace>
+              <div class="deubg-highlighted" ref="dbhl"></div>
+               <ace v-model="msg.questionContent.studentAnswer" ref="ace" @createBP="createBP">
+               </ace>
               <div class="funMenu"  @mousedown="mouseEvent('down')" @mouseup="mouseEvent('up')">
                   <ul class="horizontal-list">
-                    <li v-for="item in horFunIcon" :key="item.name"><i :class="item.class" :title="item.title"  @click="common(item.name)"></i></li>
+                    <li v-for="item in horFunList" :key="item.name"><i :class="item.class" :title="item.title"  @click="common(item.name)"></i></li>
                   </ul>
                   <transition name="verList">
                    <transition-group tag="ul" class="vertical-list" v-if="showVerList">
-                    <li v-for="item in verFunIcon" :key="item.name"><i :class="item.class" :title="item.title" @click="common(item.name)"></i></li>
+                    <li v-for="item in verFunList" :key="item.name">
+                      <i :class="item.class" :title="item.title" @click="common(item.name)"></i>
+                    </li>
                    </transition-group>
                 </transition>             
               </div> 
             </el-tab-pane>
         </el-tabs> 
-        <div splitpanes-size="15">
+        <div :splitpanes-size="pan_2_2">
             <div class="showResult" ref="resShow" :style="{height: initHeight}">
               <p  :class="{success:item.content.includes('成功'),fail:item.content.includes('失败')}" 
                    v-for="(item,index) in result" 
@@ -57,8 +67,8 @@
            </div>
         </div>
       </splitpanes>
-        <div splitpanes-size="10"><el-tree :data="variate" :props="defaultProps"></el-tree></div>
-        <div splitpanes-size="10"></div>
+        <div :splitpanes-size="pan_3"><el-tree :data="renderVariate" :props="defaultProps"></el-tree></div>
+        <div :splitpanes-size="pan_4"></div>
     </splitpanes>
   </div>
 </template>
@@ -72,27 +82,39 @@ export default {
     created () {
       this.user=JSON.parse(this.$route.query.user)
       this.sendQuestListReq()
-       this.initHeight = `${document.documentElement.clientHeight*0.15}px`
-      console.log( this.initHeight);
+      this.initHeight = `${document.documentElement.clientHeight*0.15}px`  //初始化输出框的高度
+    },
+    mounted() {
+      window.addEventListener('beforeunload', e => this.beforeunloadFn(e))
+    },
+    destroyed() {
+      window.removeEventListener('beforeunload', e => this.beforeunloadFn(e))
     },
     data () {
       return {
-        horFunIcon:[
+        horFunList:[
           {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
-          {name:'runGroup',class:'iconfont icon-polygon',title:'运行'},
+          {name:'runGroup',class:'iconfont icon-chengzuyunxing',title:'运行'},
           {name:'startDebug',class:'iconfont icon-tiaoshi',title:'调试'},
-          {name:'stepOver',class:'iconfont icon-down',title:'下一步(不进入函数)'},
+          {name:'stepOver',class:'iconfont icon-xiayihang',title:'下一步(不进入函数)'},
+          {name:'fillScreen',class:'iconfont icon-fangda',title:'全屏'},
           {name:'more',class:'iconfont icon-gengduo',title:'更多'},
         ],
-        verFunIcon:[
-          {name:'runSiginal',class:'iconfont icon-danzuyunxing',title:'单组运行'},
-          {name:'quitDebug',class:'iconfont icon-tingzhi',title:'停止调试'},
-          {name:'continueDebug',class:'iconfont icon-jixu',title:'继续调试'},
-          {name:'stepInto',class:'iconfont icon-xiayibu',title:'下一步(进入函数)'},
-          {name:'repeatDebug',class:'iconfont icon-zhongfujianli',title:'重复调试'},
-          {name:'fillScreen',class:'iconfont icon-quanping',title:'全屏'},
+        verFunList:[
+          {name:'runSiginal',class:'iconfont icon-danzuyunxing banClick',title:'单组运行'},
+          {name:'quitDebug',class:'iconfont icon-tingzhi banClick',title:'停止调试'},
+          {name:'continueDebug',class:'iconfont icon-jixu banClick',title:'继续调试'},
+          {name:'stepInto',class:'iconfont icon-xiayibu banClick',title:'下一步(进入函数)'},
+          {name:'repeatDebug',class:'iconfont icon-chongfujianli banClick',title:'重复调试'},
         ],
+        pan_1: 20,
+        pan_2: 60,
+        pan_3:10,
+        pan_4: 10,
+        pan_2_1: 85,
+        pan_2_2: 15,
         initHeight: 1,
+        isFillScreen:false,
         isSuccess: false,
         isFail: false,
         isQuestListOpen: false,
@@ -123,15 +145,22 @@ export default {
         fileName: '',
         lineNum:1,
         result:[],
+
         variate:[],  //用于存放堆栈结构要显示的数据
         defaultProps: {
           children: 'children',
           label: 'label'
         },
+        compileFlag: false,
+        debugFlag: false
       }
     },
     methods: {
-      modifyDiv(e){   
+      beforeunloadFn (e) {    //刷新窗口时执行的函数
+        if(this.debugFlag)
+          this.common('quitDebug')
+      },
+      modifyDiv(e){ 
         //这个地方通过修改vue中的data再绑定到style不行，会导致拉伸条不能动，只能通过ref的方式直接操作DOM，原因未知，猜测是拉伸库的源码做了限制
         this.$refs.resShow.style.height=e[1].width*document.documentElement.clientHeight/100+'px'
       },
@@ -144,6 +173,8 @@ export default {
         let fun=''
         switch(flag){
           case 'compile':
+            if(this.debugFlag)
+              this.common('quitDebug')
             sendMsg={
               type: 10,
               content: this.msg 
@@ -152,16 +183,20 @@ export default {
             break;
 
           case 'runGroup':
-            sendMsg={
-              type: 161,
-              content: {
-                questionFullName: this.msg.questionFullName
+            if(!this.compileFlag)
+              this.common('compile')
+              sendMsg={
+                type: 161,
+                content: {
+                  questionFullName: this.msg.questionFullName
+                }
               }
-            }
-            fun=this.getRunGroupRes
+              fun=this.getRunGroupRes
             break;
 
           case 'runSiginal':
+            if(!this.debugFlag)             
+             return
             sendMsg={
               type: 11,
               content:{
@@ -172,6 +207,8 @@ export default {
             break;
 
           case 'startDebug':
+            if(this.debugFlag)
+             return
             sendMsg={
               type: 1,
               content: {
@@ -183,6 +220,8 @@ export default {
             break;
             
           case 'stepInto':
+            if(!this.debugFlag)
+             return
             sendMsg={
               type: 2,
               content: {
@@ -194,6 +233,8 @@ export default {
             break;
 
           case 'stepOver':
+            if(!this.debugFlag)
+             return
             sendMsg={
               type: 121,
               content: {
@@ -205,6 +246,8 @@ export default {
             break;
 
           case 'quitDebug':
+            if(!this.debugFlag)
+             return
             sendMsg={
               type: 141,
               content: {
@@ -216,6 +259,8 @@ export default {
             break; 
 
           case 'continueDebug':
+            if(!this.debugFlag)
+             return
             sendMsg={
               type: 191,
               content: {
@@ -236,14 +281,18 @@ export default {
               fun=this.getInputRes
               break;
           case 'repeatDebug':
+            if(!this.debugFlag)
+             return
             break;
           case 'fillScreen':
+            this.isFillScreen=!this.isFillScreen
             break; 
           case 'more':
             this.showVerList=!this.showVerList
             break;
         }
-        this.sendReq(sendMsg,fun)
+        setTimeout(this.sendReq(sendMsg,fun),1000)
+        
       },
       sendReq(sendMsg,fun){
         if(sendMsg===''&&fun==='')
@@ -251,48 +300,46 @@ export default {
          this.socket.sendSock(sendMsg,fun)
       },
       getCompileRes(e){
+        console.log(e);
+        if(e.content.includes('成功'))
+         this.compileFlag=true
          this.result.push({name:'compileRes',content:e.content+'!'})
       },
       getRunGroupRes(e){
         this.result.push({name:'runGroupRes',content:e.content.output})
       },
       getRunSiginalRes(e){
-        this.result.push({name:'runSiginalRes',content:e.content})
+        this.result.push({name:'runSiginalRes',content:e.content.output})
       },
       getStartDebugRes(e){
+        if(e.content.error=="")
+          this.debugFlag=true
         this.result.push({name:'startDebugRes',content:`开启调试 ：${e.content.output}`})
+        this.variate=e.content.variate
         this.lineNum=e.content.lineNum
-        this.updateVariate(e.content.variate)
+        this.$refs.ace[this.tabIndex-1].aceEditor.container.appendChild(this.$refs.dbhl[this.tabIndex-1])
       },
       getStepOverRes(e){
         this.result.push({name:'stepOverRes',content:`下一行：${e.content.lineNum}`})
+        this.variate=e.content.variate
         this.lineNum=e.content.lineNum
-        this.updateVariate(e.content.variate)
-        console.log(e);  
       },
       getStepIntoRes(e){
-        this.result.push({name:'stepIntoRes',content:e.content})
+        console.log(e);
+        this.result.push({name:'stepIntoRes',content:`下一行：${e.content.lineNum}`})
+        this.variate=e.content.variate
+        this.lineNum=e.content.lineNum
       },
       getQuitDebugRes(e){
-        console.log(e);
-        this.result.push({name:'quitDebugRes',content:"终止程序！"})
+        this.debugFlag=false
+        this.result.push({name:'quitDebugRes',content:"终止调试！"})
       },
-      getContinueDebugRes(){
-        this.result.push({name:'continueDebugRes',content:e.content})
+      getContinueDebugRes(e){
+        this.lineNum=e.content.lineNum
+        this.variate=e.content.variate
+        this.result.push({name:'continueDebugRes',content:`下一行：${e.content.lineNum}`})
       },
       getInputRes(e){
-        // console.log(e);
-      },
-      updateVariate(arr){
-        this.variate=[]
-        for(let item of arr){
-          let temp={}
-          temp.label=item.name
-          temp.children=new Array({},{})
-          temp.children[0].label=`type: ${item.type}`
-          temp.children[1].label=`value: ${item.value}`
-          this.variate.push(temp)
-        }
       },
       createBP(){   //添加或者移除断点（用了lowB的DOM操作）
         if(event.target.tagName==="CANVAS")
@@ -302,7 +349,7 @@ export default {
             let canvas=document.createElement("canvas")
             // canvas.id='cv'+(this.bpRow+1)
             canvas.width='49'
-            canvas.height='17'
+            canvas.height=this.$refs.ace[this.tabIndex-1].aceEditor.renderer.lineHeight
             event.target.appendChild(canvas);
             let bp=canvas.getContext("2d");
             bp.fillStyle="#FF0000";
@@ -419,9 +466,76 @@ export default {
         this.tabIndex--;
       }
     },
-   components: {
-      Splitpanes,
-      ace
+    watch:{
+        debugFlag(){    //监听调试是否开启并改变相应图标样式
+          if(this.debugFlag){
+            //显示高亮条并将其作为编辑器的子元素，否则会相对编辑器的容器定位，代码滚动时会出错
+            this.$refs.dbhl[this.tabIndex-1].style.display='block'
+            this.$refs.dbhl[this.tabIndex-1].style.height=this.$refs.ace[this.tabIndex-1].aceEditor.renderer.lineHeight+'px'
+            for (let i = 0; i < this.verFunList.length; i++) {
+                if(this.verFunList[i].class.includes('banClick')){
+                  this.verFunList[i].class=this.verFunList[i].class.replace('banClick','')
+
+                }
+            }
+          }
+          else{
+            this.$refs.dbhl[this.tabIndex-1].style.display='none'
+            for (let i = 0; i < this.verFunList.length; i++) {
+                if(!this.verFunList[i].class.includes('banClick')){
+                  this.verFunList[i].class+=' banClick'
+                }
+            }
+          }
+         },
+        lineNum(){  //移动调试高亮光标
+          this.$refs.dbhl[this.tabIndex-1].style.top=`${this.$refs.ace[this.tabIndex-1].aceEditor.renderer.lineHeight*(this.lineNum-1)}px`
+        },
+        isFillScreen(){   //是否全屏
+        console.log(this.compileFlag);
+           if(this.isFillScreen){
+            for(let i=0;i<this.horFunList.length;i++){  //更换图标
+                if(this.horFunList[i].name=='fillScreen')
+                this.horFunList[i].class=this.horFunList[i].class.replace('icon-fangda','icon-suoxiao')
+            }
+              this.pan_2_1=100
+              this.pan_2_2=0
+              this.pan_2=100
+              this.pan_1=0
+              this.pan_3=0
+              this.pan_4=0
+            }
+            else{
+              for(let i=0;i<this.horFunList.length;i++){
+                  if(this.horFunList[i].name=='fillScreen')
+                  this.horFunList[i].class=this.horFunList[i].class.replace('icon-suoxiao','icon-fangda')
+              }
+              this.pan_2_1=85
+              this.pan_2_2=15
+              this.pan_2=60
+              this.pan_1=20
+              this.pan_3=10
+              this.pan_4=10
+            }
+        }
+      },
+      computed:{  //监听变量的改变并更新视图
+        renderVariate: function(){
+          let arr=[];
+          for(let item of this.variate){
+            let temp={}
+            temp.label=item.name
+            temp.children=new Array({},{})
+            temp.children[0].label=`type: ${item.type}`
+            temp.children[1].label=`value: ${item.value}`
+            arr.push(temp)
+        }
+          return arr;
+        }
+      },
+      components: {
+        Splitpanes,
+        ace
    }
 }
 </script>
@@ -558,9 +672,8 @@ ul{
 .el-tab-pane,.code-pane{ 
   overflow-y: scroll;
 }
-  /*将大滚动条调小，因为如果大的话会和编辑器的滚动条相近，效果不好*/
-.code-pane::-webkit-scrollbar   
-  {
+  /*将code-pane的大滚动条调小，因为如果大的话会和el-tab-pane的滚动条相近，效果不好*/
+.code-pane::-webkit-scrollbar   {
 	width: 1px;
 	background-color: white;
 }
@@ -577,24 +690,27 @@ canvas{
   right: 0;
 }
 .horizontal-list{
+  position: relative;  /*设置层级需定位 */
   height: 30px;
   margin: 0;
   margin-right: 20px;
   display: flex;
   flex-direction: row;
-  justify-content: flex-end
-
+  justify-content: flex-end;
+  z-index: 2;
 }
 .horizontal-list li{
   float: right;
 }
 .vertical-list{
+  position: relative;  /*设置层级需定位 */
   width: 14px;
   float: right;
   margin: 0;
   margin-right: 20px;
   display: flex;
   flex-direction: column;
+  z-index: 2;
 }
 .vertical-list i{
   margin: 0;
@@ -612,10 +728,20 @@ canvas{
 .success{
   color: green;
 }
+.banClick:before{
+  color: #848484!important;
+}
+.deubg-highlighted{
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255,10,10,0.2);
+  display: none;
+  z-index: 1;
+}
 .ace_gutter-cell,#breakPoint{
   cursor: pointer;
 }
-
 /* 过渡效果开始 */
 .verList-enter,.verList-leave-to{
    transform: translateY(0);
