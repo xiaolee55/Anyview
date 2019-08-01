@@ -94,7 +94,7 @@ export default {
     width: 80%;
     margin: 0 auto;
   }
-  canvas{
+  #canvas{
     position: fixed;
     display: block;
     width: 100%;

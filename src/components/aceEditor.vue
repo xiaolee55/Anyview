@@ -28,12 +28,14 @@
 				enableLiveAutocompletion: true
       })
       this.aceEditor.on('change', this.change)   //在编辑器上注册change事件
+      this.lineHeight=this.aceEditor.renderer.lineHeight
     },
     data () {
       return {
         aceEditor: null,
         themePath: 'ace/theme/katzenmilch', // 不导入 webpack-resolver，该模块路径会报错
         modePath: 'ace/mode/c_cpp' ,// 同上,
+        lineHeight: ''
       }
     },
     props: {

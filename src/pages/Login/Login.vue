@@ -81,7 +81,7 @@ html{
             h1{
               text-align: center;
             }
-            canvas{display: block;width: 100%;height: 100%;}
+            #canvas{display: block;width: 100%;height: 100%;}
             form{
                 position: absolute;
                 top: 50%;

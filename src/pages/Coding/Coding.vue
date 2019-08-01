@@ -25,7 +25,7 @@
            <el-button type="primary" round style="margin-right:20px">下一题</el-button>
         </div>
       </div>
-      <splitpanes horizontal :push-other-panes="true" :splitpanes-size="pan_2" watch-slots  @resize="modifyDiv">
+      <splitpanes horizontal :push-other-panes="true" :splitpanes-size="pan_2" watch-slots  @resize="modifyDiv" class="editor-pane">
         <el-tabs
         v-model="editableTabsValue" 
         type="card" 
@@ -40,7 +40,7 @@
               :label="item.title"
               :name="item.name"
             >
-              <div class="deubg-highlighted" ref="dbhl"></div>
+              <div class="debug-highlighted" ref="dbhl"></div>
                <ace v-model="msg.questionContent.studentAnswer" ref="ace" @createBP="createBP">
                </ace>
               <div class="funMenu"  @mousedown="mouseEvent('down')" @mouseup="mouseEvent('up')">
@@ -57,7 +57,7 @@
               </div> 
             </el-tab-pane>
         </el-tabs> 
-        <div :splitpanes-size="pan_2_2">
+        <div :splitpanes-size="pan_2_2" class='show-pane'>
             <div class="showResult" ref="resShow" :style="{height: initHeight}">
               <p  :class="{success:item.content.includes('成功'),fail:item.content.includes('失败')}" 
                    v-for="(item,index) in result" 
@@ -67,8 +67,8 @@
            </div>
         </div>
       </splitpanes>
-        <div :splitpanes-size="pan_3"><el-tree :data="renderVariate" :props="defaultProps"></el-tree></div>
-        <div :splitpanes-size="pan_4"></div>
+        <div :splitpanes-size="pan_3" class='debug-pane'><el-tree :data="renderVariate" :props="defaultProps"></el-tree></div>
+        <div :splitpanes-size="pan_4" class='visual-pane'></div>
     </splitpanes>
   </div>
 </template>
@@ -96,17 +96,19 @@ export default {
           {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
           {name:'runGroup',class:'iconfont icon-chengzuyunxing',title:'运行'},
           {name:'startDebug',class:'iconfont icon-tiaoshi',title:'调试'},
-          {name:'stepOver',class:'iconfont icon-xiayihang',title:'下一步(不进入函数)'},
           {name:'fillScreen',class:'iconfont icon-fangda',title:'全屏'},
           {name:'more',class:'iconfont icon-gengduo',title:'更多'},
         ],
         verFunList:[
+          {name:'stepOver',class:'iconfont icon-xiayihang banClick',title:'下一步(不进入函数)'},
           {name:'runSiginal',class:'iconfont icon-danzuyunxing banClick',title:'单组运行'},
           {name:'quitDebug',class:'iconfont icon-tingzhi banClick',title:'停止调试'},
           {name:'continueDebug',class:'iconfont icon-jixu banClick',title:'继续调试'},
           {name:'stepInto',class:'iconfont icon-xiayibu banClick',title:'下一步(进入函数)'},
           {name:'repeatDebug',class:'iconfont icon-chongfujianli banClick',title:'重复调试'},
         ],
+        successMsg:['编译成功','开启调试'],
+        failMsg:['编译失败','停止调试'],
         pan_1: 20,
         pan_2: 60,
         pan_3:10,
@@ -183,8 +185,12 @@ export default {
             break;
 
           case 'runGroup':
-            if(!this.compileFlag)
-              this.common('compile')
+            if(!this.compileFlag){
+              this.result.push({name:'runError',content:'请先编译！'})
+              return
+            }
+            if(this.debugFlag)
+              this.common('quitDebug')
               sendMsg={
                 type: 161,
                 content: {
@@ -207,6 +213,10 @@ export default {
             break;
 
           case 'startDebug':
+            if(!this.compileFlag){
+              this.result.push({name:'debugError',content:'请先编译！'})
+              return
+            }
             if(this.debugFlag)
              return
             sendMsg={
@@ -286,13 +296,13 @@ export default {
             break;
           case 'fillScreen':
             this.isFillScreen=!this.isFillScreen
+            this.fillScreen()
             break; 
           case 'more':
             this.showVerList=!this.showVerList
             break;
         }
-        setTimeout(this.sendReq(sendMsg,fun),1000)
-        
+        this.sendReq(sendMsg,fun)
       },
       sendReq(sendMsg,fun){
         if(sendMsg===''&&fun==='')
@@ -300,7 +310,6 @@ export default {
          this.socket.sendSock(sendMsg,fun)
       },
       getCompileRes(e){
-        console.log(e);
         if(e.content.includes('成功'))
          this.compileFlag=true
          this.result.push({name:'compileRes',content:e.content+'!'})
@@ -325,7 +334,6 @@ export default {
         this.lineNum=e.content.lineNum
       },
       getStepIntoRes(e){
-        console.log(e);
         this.result.push({name:'stepIntoRes',content:`下一行：${e.content.lineNum}`})
         this.variate=e.content.variate
         this.lineNum=e.content.lineNum
@@ -341,15 +349,15 @@ export default {
       },
       getInputRes(e){
       },
-      createBP(){   //添加或者移除断点（用了lowB的DOM操作）
+      createBP(){   //添加或者移除断点（用了lowB的DOM操作
         if(event.target.tagName==="CANVAS")
           event.target.parentNode.removeChild(event.target)
         if(event.target.classList.contains("ace_gutter-cell")){
             this.bpRow+=`,${event.target.innerText}`    //获取行号
             let canvas=document.createElement("canvas")
             // canvas.id='cv'+(this.bpRow+1)
-            canvas.width='49'
-            canvas.height=this.$refs.ace[this.tabIndex-1].aceEditor.renderer.lineHeight
+            canvas.width=49
+            canvas.height=this.$refs.ace[0].lineHeight    //获取当前显示器下编辑器的行高
             event.target.appendChild(canvas);
             let bp=canvas.getContext("2d");
             bp.fillStyle="#FF0000";
@@ -464,7 +472,45 @@ export default {
         this.editableTabsValue = activeName;
         this.editableTabs = tabs.filter(tab => tab.name !== targetIndex);
         this.tabIndex--;
-      }
+       },    
+       fillScreen(){
+           if(this.isFillScreen){
+              for(let i=0;i<this.horFunList.length;i++){  //更换图标
+                  if(this.horFunList[i].name=='fillScreen'){
+                    this.horFunList[i].class=this.horFunList[i].class.replace('icon-fangda','icon-suoxiao')
+                    break;
+                  }
+              }
+              this.$nextTick(()=>{
+                this.$el.querySelector('.code-pane').scrollTop=this.$el.querySelector('.code-pane').scrollHeight
+                this.$el.querySelector('.code-pane').parentNode.style.height=100+'%'
+                this.$el.querySelector('.show-pane').parentNode.style.height=0+'%'
+                this.$el.querySelector('.question-content').parentNode.style.width=0+'%'
+                this.$el.querySelector('.editor-pane').parentNode.style.width=100+'%'
+                this.$el.querySelector('.debug-pane').parentNode.style.width=0+'%'
+                this.$el.querySelector('.visual-pane').parentNode.style.width=0+'%'
+
+              })
+            }
+            else{
+              for(let i=0;i<this.horFunList.length;i++){
+                  if(this.horFunList[i].name=='fillScreen'){
+                    this.horFunList[i].class=this.horFunList[i].class.replace('icon-suoxiao','icon-fangda')
+                    break;
+                  }
+              }
+              this.$nextTick(()=>{
+                this.$el.querySelector('.code-pane').scrollTop=0
+                this.$el.querySelector('.code-pane').parentNode.style.height=85+'%'
+                this.$el.querySelector('.show-pane').parentNode.style.height=15+'%'
+                this.$el.querySelector('.question-content').parentNode.style.width=20+'%'
+                this.$el.querySelector('.editor-pane').parentNode.style.width=60+'%'
+                this.$el.querySelector('.debug-pane').parentNode.style.width=10+'%'
+                this.$el.querySelector('.visual-pane').parentNode.style.width=10+'%'
+
+              })
+            }
+        }
     },
     watch:{
         debugFlag(){    //监听调试是否开启并改变相应图标样式
@@ -489,34 +535,19 @@ export default {
           }
          },
         lineNum(){  //移动调试高亮光标
-          this.$refs.dbhl[this.tabIndex-1].style.top=`${this.$refs.ace[this.tabIndex-1].aceEditor.renderer.lineHeight*(this.lineNum-1)}px`
+          this.$refs.dbhl[this.tabIndex-1].style.top=`${this.$refs.ace[0].lineHeight*(this.lineNum-1)}px`
         },
-        isFillScreen(){   //是否全屏
-        console.log(this.compileFlag);
-           if(this.isFillScreen){
-            for(let i=0;i<this.horFunList.length;i++){  //更换图标
-                if(this.horFunList[i].name=='fillScreen')
-                this.horFunList[i].class=this.horFunList[i].class.replace('icon-fangda','icon-suoxiao')
+        result() {
+          this.$nextTick(() => {
+            let container = this.$el.querySelector(".showResult");
+            let height=container.scrollHeight
+            let top=container.scrollTop         
+            for(let i=0;i<height-top;i++){   //使用定时器让滚动条慢慢滚到底部,此处循环次数待定
+              setTimeout(function(){
+                container.scrollTop++;
+              },0.8*i)
             }
-              this.pan_2_1=100
-              this.pan_2_2=0
-              this.pan_2=100
-              this.pan_1=0
-              this.pan_3=0
-              this.pan_4=0
-            }
-            else{
-              for(let i=0;i<this.horFunList.length;i++){
-                  if(this.horFunList[i].name=='fillScreen')
-                  this.horFunList[i].class=this.horFunList[i].class.replace('icon-suoxiao','icon-fangda')
-              }
-              this.pan_2_1=85
-              this.pan_2_2=15
-              this.pan_2=60
-              this.pan_1=20
-              this.pan_3=10
-              this.pan_4=10
-            }
+          })
         }
       },
       computed:{  //监听变量的改变并更新视图
@@ -674,7 +705,11 @@ ul{
 }
   /*将code-pane的大滚动条调小，因为如果大的话会和el-tab-pane的滚动条相近，效果不好*/
 .code-pane::-webkit-scrollbar   {
-	width: 1px;
+	width: 0.01px;
+	background-color: white;
+}
+.code-pane::-webkit-scrollbar-thumb
+{
 	background-color: white;
 }
 canvas{
@@ -716,7 +751,6 @@ canvas{
   margin: 0;
 }
 .showResult{
-  width: 98%;
   padding: 0px 10px;
   margin: 0px;
   overflow-y: scroll;
@@ -726,18 +760,20 @@ canvas{
   color: #a94442;
 }
 .success{
-  color: green;
+  background-color: #21d376;
+  color: white;
 }
 .banClick:before{
   color: #848484!important;
 }
-.deubg-highlighted{
+.debug-highlighted{
   position: absolute;
   left: 0;
   width: 100%;
   background-color: rgba(255,10,10,0.2);
   display: none;
   z-index: 1;
+  transition: top 0.3s;
 }
 .ace_gutter-cell,#breakPoint{
   cursor: pointer;
