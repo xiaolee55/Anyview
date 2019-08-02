@@ -16,17 +16,17 @@
             <div class="per-info">
                 <span style="margin-right: 10px">{{user.name}}</span>
                 <el-dropdown trigger="click" >
-                <span class="user-icon">
-                </span>
-                <el-dropdown-menu slot="dropdown" >
-                  <el-dropdown-item><i class="el-icon-menu" ></i>个人中心</el-dropdown-item>
-                  <el-dropdown-item><i class="el-icon-bell"></i>我的消息</el-dropdown-item>
-                  <el-dropdown-item><i class="el-icon-star-off"></i>我的收藏</el-dropdown-item>
-                  <el-dropdown-item><i class="el-icon-tickets"></i>我的笔记</el-dropdown-item>
-                  <el-dropdown-item><i class="el-icon-time"></i>我的进度</el-dropdown-item>
-                  <el-dropdown-item><i class="el-icon-warning"></i>退出账号</el-dropdown-item>
-                </el-dropdown-menu>
-              </el-dropdown>
+                  <span class="user-icon">
+                  </span>
+                  <el-dropdown-menu slot="dropdown" >
+                    <el-dropdown-item><i class="el-icon-menu" ></i>个人中心</el-dropdown-item>
+                    <el-dropdown-item><i class="el-icon-bell"></i>我的消息</el-dropdown-item>
+                    <el-dropdown-item><i class="el-icon-star-off"></i>我的收藏</el-dropdown-item>
+                    <el-dropdown-item><i class="el-icon-tickets"></i>我的笔记</el-dropdown-item>
+                    <el-dropdown-item><i class="el-icon-time"></i>我的进度</el-dropdown-item>
+                    <el-dropdown-item><i class="el-icon-warning"></i>退出账号</el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
             </div>
           </div>
           <div class="content w">

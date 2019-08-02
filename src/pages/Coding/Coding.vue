@@ -15,7 +15,18 @@
     <splitpanes class="default-theme"  :push-other-panes="true" watch-slots>
       <div :splitpanes-size="pan_1" class="question-content" :class="{'questContent-color': isQuestListOpen}" @scroll="fixButton">
         <div class="question-menu-top" ref="topMenu" :class="{'menu-color': isQuestListOpen}">
-          <i class="iconfont icon-zidingyi"></i>
+            <el-dropdown trigger="click"  @command="setEditor" :hide-on-click="false" @visible-change='hidSetMenu'>
+                  <span  class="iconfont icon-zidingyi" title="设置">
+                  </span>
+                    <el-dropdown-menu slot="dropdown" ref='elDropdown'>
+                    <el-dropdown-item command="主题"><i class="el-icon-menu"></i>主题<i class="el-icon-arrow-right"></i></el-dropdown-item>
+                    <el-dropdown-item command="字体"><i class="el-icon-edit"></i>字体<i class="el-icon-arrow-right"></i></el-dropdown-item>
+                    <el-dropdown-item command="帮助"><i class="el-icon-question"></i>帮助<i class="el-icon-arrow-right"></i></el-dropdown-item>
+                  </el-dropdown-menu>
+            </el-dropdown>
+            <ul class="setting-menu" v-if='showSetMenu' ref="setMenu">
+              <li v-for="item in aceModes" :key='item.name' @click="setModes">{{item.name}}</li>
+            </ul>
           <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" ></i>
           <i class="iconfont icon-liebiao" style="cursor:pointer" @click="showQuestList"></i>
         </div>
@@ -67,7 +78,9 @@
            </div>
         </div>
       </splitpanes>
-        <div :splitpanes-size="pan_3" class='debug-pane'><el-tree :data="renderVariate" :props="defaultProps"></el-tree></div>
+        <div :splitpanes-size="pan_3" class='debug-pane'>
+          <el-tree :data="renderVariate" :props="defaultProps" :default-expand-all='true'></el-tree>
+        </div>
         <div :splitpanes-size="pan_4" class='visual-pane'></div>
     </splitpanes>
   </div>
@@ -92,6 +105,7 @@ export default {
     },
     data () {
       return {
+        aceModes:[],
         horFunList:[
           {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
           {name:'runGroup',class:'iconfont icon-chengzuyunxing',title:'运行'},
@@ -107,6 +121,8 @@ export default {
           {name:'stepInto',class:'iconfont icon-xiayibu banClick',title:'下一步(进入函数)'},
           {name:'repeatDebug',class:'iconfont icon-chongfujianli banClick',title:'重复调试'},
         ],
+        _thisMode: '',
+        showSetMenu: false,
         successMsg:['编译成功','开启调试'],
         failMsg:['编译失败','停止调试'],
         pan_1: 20,
@@ -158,6 +174,47 @@ export default {
       }
     },
     methods: {
+      hidSetMenu(){
+        this.showSetMenu=false 
+      },
+      setModes(e){
+        if(this._thisMode=='theme')
+          this.$refs.ace[this.tabIndex-1].aceEditor.setTheme(`ace/theme/${e.target.innerText}`)
+        else
+          this.$refs.ace[this.tabIndex-1].aceEditor.setFontSize(e.target.innerText)
+      },
+      setEditor(command){
+         switch(command){
+           case '主题':
+            this._thisMode='theme'
+            this.modifyModes('theme')
+            break;
+           case '字体':
+            this._thisMode='font'
+            this.modifyModes('font')
+            break;  
+          //  case '帮助': 
+          //   this.help()
+          //   break;
+         }
+      },
+      modifyModes(flag){
+        this.showSetMenu=true
+        if(flag=='theme')
+          this.aceModes=[{name:'katzenmilch',path:'ace/theme/katzenmilch'},
+          {name:'chrome',path:'ace/theme/chrome'},
+          {name:'github',path:'ace/theme/github'},
+          {name:'eclipse',path:'ace/theme/eclipse'},
+          {name:'monokai',path:'ace/theme/monokai'},
+          {name:'sqlserver',path:'ace/theme/sqlserver'},
+          {name:'twilight',path:'ace/theme/twilight'}]
+        else
+           this.aceModes=[{name:'12px'},{name:'13px'},{name:'14px'},{name:'15px'},{name:'16px'},{name:'17px'},{name:'18px'},{name:'19px'},{name:'20px'}]
+        this.$nextTick(()=>{
+          this.$refs.setMenu.style.top=this.$refs.elDropdown.$el.offsetTop+'px'
+          this.$refs.setMenu.style.left=this.$refs.elDropdown.$el.offsetLeft+this.$refs.elDropdown.$el.offsetWidth+'px'
+        })
+      },
       beforeunloadFn (e) {    //刷新窗口时执行的函数
         if(this.debugFlag)
           this.common('quitDebug')
@@ -329,12 +386,13 @@ export default {
         this.$refs.ace[this.tabIndex-1].aceEditor.container.appendChild(this.$refs.dbhl[this.tabIndex-1])
       },
       getStepOverRes(e){
-        this.result.push({name:'stepOverRes',content:`下一行：${e.content.lineNum}`})
+        this.result.push({name:'stepOverRes',content:`本行：${e.content.lineNum}`})
         this.variate=e.content.variate
         this.lineNum=e.content.lineNum
       },
       getStepIntoRes(e){
-        this.result.push({name:'stepIntoRes',content:`下一行：${e.content.lineNum}`})
+        console.log(e);
+        this.result.push({name:'stepIntoRes',content:`本行：${e.content.lineNum}`})
         this.variate=e.content.variate
         this.lineNum=e.content.lineNum
       },
@@ -345,7 +403,7 @@ export default {
       getContinueDebugRes(e){
         this.lineNum=e.content.lineNum
         this.variate=e.content.variate
-        this.result.push({name:'continueDebugRes',content:`下一行：${e.content.lineNum}`})
+        this.result.push({name:'continueDebugRes',content:`本行：${e.content.lineNum}`})
       },
       getInputRes(e){
       },
@@ -654,6 +712,24 @@ ul{
 .menu-color{
   background-color: rgba(0,0,0,0);
 }
+.setting-menu{
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  z-index: 2011;
+  margin: 5px 0;
+  background-color: #FFF;
+  border: 1px solid #EBEEF5;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+}
+.setting-menu li{
+  padding: 7px 15px;
+  cursor: pointer;
+}
+.setting-menu li:hover{
+    background-color: #f5f7fa;
+    color: #409eff;
+}
 /* 问题内容板块结束 */
 
 /* 问题列表开始 */
@@ -773,7 +849,7 @@ canvas{
   background-color: rgba(255,10,10,0.2);
   display: none;
   z-index: 1;
-  transition: top 0.3s;
+  transition: top 0.2s;
 }
 .ace_gutter-cell,#breakPoint{
   cursor: pointer;
