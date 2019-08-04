@@ -33,7 +33,12 @@ export default new VueRouter({
     },
     {
       path: '/',
-      component: Login
-    }
+      component: Login,
+      redirect: '/Login'   //重定向
+    },
+    {
+      path: '**',   // 错误路由
+      redirect: '/Login'   //重定向
+    },
   ]
 })

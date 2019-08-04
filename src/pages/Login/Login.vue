@@ -41,6 +41,7 @@
 </template>
 
 <script>
+import global from '@/store/global'
 export default {
   data () {
     return {
@@ -71,6 +72,7 @@ export default {
             return
           }
           else{
+            global.setIsLogin(true) //将全局变量glob_isLogin设为true
             this.$message({
               showClose: true,
               message: '欢迎您,'+e.content.name,
