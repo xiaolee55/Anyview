@@ -32,8 +32,13 @@
           <div class="content w">
             <h1 style="margin-top: 30px">继续题目：</h1>
             <div class="latest-course">
-              <course courseName="C语言程序设计"  cardType="上次做到" :questionId="50" :questionCount="200"  @goTo='goTo'></course>
-              <course courseName="数据结构"  cardType="上次做到" :questionId="40" :questionCount="200"></course>
+              <course 
+              courseName="数据结构"  
+              cardType="上次做到" 
+              :questionId="40" 
+              :questionCount="200" 
+              @goTo='goTo'>
+              </course>
             </div>
             <h1>所有课程：</h1>
             <div class="all-course">
@@ -65,9 +70,8 @@ export default {
       }
     },
     methods: {
-      goTo(){
-          
-          this.$router.push({ 
+      goTo(){      
+          this.$router.push({
             name: 'Coding',
             query:{ 
                 user: JSON.stringify(this.user)

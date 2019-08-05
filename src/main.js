@@ -18,13 +18,17 @@ Vue.config.productionTip = false
 // 路由跳转验证，要写在实例创建之前才能防止直接修改URL可以跳转的问题
 // 注册一个全局守卫，作用是在路由跳转前，对路由进行判断，防止未登录的用户跳转到其他需要登录的页面去
 router.beforeEach((to, from, next) => {
+  console.log(localStorage.length)
   // 如果已经登录，可以随便访问
-  if(Vue.prototype.GLOBAL.glob_isLogin){
+  if(localStorage.length>=2){
+    if(to.path == '/Login') {   //在登录状态就不能重新访问登录界面
+      next({path: from.path})
+    }
     next()
   }else {
   // 如果没有登录，但你访问其他需要登录的页面，那我就让你跳到登录页面去
-    if(to.path !== '/login') {
-      next({path: '/login'})
+    if(to.path !== '/Login') {
+      next({path: '/Login'})
     }else {
       next()
     }

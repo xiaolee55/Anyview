@@ -72,6 +72,7 @@ export default {
             return
           }
           else{
+            localStorage.setItem('isLogin', true)
             global.setIsLogin(true) //将全局变量glob_isLogin设为true
             this.$message({
               showClose: true,
