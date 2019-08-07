@@ -62,6 +62,10 @@
 import course from '../../components/courseCard.vue';
 export default {
     created () {
+        if(location.href.indexOf('#reloaded')==-1){
+          location.href=location.href+"#reloaded";
+          location.reload();
+        }
       this.user=JSON.parse(this.$route.query.user);
     },
     data () {

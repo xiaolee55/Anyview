@@ -41,7 +41,7 @@ export default {
       position: relative;
       width: 250px;
       height: 250px;
-      margin: 30px;
+      margin: 20px;
       border-radius: 10%;
       color: white;
       background-image: url(./images/img.jpg);
