@@ -93,7 +93,7 @@ import ace from '../../components/aceEditor.vue'
 let ace_layer=document.querySelector(".ace_layer");
 export default {
     created () {
-      this.user=JSON.parse(this.$route.query.user)
+      this.user=JSON.parse(window.localStorage.getItem('user'))
       this.sendQuestListReq()
       this.initHeight = `${document.documentElement.clientHeight*0.15}px`  //初始化输出框的高度
     },
@@ -227,7 +227,7 @@ export default {
         this.$refs.topMenu.style.top=event.target.scrollTop+'px';
         this.$refs.bottomMenu.style.bottom=-event.target.scrollTop+'px';
       },
-      common(flag){  //所有按钮的总入口
+      common(flag){  //编辑器所有按钮的总入口
         let sendMsg=''
         let fun=''
         switch(flag){
@@ -326,6 +326,7 @@ export default {
             break; 
 
           case 'continueDebug':
+            console.log(this.bpRow.substring(1));
             if(!this.debugFlag)
              return
             sendMsg={
@@ -378,6 +379,8 @@ export default {
         this.result.push({name:'runSiginalRes',content:e.content.output})
       },
       getStartDebugRes(e){
+        console.log(e);
+        
         if(e.content.error=="")
           this.debugFlag=true
         this.result.push({name:'startDebugRes',content:`开启调试 ：${e.content.output}`})
@@ -611,6 +614,7 @@ export default {
       computed:{  //监听变量的改变并更新视图
         renderVariate: function(){
           let arr=[];
+          console.log(this.variate);
           for(let item of this.variate){
             let temp={}
             temp.label=item.name
@@ -836,8 +840,7 @@ canvas{
   color: #a94442;
 }
 .success{
-  background-color: #21d376;
-  color: white;
+  color: #21d376;
 }
 .banClick:before{
   color: #848484!important;

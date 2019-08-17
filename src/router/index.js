@@ -4,7 +4,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Login from '../pages/Login/Login.vue'
-import workSelect from '../pages/workSelect/workSelect.vue'
+import work from '../pages/work/work.vue'
 import Coding from '../pages/Coding/Coding.vue'
 import PersonalCenter from '../pages/PersonalCenter/PersonalCenter.vue'
 // 声明使用插件
@@ -15,17 +15,26 @@ export default new VueRouter({
   routes: [
     {
       path: '/login',
-      component: Login // 返回路由组件的函数, 只有执行此函数才会加载路由组件, 这个函数在请求对应的路由路径时才会执行
+      component: Login, // 返回路由组件的函数, 只有执行此函数才会加载路由组件, 这个函数在请求对应的路由路径时才会执行
+      meta: {
+        requiresAuth: true
+      }
     },
     {
-      path: '/workSelect',
-      name: 'workSelect',
-      component: workSelect
+      path: '/work',
+      name: 'work',
+      component: work,
+      meta: {
+        requiresAuth: true
+      }
     },
     {
       path: '/Coding',
       name: 'Coding',
-      component: Coding
+      component: Coding,
+      meta: {
+        requiresAuth: true
+      }
     },
     {
       path: '/PersonalCenter',

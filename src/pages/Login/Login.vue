@@ -41,7 +41,6 @@
 </template>
 
 <script>
-import global from '@/store/global'
 export default {
   data () {
     return {
@@ -54,8 +53,7 @@ export default {
         schoolId: '',
         switch: true
       },
-      schoolList: [],
-      userInfo: ""
+      schoolList: []
     }
   },
   mounted () {
@@ -72,19 +70,12 @@ export default {
             return
           }
           else{
-            localStorage.setItem('isLogin', true)
-            global.setIsLogin(true) //将全局变量glob_isLogin设为true
-            this.$message({
-              showClose: true,
-              message: '欢迎您,'+e.content.name,
-              type: 'success'
-            });
-            this.userInfo = e.content
-            this.$router.push({   // 路由跳转并传递信息
-              name: 'workSelect',
-              query:{ 
-                  user: JSON.stringify(this.userInfo)
-              },
+            //登录成功，触发vuex中的mutation
+            this.$store.commit('setIsLogin',true);
+            this.$store.commit('setUser',JSON.stringify(e.content))
+
+            this.$router.push({   // 路由跳转
+              name: 'work'
           })
         }
       },

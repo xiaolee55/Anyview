@@ -8,35 +8,42 @@ import router from './router'
 import * as socket from './api/websocket'
 import ace from 'ace-builds'
 import './assets/iconfont/iconfont.css'
-import global from '@/store/global'
+import store from './store'
 
-Vue.prototype.GLOBAL=global   //此处不能直接将变量挂载在原型，因为在其他地方修改只是修改其副本，要想修改原型中的值，只能通过修改引用类型的属性
 Vue.prototype.socket = socket
 Vue.use(ace)
 Vue.use(ElementUI)
 Vue.config.productionTip = false
+
+// 页面刷新时，重新赋值有没登录
+if (window.localStorage.getItem('isLogin')) {
+  store.commit('setIsLogin', window.localStorage.getItem('isLogin'));
+}
 // 路由跳转验证，要写在实例创建之前才能防止直接修改URL可以跳转的问题
 // 注册一个全局守卫，作用是在路由跳转前，对路由进行判断，防止未登录的用户跳转到其他需要登录的页面去
 router.beforeEach((to, from, next) => {
-  // 如果已经登录，可以随便访问
-  if(localStorage.length>=2){
-    if(to.path == '/Login') {   //在登录状态就不能重新访问登录界面
-        next({path: '/workSelect'})
+  if(to.matched.some(r=>r.meta.requiresAuth)){
+    if(store.state.isLogin){
+      if(to.path=='/Login')
+        next('/work'); 
+      next();
     }
-    next()
-  }else {
-  // 如果没有登录，但你访问其他需要登录的页面，那我就让你跳到登录页面去
-    if(to.path !== '/Login') {
-      next({path: '/Login'})
-    }else {
+    else{
+      console.log(111);
       next()
     }
   }
+  else{
+    next();
+  }
   })
+
+
 /* eslint-disable no-new */
  let vm = new Vue({
       el: '#app',
       router,
+      store,
       components: { App },
       template: '<App/>',
     })
