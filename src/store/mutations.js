@@ -11,6 +11,7 @@ export default {
     },
     sendQuestListReq(state){
         // socket.sendSock({type: 3, content: state.user.id}, this.getQuestList)
+        console.log(socket)
     },
     getQuestList(e){
         console.log(e)

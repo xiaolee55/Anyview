@@ -27,7 +27,7 @@
             <ul class="setting-menu" v-if='showSetMenu' ref="setMenu">
               <li v-for="item in aceModes" :key='item.name' @click="setModes">{{item.name}}</li>
             </ul>
-          <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" ></i>
+          <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" title="个人中心" @click='goTo'></i>
           <i class="iconfont icon-liebiao" style="cursor:pointer" @click="showQuestList"></i>
         </div>
          <div class="question-desc" ><p>{{questDesc}}</p></div>
@@ -110,12 +110,12 @@ export default {
           {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
           {name:'runGroup',class:'iconfont icon-chengzuyunxing',title:'运行'},
           {name:'startDebug',class:'iconfont icon-tiaoshi',title:'调试'},
+          {name:'runSiginal',class:'iconfont icon-danzuyunxing',title:'单组运行'},
           {name:'fillScreen',class:'iconfont icon-fangda',title:'全屏'},
           {name:'more',class:'iconfont icon-gengduo',title:'更多'},
         ],
         verFunList:[
           {name:'stepOver',class:'iconfont icon-xiayihang banClick',title:'下一步(不进入函数)'},
-          {name:'runSiginal',class:'iconfont icon-danzuyunxing banClick',title:'单组运行'},
           {name:'quitDebug',class:'iconfont icon-tingzhi banClick',title:'停止调试'},
           {name:'continueDebug',class:'iconfont icon-jixu banClick',title:'继续调试'},
           {name:'stepInto',class:'iconfont icon-xiayibu banClick',title:'下一步(进入函数)'},
@@ -127,8 +127,8 @@ export default {
         failMsg:['编译失败','停止调试'],
         pan_1: 20,
         pan_2: 60,
-        pan_3:10,
-        pan_4: 10,
+        pan_3:20,
+        pan_4: 0,
         pan_2_1: 85,
         pan_2_2: 15,
         initHeight: 1,
@@ -164,7 +164,8 @@ export default {
         lineNum:1,
         result:[],
 
-        variate:[],  //用于存放堆栈结构要显示的数据
+        variate:[],  //用于存放后端取到的变量数据
+        renderVariate:[],  //格式化后的变量数据
         defaultProps: {
           children: 'children',
           label: 'label'
@@ -174,6 +175,11 @@ export default {
       }
     },
     methods: {
+      goTo(){
+        this.$router.push({
+            name: 'personalCenter'
+        })
+      },
       hidSetMenu(){
         this.showSetMenu=false 
       },
@@ -258,8 +264,10 @@ export default {
             break;
 
           case 'runSiginal':
-            if(!this.debugFlag)             
-             return
+            if(!this.compileFlag){
+              this.result.push({name:'runError',content:'请先编译！'})
+              return
+            }
             sendMsg={
               type: 11,
               content:{
@@ -326,7 +334,6 @@ export default {
             break; 
 
           case 'continueDebug':
-            console.log(this.bpRow.substring(1));
             if(!this.debugFlag)
              return
             sendMsg={
@@ -379,24 +386,24 @@ export default {
         this.result.push({name:'runSiginalRes',content:e.content.output})
       },
       getStartDebugRes(e){
-        console.log(e);
-        
         if(e.content.error=="")
           this.debugFlag=true
         this.result.push({name:'startDebugRes',content:`开启调试 ：${e.content.output}`})
         this.variate=e.content.variate
+        this.renderVariate=this.renderVar(this.variate)
         this.lineNum=e.content.lineNum
         this.$refs.ace[this.tabIndex-1].aceEditor.container.appendChild(this.$refs.dbhl[this.tabIndex-1])
       },
       getStepOverRes(e){
         this.result.push({name:'stepOverRes',content:`本行：${e.content.lineNum}`})
         this.variate=e.content.variate
+        this.renderVariate=this.renderVar(this.variate)
         this.lineNum=e.content.lineNum
       },
       getStepIntoRes(e){
-        console.log(e);
         this.result.push({name:'stepIntoRes',content:`本行：${e.content.lineNum}`})
         this.variate=e.content.variate
+        this.renderVariate=this.renderVar(this.variate)
         this.lineNum=e.content.lineNum
       },
       getQuitDebugRes(e){
@@ -406,7 +413,31 @@ export default {
       getContinueDebugRes(e){
         this.lineNum=e.content.lineNum
         this.variate=e.content.variate
+        this.renderVariate=this.renderVar(this.variate)
         this.result.push({name:'continueDebugRes',content:`本行：${e.content.lineNum}`})
+      },
+      renderVar(variate){   //格式化变量数据
+        if(!Array.isArray(variate))
+          variate=[variate]
+        // console.log(variate);
+        let arr=[];
+        for(let item of variate){
+            let temp={}
+            temp.label=item.name
+            temp.children=new Array({},{},{})
+            temp.children[0].label=`type: ${item.type}`
+            temp.children[1].label=`name: ${item.name}`
+            if(Array.isArray(item.value)){
+              // console.log(item.value[1]);
+               temp.children[2].label=`value: ${item.value[0]}`
+               console.log(item.value[0]);
+               temp.children[2].children=this.renderVar(item.value[1])
+            }else{
+               temp.children[2].label=`value: ${item.value}`
+            }
+           arr.push(temp)
+        }
+        return arr
       },
       getInputRes(e){
       },
@@ -612,19 +643,6 @@ export default {
         }
       },
       computed:{  //监听变量的改变并更新视图
-        renderVariate: function(){
-          let arr=[];
-          console.log(this.variate);
-          for(let item of this.variate){
-            let temp={}
-            temp.label=item.name
-            temp.children=new Array({},{})
-            temp.children[0].label=`type: ${item.type}`
-            temp.children[1].label=`value: ${item.value}`
-            arr.push(temp)
-        }
-          return arr;
-        }
       },
       components: {
         Splitpanes,
@@ -870,6 +888,11 @@ canvas{
    opacity: 0;
 }
 /* 过渡效果结束 */
-
 /* 编码面板结束 */
+
+/* 调试面板开始 */
+#pane_2{
+  overflow: scroll;
+}
+/* 调试面板结束 */
 </style>

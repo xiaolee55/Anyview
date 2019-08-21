@@ -38,6 +38,7 @@ export default new VueRouter({
     },
     {
       path: '/PersonalCenter',
+      name: 'personalCenter',
       component: PersonalCenter
     },
     {
