@@ -171,7 +171,8 @@ export default {
           label: 'label'
         },
         compileFlag: false,
-        debugFlag: false
+        debugFlag: false,
+        runSig: false
       }
     },
     methods: {
@@ -268,6 +269,8 @@ export default {
               this.result.push({name:'runError',content:'请先编译！'})
               return
             }
+            if(this.debugFlag)
+              this.common('quitDebug')
             sendMsg={
               type: 11,
               content:{
@@ -282,8 +285,13 @@ export default {
               this.result.push({name:'debugError',content:'请先编译！'})
               return
             }
+            if(this.runSig){
+              console.log(2,this.runSig)
+              this.common('quitDebug')
+            }
             if(this.debugFlag)
              return
+             console.log(this.bpRow.substring(1))
             sendMsg={
               type: 1,
               content: {
@@ -308,6 +316,7 @@ export default {
             break;
 
           case 'stepOver':
+            console.log(this.bpRow.substring(1));
             if(!this.debugFlag)
              return
             sendMsg={
@@ -321,8 +330,8 @@ export default {
             break;
 
           case 'quitDebug':
-            if(!this.debugFlag)
-             return
+            // if(!this.debugFlag)
+            //  return
             sendMsg={
               type: 141,
               content: {
@@ -383,6 +392,7 @@ export default {
         this.result.push({name:'runGroupRes',content:e.content.output})
       },
       getRunSiginalRes(e){
+        this.runSig=true
         this.result.push({name:'runSiginalRes',content:e.content.output})
       },
       getStartDebugRes(e){
@@ -395,6 +405,12 @@ export default {
         this.$refs.ace[this.tabIndex-1].aceEditor.container.appendChild(this.$refs.dbhl[this.tabIndex-1])
       },
       getStepOverRes(e){
+        console.log(e.content.output.includes('Quit'))
+        if(e.content.output.includes('Quit')){
+          console.log(111)
+          this.common('quitDebug')
+          return
+          }
         this.result.push({name:'stepOverRes',content:`本行：${e.content.lineNum}`})
         this.variate=e.content.variate
         this.renderVariate=this.renderVar(this.variate)
@@ -407,6 +423,7 @@ export default {
         this.lineNum=e.content.lineNum
       },
       getQuitDebugRes(e){
+        this.renderVariate=[]
         this.debugFlag=false
         this.result.push({name:'quitDebugRes',content:"终止调试！"})
       },
@@ -430,7 +447,6 @@ export default {
             if(Array.isArray(item.value)){
               // console.log(item.value[1]);
                temp.children[2].label=`value: ${item.value[0]}`
-               console.log(item.value[0]);
                temp.children[2].children=this.renderVar(item.value[1])
             }else{
                temp.children[2].label=`value: ${item.value}`
@@ -442,8 +458,10 @@ export default {
       getInputRes(e){
       },
       createBP(){   //添加或者移除断点（用了lowB的DOM操作
-        if(event.target.tagName==="CANVAS")
-          event.target.parentNode.removeChild(event.target)
+        if(event.target.tagName==="CANVAS"){
+          this.bpRow=this.bpRow.replace(event.target.parentNode.innerText,'')  
+           event.target.parentNode.removeChild(event.target) 
+        }
         if(event.target.classList.contains("ace_gutter-cell")){
             this.bpRow+=`,${event.target.innerText}`    //获取行号
             let canvas=document.createElement("canvas")

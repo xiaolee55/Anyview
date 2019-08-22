@@ -1,5 +1,5 @@
 // 只能执行同步事件
-import * as socket from '@/api/websocket'
+// import * as socket from '@/api/websocket'
 export default {
     setIsLogin(state,isLogin){
         window.localStorage.setItem('isLogin', true);

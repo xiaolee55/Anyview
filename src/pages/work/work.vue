@@ -62,10 +62,10 @@
 import course from '../../components/courseCard.vue';
 export default {
     created () {
-        // if(location.href.indexOf('#reloaded')==-1){
-        //   location.href=location.href+"#reloaded";
-        //   location.reload();
-        // }
+        if(location.href.indexOf('#reloaded')==-1){
+          location.href=location.href+"#reloaded";
+          location.reload();
+        }
         this.$store.commit('sendQuestListReq')
         this.user=JSON.parse(window.localStorage.getItem('user'))
         this.$message({
