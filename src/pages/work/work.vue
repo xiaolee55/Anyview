@@ -33,8 +33,10 @@
             <h1 style="margin-top: 30px">继续题目：</h1>
             <div class="latest-course">
               <course 
-              courseName="数据结构"  
+              v-cloak
+              :courseName="this.$store.state.continue_tableName"
               cardType="上次做到" 
+              :totalNum="this.$store.state.totalNum"
               :questionId="40" 
               :questionCount="200" 
               @goTo='goTo'>
@@ -62,11 +64,11 @@
 import course from '../../components/courseCard.vue';
 export default {
     created () {
-        if(location.href.indexOf('#reloaded')==-1){
-          location.href=location.href+"#reloaded";
-          location.reload();
-        }
-        this.$store.commit('sendQuestListReq')
+        // if(location.href.indexOf('#reloaded')==-1){
+        //   location.href=location.href+"#reloaded";
+        //   location.reload();
+        // }
+        this.$store.dispatch('sendQuestionListReq')
         this.user=JSON.parse(window.localStorage.getItem('user'))
         this.$message({
           showClose: true,
@@ -93,6 +95,9 @@ export default {
 </script>
 
 <style>
+[v-cloak] {
+    display: none !important;
+}
   html{
       height: 100%;
   }

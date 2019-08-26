@@ -1,10 +1,17 @@
 <template>
   <div class="father">
         <div class="question-list" ref="questList">
-          <h3>{{questListName}}</h3>
+          <h3>{{this.$store.state.continue_tableName}}</h3>
           <el-collapse>
-            <el-collapse-item :title="`第${index+1}章`" v-for="(chap,index) in questions" :key="index" class="collapse-font">
-              <div v-for="(question,i) in chap" :key="i" class="question-name" @click="sendQuestContentReq(question.eid,question.name)">
+            <el-collapse-item 
+            :title="chap[0].chapName" 
+            v-for="(chap,index) in this.$store.state.questionList" 
+            :key="index" 
+            class="collapse-font">
+              <div 
+              v-for="(question,i) in chap" 
+              :key="i" class="question-name" 
+              @click="getQuestionContent(question.eid,question.name)">
                 <el-checkbox v-model="checked" style="margin-right: 3px"></el-checkbox>
                 <span>{{question.name}}</span>
               </div>
@@ -30,7 +37,7 @@
           <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" title="个人中心" @click='goTo'></i>
           <i class="iconfont icon-liebiao" style="cursor:pointer" @click="showQuestList"></i>
         </div>
-         <div class="question-desc" ><p>{{questDesc}}</p></div>
+         <div class="question-desc" ><p>{{this.$store.state.questionDesc}}</p></div>
          <div class="question-menu-bottom" ref="bottomMenu" :class="{'menu-color': isQuestListOpen}">
           <el-button type="primary" round style="margin-right:20px">上一题</el-button>
            <el-button type="primary" round style="margin-right:20px">下一题</el-button>
@@ -44,6 +51,7 @@
         :splitpanes-size="pan_2_1" 
         class="code-pane" 
         @tab-remove="removeTab"
+        @tab-click="clickTab"
         >
             <el-tab-pane
               v-for="item in editableTabs"
@@ -52,7 +60,7 @@
               :name="item.name"
             >
               <div class="debug-highlighted" ref="dbhl"></div>
-               <ace v-model="msg.questionContent.studentAnswer" ref="ace" @createBP="createBP">
+               <ace v-model="studentAnswer" ref="ace" @createBP="createBP">
                </ace>
               <div class="funMenu"  @mousedown="mouseEvent('down')" @mouseup="mouseEvent('up')">
                   <ul class="horizontal-list">
@@ -94,7 +102,7 @@ let ace_layer=document.querySelector(".ace_layer");
 export default {
     created () {
       this.user=JSON.parse(window.localStorage.getItem('user'))
-      this.sendQuestListReq()
+      this.$store.dispatch('sendQuestionListReq')
       this.initHeight = `${document.documentElement.clientHeight*0.15}px`  //初始化输出框的高度
     },
     mounted() {
@@ -145,22 +153,12 @@ export default {
           nextStep: 1,
           more: 1
         },
+        studentAnswer: '',
         editableTabsValue: '1',
         editableTabs: [],
         tabIndex: 0 ,
-        questListName: '',
         user: {},
-        questions: [],
         checked: true,
-        msg:{
-          questionFullName: '',
-          config: '',
-          questionContent: '',
-          questionHeaderFiles: ''
-        },
-        questDesc: '',
-        studentAnswer: '',
-        fileName: '',
         lineNum:1,
         result:[],
 
@@ -223,8 +221,9 @@ export default {
         })
       },
       beforeunloadFn (e) {    //刷新窗口时执行的函数
-        if(this.debugFlag)
+        if(this.runSig||this.debugFlag)
           this.common('quitDebug')
+        
       },
       modifyDiv(e){ 
         //这个地方通过修改vue中的data再绑定到style不行，会导致拉伸条不能动，只能通过ref的方式直接操作DOM，原因未知，猜测是拉伸库的源码做了限制
@@ -241,9 +240,10 @@ export default {
           case 'compile':
             if(this.debugFlag)
               this.common('quitDebug')
+            this.$store.commit('saveAnswer',this.studentAnswer)
             sendMsg={
               type: 10,
-              content: this.msg 
+              content: this.$store.state.presentQuestion.content
             }
             fun=this.getCompileRes
             break;
@@ -255,10 +255,11 @@ export default {
             }
             if(this.debugFlag)
               this.common('quitDebug')
+              console.log(this.$store.state.presentQuestion.content);
               sendMsg={
                 type: 161,
                 content: {
-                  questionFullName: this.msg.questionFullName
+                  questionFullName: this.$store.state.presentQuestion.content.questionFullName
                 }
               }
               fun=this.getRunGroupRes
@@ -269,12 +270,12 @@ export default {
               this.result.push({name:'runError',content:'请先编译！'})
               return
             }
-            if(this.debugFlag)
-              this.common('quitDebug')
+            // if(this.debugFlag)
+            //   this.common('quitDebug')
             sendMsg={
               type: 11,
               content:{
-                questionFullName: this.msg.questionFullName
+                questionFullName: this.$store.state.presentQuestion.content.questionFullName
               }
             }
             fun=this.getRunSiginalRes
@@ -286,22 +287,19 @@ export default {
               return
             }
             if(this.runSig){
-              console.log(2,this.runSig)
               this.common('quitDebug')
             }
             if(this.debugFlag)
              return
-             console.log(this.bpRow.substring(1))
             sendMsg={
               type: 1,
               content: {
                 bp: this.bpRow.substring(1),
-                questionFullName: this.msg.questionFullName
+                questionFullName: this.$store.state.presentQuestion.content.questionFullName
               } 
             }
             fun=this.getStartDebugRes
-            break;
-            
+            break;         
           case 'stepInto':
             if(!this.debugFlag)
              return
@@ -309,21 +307,20 @@ export default {
               type: 2,
               content: {
                 bp: this.bpRow.substring(1),
-                questionFullName: this.msg.questionFullName
+                questionFullName: this.$store.state.presentQuestion.content.questionFullName
               } 
             }
             fun=this.getStepIntoRes
             break;
 
           case 'stepOver':
-            console.log(this.bpRow.substring(1));
             if(!this.debugFlag)
              return
             sendMsg={
               type: 121,
               content: {
                 bp: this.bpRow.substring(1),
-                questionFullName: this.msg.questionFullName
+                questionFullName: this.$store.state.presentQuestion.content.questionFullName
               } 
             }
             fun=this.getStepOverRes
@@ -336,7 +333,7 @@ export default {
               type: 141,
               content: {
                 bp: this.bpRow.substring(1),
-                questionFullName: this.msg.questionFullName
+                questionFullName: this.$store.state.presentQuestion.content.questionFullName
               } 
             }
             fun=this.getQuitDebugRes
@@ -349,21 +346,11 @@ export default {
               type: 191,
               content: {
                 bp: this.bpRow.substring(1),
-                questionFullName: this.msg.questionFullName
+                questionFullName: this.$store.state.presentQuestion.content.questionFullName
               } 
             }
             fun=this.getContinueDebugRes
             break;
-
-            case 'input':
-              sendMsg={
-                type: 181,
-                content: {
-                  inputString:'3'
-                  }
-              }
-              fun=this.getInputRes
-              break;
           case 'repeatDebug':
             if(!this.debugFlag)
              return
@@ -392,6 +379,7 @@ export default {
         this.result.push({name:'runGroupRes',content:e.content.output})
       },
       getRunSiginalRes(e){
+        this.debugFlag=false;
         this.runSig=true
         this.result.push({name:'runSiginalRes',content:e.content.output})
       },
@@ -402,12 +390,10 @@ export default {
         this.variate=e.content.variate
         this.renderVariate=this.renderVar(this.variate)
         this.lineNum=e.content.lineNum
-        this.$refs.ace[this.tabIndex-1].aceEditor.container.appendChild(this.$refs.dbhl[this.tabIndex-1])
+        this.$refs.ace[this.editableTabsValue-1].aceEditor.container.appendChild(this.$refs.dbhl[this.editableTabsValue-1])
       },
       getStepOverRes(e){
-        console.log(e.content.output.includes('Quit'))
         if(e.content.output.includes('Quit')){
-          console.log(111)
           this.common('quitDebug')
           return
           }
@@ -433,10 +419,21 @@ export default {
         this.renderVariate=this.renderVar(this.variate)
         this.result.push({name:'continueDebugRes',content:`本行：${e.content.lineNum}`})
       },
+      getQuestionContent(id,name){
+        //若点击已经打开的题目，则不会再发送请求
+        let flag=true
+        this.$store.state.activeQuestion.forEach((item)=>{
+             if(item.name==name){
+                this.$store.commit('updatePresQues',item)
+                flag=false
+             }
+          })
+        if(flag)
+          this.$store.dispatch('sendQuestionContentReq',{id,name})
+      },
       renderVar(variate){   //格式化变量数据
         if(!Array.isArray(variate))
           variate=[variate]
-        // console.log(variate);
         let arr=[];
         for(let item of variate){
             let temp={}
@@ -445,7 +442,6 @@ export default {
             temp.children[0].label=`type: ${item.type}`
             temp.children[1].label=`name: ${item.name}`
             if(Array.isArray(item.value)){
-              // console.log(item.value[1]);
                temp.children[2].label=`value: ${item.value[0]}`
                temp.children[2].children=this.renderVar(item.value[1])
             }else{
@@ -454,8 +450,6 @@ export default {
            arr.push(temp)
         }
         return arr
-      },
-      getInputRes(e){
       },
       createBP(){   //添加或者移除断点（用了lowB的DOM操作
         if(event.target.tagName==="CANVAS"){
@@ -488,47 +482,6 @@ export default {
               case "更多": (flag==="down")?this.activeIcon.more=0.5:this.activeIcon.more=1;break;
             }
         }
-      },
-      getQuestList: function(e){   //拿到题目列表并进行格式化
-        this.questListName=e.content[0].tableName
-        //将获取到的一维数组格式化为二维数组，分章节，章节里面分题目
-        let that=this
-        that.questions=new Array()
-        let tempArr= new Array()
-        let temp=e.content[0].catalogs[0]
-        e.content[0].catalogs.forEach(function(item,index){           
-          item.name="第"+(index+1)+"题"
-          if(item.chapName==temp.chapName){
-            tempArr.push(item)
-          }
-          else{
-            that.questions.push(tempArr)
-            tempArr=new Array()
-            tempArr.push(item)
-          }
-          temp=item
-          // console.log(item.chapName.match(/\d+/g)[0]-1);
-          })
-          this.questions.push(tempArr)
-          // 默認打開的題目
-         this.sendQuestContentReq(this.questions[3][0].eid,this.questions[3][0].name)
-      },
-      sendQuestListReq: function() {  //发送题目列表请求
-        this.socket.sendSock({type: 3, content: this.user.id}, this.getQuestList)
-      },
-      getQuestContent(e){  //获取题目内容
-        this.msg.questionContent=e.content.questionContent
-        this.msg.questionHeaderFiles=e.content.questionHeaderFiles
-        this.msg.questionFullName=e.content.questionFullName
-        this.msg.config=e.content.config
-        this.fileName=e.content.questionContent.mainFileName
-        this.questDesc=e.content.questionContent.questionDescription
-        this.studentAnswer=e.content.questionContent.studentAnswer
-        this.$refs.ace[this.tabIndex-1].aceEditor.setValue(this.studentAnswer,1) /*将头文件写入编辑器中*/
-      },
-      sendQuestContentReq(questionId,questionName) {   //发送题目内容请求
-        this.socket.sendSock({type: 4, content: questionId}, this.getQuestContent)
-        this.addTab(questionName)
       },
       handleChange(val) {
       },
@@ -565,15 +518,24 @@ export default {
         }
       },
       removeTab(targetIndex) {    //关闭标签
-          let activeName=this.editableTabsValue;
-          let tabs=this.editableTabs;
-          if(tabs.length==1)
-            return;
-          if (activeName === targetIndex) {
+        let activeName=this.editableTabsValue;
+        let tabs=this.editableTabs;
+        let preQuestnName,delQuestionName;
+        if(tabs.length==1)
+          return;
+        if (activeName === targetIndex) {
             tabs.forEach((tab, index) => {
               if (tab.name === targetIndex) {
+                delQuestionName=tab.title
                 let nextTab = tabs[index + 1] || tabs[index - 1];
                 if (nextTab) {
+                  //更新当前题目
+                  preQuestnName=nextTab.title
+                  this.$store.state.activeQuestion.forEach((item)=>{
+                      if(item.name==preQuestnName){
+                          this.$store.commit('updatePresQues',item)
+                      }
+                    })
                   activeName = nextTab.name;
                 }
               }
@@ -582,8 +544,18 @@ export default {
         this.editableTabsValue = activeName;
         this.editableTabs = tabs.filter(tab => tab.name !== targetIndex);
         this.tabIndex--;
-       },    
-       fillScreen(){
+        //更新打开的题目列表
+        this.$store.commit('updatedActiveQues',this.$store.state.activeQuestion.filter(item=>item.name!=delQuestionName))
+       },  
+      clickTab(target){  //手动点击tab切换当前题目
+         if(this.$store.state.presentQuestion.name!=target.label){
+           this.editableTabsValue = target.name
+           this.$store.state.presentQuestion=this.$store.state.activeQuestion.filter((item)=>{
+               return item.name==target.label
+           })[0]
+         }
+       },
+      fillScreen(){
            if(this.isFillScreen){
               for(let i=0;i<this.horFunList.length;i++){  //更换图标
                   if(this.horFunList[i].name=='fillScreen'){
@@ -621,6 +593,7 @@ export default {
               })
             }
         }
+    
     },
     watch:{
         debugFlag(){    //监听调试是否开启并改变相应图标样式
@@ -658,9 +631,21 @@ export default {
               },0.8*i)
             }
           })
+        }, 
+        presentQuestion(){  //配合watch监听当前页面所在题目 
+          if(this.$store.state.presentQuestion.name)   
+            this.addTab(this.$store.state.presentQuestion.name)
+          setTimeout(()=>{
+              this.$refs.ace[this.editableTabsValue-1]
+              .aceEditor
+              .setValue(this.$store.state.presentQuestion.content.questionContent.studentAnswer,1)
+          },1000)
         }
       },
-      computed:{  //监听变量的改变并更新视图
+    computed:{  
+        presentQuestion(){    //配合watch监听当前页面所在题目
+          return this.$store.state.presentQuestion
+        }
       },
       components: {
         Splitpanes,
@@ -691,7 +676,7 @@ ul{
     width: 100%;
   }
 .splitpanes.default-theme .splitpanes__pane{
-    background-color: white;
+    background-color: white !important;
   }
   /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
 ::-webkit-scrollbar

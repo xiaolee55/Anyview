@@ -48,7 +48,7 @@ function sendSock(agentData,callback){
 }
  
 //数据接收
-function websocketonmessage(e){ 
+function websocketonmessage(e){
     global_callback(JSON.parse(e.data));
 }
  

@@ -4,11 +4,11 @@
         <h2>{{courseName}}</h2>
         <el-progress type="circle" :percentage="questionId/questionCount*100" :width="100"></el-progress>
         <div class="work-info">
-            <h3>8</h3>
+            <h3>{{totalNum}}</h3>
             <h3>{{questionId}}</h3>
         </div>
         <div class="work-text">
-            <span>章节</span>
+            <span>总章节</span>
             <span>{{cardType}}</span>
         </div>
     </div>
@@ -26,6 +26,10 @@ export default {
         questionCount: {
             type: Number,
             default: 200
+        },
+        totalNum: {
+            type: Number,
+            default: 0
         }
     },
     methods: {

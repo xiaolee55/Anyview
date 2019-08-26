@@ -4,5 +4,11 @@
 export default {
     isLogin: false,
     user: {},
-    questList: {}
-  }
+    schoolList: [],
+    questionList: [],
+    continue_tableName: '',
+    totalNum: 0,
+    questionDesc: '',
+    presentQuestion: {},
+    activeQuestion:[]
+}

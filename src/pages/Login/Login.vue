@@ -18,7 +18,7 @@
             </el-form-item>
             <el-form-item >
                 <el-select v-model="user.schoolId" placeholder="请选择您的学校">
-                  <el-option v-for="(school,index) in schoolList" :key="index" :value="school.id" :label="school.schoolName"></el-option>
+                  <el-option v-for="(school,index) in this.$store.state.schoolList" :key="index" :value="school.id" :label="school.schoolName"></el-option>
                 </el-select>
                 <el-checkbox v-model="user.switch">记住密码</el-checkbox>
             </el-form-item>
@@ -52,35 +52,15 @@ export default {
         password: '',
         schoolId: '',
         switch: true
-      },
-      schoolList: []
+      }    
     }
   },
   mounted () {
-      this.socket.sendSock({type: 6,content: '获取学校列表'},this.getSchool)
+      this.$store.dispatch('sendSchoolListReq')   //发送获取学校列表请求
     },
   methods: {
-      getSchool (e) {
-          this.schoolList = e.content 
-      },
-      getUserInfo (e) {
-          if(e.type==-12){  //账号不存在
-            this.error=false
-            this.errDesc='信息输入错误'
-            return
-          }
-          else{
-            //登录成功，触发vuex中的mutation
-            this.$store.commit('setIsLogin',true);
-            this.$store.commit('setUser',JSON.stringify(e.content))
-
-            this.$router.push({   // 路由跳转
-              name: 'work'
-          })
-        }
-      },
-      submit () {       
-        for(let item in this.user){   //检查输入信息是否为空
+      checkInfo(){  //检查输入信息是否为空
+        for(let item in this.user){  
           if(this.user[item]===''){
             switch(item){
               case 'username': this.errDesc='账号输入为空';break;
@@ -88,10 +68,26 @@ export default {
               case 'schoolId': this.errDesc='未选择学校';break;
             }
             this.error=false
-            return
+            return false
           }
         }
-        this.socket.sendSock({type: 0, content: this.user}, this.getUserInfo)
+        return true
+      },
+      submit () {
+        if(this.checkInfo())
+          this.$store.dispatch('sendLoginReq',this.user)   //发送登录请求
+          setTimeout(()=>{
+            if(!localStorage.getItem('isLogin')){  //账号不存在
+              this.error=false
+              this.errDesc='信息输入错误'
+              return
+            }
+            else{
+              this.$router.push({   // 路由跳转
+                name: 'work'
+            })
+          }
+          },500)
       }
 
   }

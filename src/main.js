@@ -16,9 +16,9 @@ Vue.use(ElementUI)
 Vue.config.productionTip = false
 
 // 页面刷新时，重新赋值有没登录
-if (window.localStorage.getItem('isLogin')) {
-  store.commit('setIsLogin', window.localStorage.getItem('isLogin'));
-}
+// if (window.localStorage.getItem('isLogin')) {
+//   store.commit('setIsLogin', window.localStorage.getItem('isLogin'));
+// }
 // 路由跳转验证，要写在实例创建之前才能防止直接修改URL可以跳转的问题
 // 注册一个全局守卫，作用是在路由跳转前，对路由进行判断，防止未登录的用户跳转到其他需要登录的页面去
 router.beforeEach((to, from, next) => {
@@ -29,7 +29,6 @@ router.beforeEach((to, from, next) => {
       next();
     }
     else{
-      console.log(111);
       next()
     }
   }
