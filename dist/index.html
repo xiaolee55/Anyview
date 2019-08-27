@@ -1,0 +1,29 @@
+<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>anyview-web</title><script src=static/ace-builds/src-noconflict/ace.js type=text/javascript charset=utf-8></script><script src=static/ace-builds/src-noconflict/ext-language_tools.js type=text/javascript charset=utf-8></script><script src=static/canvas.js defer=defer></script><style>#editor {
+    position: absolute;
+    width: 500px;
+    height: 400px;
+}</style><link href=/static/css/app.90b8464fff9c70fab8b167cd954a370f.css rel=stylesheet></head><body><div id=app></div><script>window.onload=function(){
+         // 嵌入ACE编辑器
+      let editor = ace.edit('edMain')
+      editor.setTheme('ace/theme/katzenmilch')
+      editor.setFontSize(16)
+      editor.getSession().setMode('ace/mode/c_cpp')
+      let languageTools = ace.require('ace/ext/language_tools')
+      editor.setOptions({
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+      })
+      languageTools.addCompleter({
+        getCompletions: function (editor, session, pos, prefix, callback) {
+          callback(null, [
+            {
+              name : 'include',
+              value : 'include',
+              meta: 'keywordControls',
+              score : 1000// 让test排在最上面
+            }
+          ])
+        }
+      })
+   }</script><script type=text/javascript src=/static/js/manifest.2ae2e69a05c33dfc65f8.js></script><script type=text/javascript src=/static/js/vendor.72f05c49a9ed46a789a0.js></script><script type=text/javascript src=/static/js/app.6e451db7029f86413d44.js></script></body></html>

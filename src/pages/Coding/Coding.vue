@@ -673,6 +673,7 @@ export default {
           this.$store.commit('updatedQuestDesc',this.$store.state.presentQuestion.content.questionContent.questionDescription)
           if(this.$store.state.presentQuestion.name)   
             this.addTab(this.$store.state.presentQuestion.name)
+            // console.log( this.$refs.ace[this.editableTabsValue-1]);
           setTimeout(()=>{
               this.$refs.ace[this.editableTabsValue-1]
               .aceEditor
