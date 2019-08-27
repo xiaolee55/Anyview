@@ -39,8 +39,8 @@
         </div>
          <div class="question-desc" ><p>{{this.$store.state.questionDesc}}</p></div>
          <div class="question-menu-bottom" ref="bottomMenu" :class="{'menu-color': isQuestListOpen}">
-          <el-button type="primary" round style="margin-right:20px">上一题</el-button>
-           <el-button type="primary" round style="margin-right:20px">下一题</el-button>
+          <el-button type="primary" round style="margin-right:20px" @click="lastQuestion">上一题</el-button>
+           <el-button type="primary" round style="margin-right:20px" @click="nextQuestion">下一题</el-button>
         </div>
       </div>
       <splitpanes horizontal :push-other-panes="true" :splitpanes-size="pan_2" watch-slots  @resize="modifyDiv" class="editor-pane">
@@ -114,6 +114,9 @@ export default {
     data () {
       return {
         aceModes:[],
+        aceTheme:'katzenmilch',
+        aceFont:'15px',
+        _thisMode: '',
         horFunList:[
           {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
           {name:'runGroup',class:'iconfont icon-chengzuyunxing',title:'运行'},
@@ -129,7 +132,6 @@ export default {
           {name:'stepInto',class:'iconfont icon-xiayibu banClick',title:'下一步(进入函数)'},
           {name:'repeatDebug',class:'iconfont icon-chongfujianli banClick',title:'重复调试'},
         ],
-        _thisMode: '',
         showSetMenu: false,
         successMsg:['编译成功','开启调试'],
         failMsg:['编译失败','停止调试'],
@@ -156,12 +158,11 @@ export default {
         studentAnswer: '',
         editableTabsValue: '1',
         editableTabs: [],
-        tabIndex: 0 ,
+        tabIndex: 0,
         user: {},
         checked: true,
         lineNum:1,
         result:[],
-
         variate:[],  //用于存放后端取到的变量数据
         renderVariate:[],  //格式化后的变量数据
         defaultProps: {
@@ -174,6 +175,10 @@ export default {
       }
     },
     methods: {
+      beforeunloadFn (e) {    //刷新窗口时执行的函数
+        if(this.runSig||this.debugFlag)
+          this.common('quitDebug') 
+      },
       goTo(){
         this.$router.push({
             name: 'personalCenter'
@@ -183,10 +188,16 @@ export default {
         this.showSetMenu=false 
       },
       setModes(e){
-        if(this._thisMode=='theme')
-          this.$refs.ace[this.tabIndex-1].aceEditor.setTheme(`ace/theme/${e.target.innerText}`)
-        else
-          this.$refs.ace[this.tabIndex-1].aceEditor.setFontSize(e.target.innerText)
+        if(this._thisMode=='theme'){
+          this.aceTheme=e.target.innerText
+          for(let i=0;i<this.$refs.ace.length;i++)
+            this.$refs.ace[i].aceEditor.setTheme(`ace/theme/${e.target.innerText}`)
+        }
+        else{
+          this.aceFont=e.target.innerText
+          for(let i=0;i<this.$refs.ace.length;i++) 
+           this.$refs.ace[i].aceEditor.setFontSize(e.target.innerText)
+        }
       },
       setEditor(command){
          switch(command){
@@ -220,11 +231,6 @@ export default {
           this.$refs.setMenu.style.left=this.$refs.elDropdown.$el.offsetLeft+this.$refs.elDropdown.$el.offsetWidth+'px'
         })
       },
-      beforeunloadFn (e) {    //刷新窗口时执行的函数
-        if(this.runSig||this.debugFlag)
-          this.common('quitDebug')
-        
-      },
       modifyDiv(e){ 
         //这个地方通过修改vue中的data再绑定到style不行，会导致拉伸条不能动，只能通过ref的方式直接操作DOM，原因未知，猜测是拉伸库的源码做了限制
         this.$refs.resShow.style.height=e[1].width*document.documentElement.clientHeight/100+'px'
@@ -233,6 +239,200 @@ export default {
         this.$refs.topMenu.style.top=event.target.scrollTop+'px';
         this.$refs.bottomMenu.style.bottom=-event.target.scrollTop+'px';
       },
+      renderVar(variate){   //格式化变量数据
+        if(!Array.isArray(variate))
+          variate=[variate]
+        let arr=[];
+        for(let item of variate){
+            let temp={}
+            temp.label=item.name
+            temp.children=new Array({},{},{})
+            temp.children[0].label=`type: ${item.type}`
+            temp.children[1].label=`name: ${item.name}`
+            if(Array.isArray(item.value)){
+               temp.children[2].label=`value: ${item.value[0]}`
+               temp.children[2].children=this.renderVar(item.value[1])
+            }else{
+               temp.children[2].label=`value: ${item.value}`
+            }
+           arr.push(temp)
+        }
+        return arr
+      },
+      createBP(){   //添加或者移除断点（用了lowB的DOM操作
+        if(event.target.tagName==="CANVAS"){
+          this.bpRow=this.bpRow.replace(event.target.parentNode.innerText,'')  
+           event.target.parentNode.removeChild(event.target) 
+        }
+        if(event.target.classList.contains("ace_gutter-cell")){
+            this.bpRow+=`,${event.target.innerText}`    //获取行号
+            let canvas=document.createElement("canvas")
+            // canvas.id='cv'+(this.bpRow+1)
+            canvas.width=49
+            canvas.height=this.$refs.ace[0].lineHeight    //获取当前显示器下编辑器的行高
+            event.target.appendChild(canvas);
+            let bp=canvas.getContext("2d");
+            bp.fillStyle="#FF0000";
+            bp.beginPath();
+            bp.arc(25,8,5,0,Math.PI*2,true);
+            bp.closePath();
+            bp.fill();
+            // bp.clearRect(0,0,canvas.width,canvas.height);
+        }
+      },
+      mouseEvent(flag){   //设置图标被点击时的样式改变
+        if(event.srcElement.tagName==="I"){
+            switch(event.srcElement.title){
+              case "编译": (flag==="down")?this.activeIcon.compile=0.5:this.activeIcon.compile=1;break;
+              case "运行": (flag==="down")?this.activeIcon.run=0.5:this.activeIcon.run=1;break;
+              case "调试": (flag==="down")?this.activeIcon.debug=0.5:this.activeIcon.debug=1;break;
+              case "下一步": (flag==="down")?this.activeIcon.nextStep=0.5:this.activeIcon.nextStep=1;break;
+              case "更多": (flag==="down")?this.activeIcon.more=0.5:this.activeIcon.more=1;break;
+            }
+        }
+      },
+      showQuestList(){   //显示题目列表
+          this.isQuestListOpen=true;
+          this.$refs.questList.style.left='0'
+      },
+      hideQuestList(){    //隐藏题目列表
+          this.isQuestListOpen=false;
+          this.$refs.questList.style.left='-20%'
+      },
+      addTab(targetName) {      //增加标签
+        let flag = this.editableTabs.every((item)=>{  //是否点击了重复标签
+          if(item.title===targetName)
+            return false
+          else
+            return true
+        })
+        if(flag){         
+          let newTabName = ++this.tabIndex + '';
+          let newTab = { 
+            title: targetName,
+            name: newTabName,
+          }
+          this.editableTabsValue = newTabName;
+          this.editableTabs.push(newTab);
+          setTimeout(()=>{
+            this.$refs.ace[this.editableTabsValue-1].aceEditor.setTheme(`ace/theme/${this.aceTheme}`) 
+            this.$refs.ace[this.editableTabsValue-1].aceEditor.setFontSize(`ace/theme/${this.aceFont}`)   
+          })
+        }else{
+            for(let i=0;i<this.editableTabs.length;i++){
+              if(this.editableTabs[i].title==targetName){
+                  this.editableTabsValue = this.editableTabs[i].name
+                  break
+              }
+          }
+        }
+      },
+      removeTab(targetIndex) {    //关闭标签
+        let activeIndex=this.editableTabsValue;
+        let tabs=this.editableTabs;
+        let preQuestnName=this.$store.state.presentQuestion.name
+        let delQuestionName
+        if(tabs.length==1)
+          return;
+        if (activeIndex === targetIndex) {  //关闭的标签是否为当前打开的题目
+            tabs.forEach((tab, index) => {
+              if (tab.name === targetIndex) {
+                delQuestionName=tab.title
+                let nextTab = tabs[index + 1] || tabs[index - 1];
+                if (nextTab) {
+                  //更新当前题目
+                  preQuestnName=nextTab.title
+                  this.$store.state.activeQuestion.forEach((item)=>{
+                      if(item.name==preQuestnName){
+                          this.$store.commit('updatePresQues',item)
+                      }
+                    })
+                }
+              }
+            });
+        }
+        //更新标签数组，保证序号连接，更新当前标签的序号，更新标签长度
+        let filtTabs = tabs.filter(tab => tab.name !== targetIndex);
+        this.editableTabs= filtTabs.map((tab,index)=>{ return {name:index+1+'',title:tab.title}})
+        this.editableTabsValue= this.editableTabs.find(item=>item.title==preQuestnName).name
+        this.tabIndex--;
+        //更新打开的题目列表
+        this.$store.commit('updatedActiveQues',this.$store.state.activeQuestion.filter(item=>item.name!=delQuestionName))
+       },  
+      clickTab(target){  //手动点击tab切换当前题目
+         if(this.$store.state.presentQuestion.name!=target.label){
+           this.editableTabsValue = target.name
+           this.$store.commit('updatePresQues',this.$store.state.activeQuestion.find(item=>item.name==target.label))
+         }
+       },
+      lastQuestion(){
+        let state=this.$store.state
+        if(state.presentQuestion.name=='第1题'||this.$store.state.activeQuestion.length==1)
+          return
+        let questionName=`第${state.presentQuestion.name.replace(/[^0-9]/ig,"")-1}题`;
+        let presQuestion=state.activeQuestion.filter(item=>{
+          return item.name==questionName
+        })[0]
+        let reqQuestion=state.questionList.flat().filter(item=>{    //数组扁平化之后再进行过滤
+          return item.name==questionName
+        })[0]
+        presQuestion
+        ?this.$store.commit('updatePresQues',presQuestion)
+        :this.$store.dispatch('sendQuestionContentReq',{id:reqQuestion.eid,name:questionName})
+      },
+      nextQuestion(){
+        let state=this.$store.state
+        if(state.presentQuestion.name==`第${state.questionList.flat().length}题`)
+          return
+        let questionName=`第${Number(state.presentQuestion.name.replace(/[^0-9]/ig,""))+1}题`;
+        let presQuestion=state.activeQuestion.filter(item=>{
+          return item.name==questionName
+        })[0]
+        let reqQuestion=state.questionList.flat().filter(item=>{    //数组扁平化之后再进行过滤
+          return item.name==questionName
+        })[0]
+        presQuestion
+        ?this.$store.commit('updatePresQues',presQuestion)
+        :this.$store.dispatch('sendQuestionContentReq',{id:reqQuestion.eid,name:questionName})
+      },
+      fillScreen(){
+           if(this.isFillScreen){
+              for(let i=0;i<this.horFunList.length;i++){  //更换图标
+                  if(this.horFunList[i].name=='fillScreen'){
+                    this.horFunList[i].class=this.horFunList[i].class.replace('icon-fangda','icon-suoxiao')
+                    break;
+                  }
+              }
+              this.$nextTick(()=>{
+                this.$el.querySelector('.code-pane').scrollTop=this.$el.querySelector('.code-pane').scrollHeight
+                this.$el.querySelector('.code-pane').parentNode.style.height=100+'%'
+                this.$el.querySelector('.show-pane').parentNode.style.height=0+'%'
+                this.$el.querySelector('.question-content').parentNode.style.width=0+'%'
+                this.$el.querySelector('.editor-pane').parentNode.style.width=100+'%'
+                this.$el.querySelector('.debug-pane').parentNode.style.width=0+'%'
+                this.$el.querySelector('.visual-pane').parentNode.style.width=0+'%'
+
+              })
+            }
+            else{
+              for(let i=0;i<this.horFunList.length;i++){
+                  if(this.horFunList[i].name=='fillScreen'){
+                    this.horFunList[i].class=this.horFunList[i].class.replace('icon-suoxiao','icon-fangda')
+                    break;
+                  }
+              }
+              this.$nextTick(()=>{
+                this.$el.querySelector('.code-pane').scrollTop=0
+                this.$el.querySelector('.code-pane').parentNode.style.height=85+'%'
+                this.$el.querySelector('.show-pane').parentNode.style.height=15+'%'
+                this.$el.querySelector('.question-content').parentNode.style.width=20+'%'
+                this.$el.querySelector('.editor-pane').parentNode.style.width=60+'%'
+                this.$el.querySelector('.debug-pane').parentNode.style.width=20+'%'
+                this.$el.querySelector('.visual-pane').parentNode.style.width=0+'%'
+
+              })
+            }
+        },
       common(flag){  //编辑器所有按钮的总入口
         let sendMsg=''
         let fun=''
@@ -255,7 +455,6 @@ export default {
             }
             if(this.debugFlag)
               this.common('quitDebug')
-              console.log(this.$store.state.presentQuestion.content);
               sendMsg={
                 type: 161,
                 content: {
@@ -431,176 +630,14 @@ export default {
         if(flag)
           this.$store.dispatch('sendQuestionContentReq',{id,name})
       },
-      renderVar(variate){   //格式化变量数据
-        if(!Array.isArray(variate))
-          variate=[variate]
-        let arr=[];
-        for(let item of variate){
-            let temp={}
-            temp.label=item.name
-            temp.children=new Array({},{},{})
-            temp.children[0].label=`type: ${item.type}`
-            temp.children[1].label=`name: ${item.name}`
-            if(Array.isArray(item.value)){
-               temp.children[2].label=`value: ${item.value[0]}`
-               temp.children[2].children=this.renderVar(item.value[1])
-            }else{
-               temp.children[2].label=`value: ${item.value}`
-            }
-           arr.push(temp)
-        }
-        return arr
-      },
-      createBP(){   //添加或者移除断点（用了lowB的DOM操作
-        if(event.target.tagName==="CANVAS"){
-          this.bpRow=this.bpRow.replace(event.target.parentNode.innerText,'')  
-           event.target.parentNode.removeChild(event.target) 
-        }
-        if(event.target.classList.contains("ace_gutter-cell")){
-            this.bpRow+=`,${event.target.innerText}`    //获取行号
-            let canvas=document.createElement("canvas")
-            // canvas.id='cv'+(this.bpRow+1)
-            canvas.width=49
-            canvas.height=this.$refs.ace[0].lineHeight    //获取当前显示器下编辑器的行高
-            event.target.appendChild(canvas);
-            let bp=canvas.getContext("2d");
-            bp.fillStyle="#FF0000";
-            bp.beginPath();
-            bp.arc(25,8,5,0,Math.PI*2,true);
-            bp.closePath();
-            bp.fill();
-            // bp.clearRect(0,0,canvas.width,canvas.height);
-        }
-      },
-      mouseEvent(flag){   //设置图标被点击时的样式改变
-        if(event.srcElement.tagName==="I"){
-            switch(event.srcElement.title){
-              case "编译": (flag==="down")?this.activeIcon.compile=0.5:this.activeIcon.compile=1;break;
-              case "运行": (flag==="down")?this.activeIcon.run=0.5:this.activeIcon.run=1;break;
-              case "调试": (flag==="down")?this.activeIcon.debug=0.5:this.activeIcon.debug=1;break;
-              case "下一步": (flag==="down")?this.activeIcon.nextStep=0.5:this.activeIcon.nextStep=1;break;
-              case "更多": (flag==="down")?this.activeIcon.more=0.5:this.activeIcon.more=1;break;
-            }
-        }
-      },
-      handleChange(val) {
-      },
-      showQuestList(){
-          this.isQuestListOpen=true;
-          this.$refs.questList.style.left='0'
-      },
-      hideQuestList(){
-          this.isQuestListOpen=false;
-          this.$refs.questList.style.left='-20%'
-      },
-      addTab(targetName) {      //增加标签
-        let flag = this.editableTabs.every((item)=>{  //是否点击了重复标签
-          if(item.title===targetName)
-            return false
-          else
-            return true
-        })
-        if(flag){         
-          let newTabName = ++this.tabIndex + '';
-          let newTab = { 
-            title: targetName,
-            name: newTabName,
-          }
-          this.editableTabsValue = newTabName;
-          this.editableTabs.push(newTab);         
-        }else{
-            for(let i=0;i<this.editableTabs.length;i++){
-              if(this.editableTabs[i].title==targetName){
-                  this.editableTabsValue = this.editableTabs[i].name
-                  break
-              }
-          }
-        }
-      },
-      removeTab(targetIndex) {    //关闭标签
-        let activeName=this.editableTabsValue;
-        let tabs=this.editableTabs;
-        let preQuestnName,delQuestionName;
-        if(tabs.length==1)
-          return;
-        if (activeName === targetIndex) {
-            tabs.forEach((tab, index) => {
-              if (tab.name === targetIndex) {
-                delQuestionName=tab.title
-                let nextTab = tabs[index + 1] || tabs[index - 1];
-                if (nextTab) {
-                  //更新当前题目
-                  preQuestnName=nextTab.title
-                  this.$store.state.activeQuestion.forEach((item)=>{
-                      if(item.name==preQuestnName){
-                          this.$store.commit('updatePresQues',item)
-                      }
-                    })
-                  activeName = nextTab.name;
-                }
-              }
-            });
-        }
-        this.editableTabsValue = activeName;
-        this.editableTabs = tabs.filter(tab => tab.name !== targetIndex);
-        this.tabIndex--;
-        //更新打开的题目列表
-        this.$store.commit('updatedActiveQues',this.$store.state.activeQuestion.filter(item=>item.name!=delQuestionName))
-       },  
-      clickTab(target){  //手动点击tab切换当前题目
-         if(this.$store.state.presentQuestion.name!=target.label){
-           this.editableTabsValue = target.name
-           this.$store.state.presentQuestion=this.$store.state.activeQuestion.filter((item)=>{
-               return item.name==target.label
-           })[0]
-         }
-       },
-      fillScreen(){
-           if(this.isFillScreen){
-              for(let i=0;i<this.horFunList.length;i++){  //更换图标
-                  if(this.horFunList[i].name=='fillScreen'){
-                    this.horFunList[i].class=this.horFunList[i].class.replace('icon-fangda','icon-suoxiao')
-                    break;
-                  }
-              }
-              this.$nextTick(()=>{
-                this.$el.querySelector('.code-pane').scrollTop=this.$el.querySelector('.code-pane').scrollHeight
-                this.$el.querySelector('.code-pane').parentNode.style.height=100+'%'
-                this.$el.querySelector('.show-pane').parentNode.style.height=0+'%'
-                this.$el.querySelector('.question-content').parentNode.style.width=0+'%'
-                this.$el.querySelector('.editor-pane').parentNode.style.width=100+'%'
-                this.$el.querySelector('.debug-pane').parentNode.style.width=0+'%'
-                this.$el.querySelector('.visual-pane').parentNode.style.width=0+'%'
-
-              })
-            }
-            else{
-              for(let i=0;i<this.horFunList.length;i++){
-                  if(this.horFunList[i].name=='fillScreen'){
-                    this.horFunList[i].class=this.horFunList[i].class.replace('icon-suoxiao','icon-fangda')
-                    break;
-                  }
-              }
-              this.$nextTick(()=>{
-                this.$el.querySelector('.code-pane').scrollTop=0
-                this.$el.querySelector('.code-pane').parentNode.style.height=85+'%'
-                this.$el.querySelector('.show-pane').parentNode.style.height=15+'%'
-                this.$el.querySelector('.question-content').parentNode.style.width=20+'%'
-                this.$el.querySelector('.editor-pane').parentNode.style.width=60+'%'
-                this.$el.querySelector('.debug-pane').parentNode.style.width=10+'%'
-                this.$el.querySelector('.visual-pane').parentNode.style.width=10+'%'
-
-              })
-            }
-        }
     
     },
     watch:{
         debugFlag(){    //监听调试是否开启并改变相应图标样式
           if(this.debugFlag){
             //显示高亮条并将其作为编辑器的子元素，否则会相对编辑器的容器定位，代码滚动时会出错
-            this.$refs.dbhl[this.tabIndex-1].style.display='block'
-            this.$refs.dbhl[this.tabIndex-1].style.height=this.$refs.ace[this.tabIndex-1].aceEditor.renderer.lineHeight+'px'
+            this.$refs.dbhl[this.editableTabsValue-1].style.display='block'
+            this.$refs.dbhl[this.editableTabsValue-1].style.height=this.$refs.ace[this.editableTabsValue-1].aceEditor.renderer.lineHeight+'px'
             for (let i = 0; i < this.verFunList.length; i++) {
                 if(this.verFunList[i].class.includes('banClick')){
                   this.verFunList[i].class=this.verFunList[i].class.replace('banClick','')
@@ -609,7 +646,7 @@ export default {
             }
           }
           else{
-            this.$refs.dbhl[this.tabIndex-1].style.display='none'
+            this.$refs.dbhl[this.editableTabsValue-1].style.display='none'
             for (let i = 0; i < this.verFunList.length; i++) {
                 if(!this.verFunList[i].class.includes('banClick')){
                   this.verFunList[i].class+=' banClick'
@@ -618,7 +655,7 @@ export default {
           }
          },
         lineNum(){  //移动调试高亮光标
-          this.$refs.dbhl[this.tabIndex-1].style.top=`${this.$refs.ace[0].lineHeight*(this.lineNum-1)}px`
+          this.$refs.dbhl[this.editableTabsValue-1].style.top=`${this.$refs.ace[this.editableTabsValue-1].lineHeight*(this.lineNum-1)}px`
         },
         result() {
           this.$nextTick(() => {
@@ -633,13 +670,14 @@ export default {
           })
         }, 
         presentQuestion(){  //配合watch监听当前页面所在题目 
+          this.$store.commit('updatedQuestDesc',this.$store.state.presentQuestion.content.questionContent.questionDescription)
           if(this.$store.state.presentQuestion.name)   
             this.addTab(this.$store.state.presentQuestion.name)
           setTimeout(()=>{
               this.$refs.ace[this.editableTabsValue-1]
               .aceEditor
               .setValue(this.$store.state.presentQuestion.content.questionContent.studentAnswer,1)
-          },1000)
+          })
         }
       },
     computed:{  
