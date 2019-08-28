@@ -30,7 +30,7 @@
           </el-collapse>    
           <div class="close-btn"><el-button @click="hideQuestList" >关闭</el-button></div>
         </div>
-    <splitpanes class="default-theme"  :push-other-panes="true" watch-slots>
+    <splitpanes  :push-other-panes="true" watch-slots>
       <div :splitpanes-size="pan_1" class="question-content" :class="{'questContent-color': isQuestListOpen}" @scroll="fixButton">
         <div class="question-menu-top" ref="topMenu" :class="{'menu-color': isQuestListOpen}">
             <el-dropdown trigger="click"  @command="setEditor" :hide-on-click="false" @visible-change='hidSetMenu'>
@@ -88,6 +88,9 @@
             </el-tab-pane>
         </el-tabs> 
         <div :splitpanes-size="pan_2_2" class='show-pane'>
+            <div class="result-menu">
+                <i class="iconfont icon-qingkong" title="清屏" @click='clearResult'></i>
+            </div>
             <div class="showResult" ref="resShow" :style="{height: initHeight}">
               <p  :class="{success:item.content.includes('成功'),fail:item.content.includes('失败')}" 
                    v-for="(item,index) in result" 
@@ -152,8 +155,8 @@ export default {
         successMsg:['编译成功','开启调试'],
         failMsg:['编译失败','停止调试'],
         pan_1: 20,
-        pan_2: 60,
-        pan_3:20,
+        pan_2: 70,
+        pan_3:10,
         pan_4: 0,
         pan_2_1: 85,
         pan_2_2: 15,
@@ -449,6 +452,9 @@ export default {
               })
             }
         },
+      clearResult(){
+        this.result=[]
+      },
       common(flag){  //编辑器所有按钮的总入口
         let sendMsg=''
         let fun=''
@@ -587,6 +593,8 @@ export default {
       },
       getCompileRes(e){
         console.log(e);
+        this.pan_2_2=50
+        this.pan_2_1=50
         if(e.content.includes('成功'))
          this.compileFlag=true
          this.result.push({name:'compileRes',content:e.content+'!'})
@@ -594,6 +602,7 @@ export default {
       getRunGroupRes(e){
         console.log(e);
         this.result.push({name:'runGroupRes',content:e.content.output})
+        this.result.push({name:'num',content:`正确次数: ${e.content.right_num}&nbsp;&nbsp;错误次数: ${e.content.error_num}`})
       },
       getRunSiginalRes(e){
         this.debugFlag=false;
@@ -721,7 +730,7 @@ html{
 }
 body{
     height: 100%;
-    font: 500 16px/25px "Microsoft yahei";
+    font: 500 16px/20px "Microsoft yahei";
     margin: 0;
     padding: 0;
 }
@@ -734,9 +743,53 @@ ul{
     height: 100%;
     width: 100%;
   }
-.splitpanes.default-theme .splitpanes__pane{
-    background-color: white !important;
-  }
+.splitpanes,.splitpanes__pane {
+  background: white;
+}
+
+.splitpanes--vertical > .splitpanes__splitter {
+  position: relative;
+  min-width: 9px;
+  background-color: #fff;
+}
+.splitpanes--horizontal > .splitpanes__splitter {
+  position: relative;
+  min-height: 9px;
+  background-color: #fff;
+}
+.splitpanes--vertical > .splitpanes__splitter::before {
+  margin-left: -2px;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 30px;
+}
+.splitpanes--vertical > .splitpanes__splitter::after {
+  margin-left: 1px;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 30px; 
+}
+.splitpanes--horizontal > .splitpanes__splitter::before {
+  margin-top: -2px;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 1px;
+}
+.splitpanes--horizontal > .splitpanes__splitter::after {
+  margin-top: 1px;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 1px;
+}
+.splitpanes__splitter::after,.splitpanes__splitter::before{
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background-color: rgba(0,0,0,.15);
+  -webkit-transition: background-color .3s;
+  transition: background-color .3s;
+}
   /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
 ::-webkit-scrollbar
 {
@@ -921,10 +974,22 @@ canvas{
 .vertical-list i{
   margin: 0;
 }
+.show-pane{
+  position: relative;
+}
 .showResult{
-  padding: 0px 10px;
+  /* padding: 0px 10px; */
   margin: 0px;
   overflow-y: scroll;
+}
+.result-menu{
+  position: absolute;
+  margin: 0px 20px;
+  top: 0;
+  right: 0;
+  display: flex; 
+  justify-content: flex-end;
+  line-height: 16px;
 }
 .fail{
   background-color: #f2dede;

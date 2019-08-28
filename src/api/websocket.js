@@ -9,8 +9,8 @@ function getWebIP(){
 }
  
 function initWebSocket(){ //初始化weosocket
-    //ws地址101.132.120.137
-    var wsuri = 'ws://localhost:8889/anyview';
+    //ws地址101.132.120.137   2019081105
+    var wsuri = 'ws://101.132.120.137:8889/anyview';
     websock = new WebSocket(wsuri);
     websock.onmessage = function(e){
     	websocketonmessage(e);

@@ -97,7 +97,16 @@ let draw = function () {
 }
  
 let init = function (num) {
-    console.log(canvas);
+    window.onmousemove = function (e) {
+        e = e || window.event;
+        current_circle.x = e.clientX;
+        current_circle.y = e.clientY;
+    }
+    window.onmouseout = function () {
+        current_circle.x = null;
+        current_circle.y = null;
+     
+    };
      canvas = document.getElementById('canvas');
      ctx = canvas.getContext('2d');
      w = canvas.width = canvas.offsetWidth;
@@ -109,14 +118,4 @@ let init = function (num) {
     }
     draw();
 }
-window.onmousemove = function (e) {
-    e = e || window.event;
-    current_circle.x = e.clientX;
-    current_circle.y = e.clientY;
-}
-window.onmouseout = function () {
-    current_circle.x = null;
-    current_circle.y = null;
- 
-};
 export default init
