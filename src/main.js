@@ -23,7 +23,7 @@ Vue.config.productionTip = false
 // 注册一个全局守卫，作用是在路由跳转前，对路由进行判断，防止未登录的用户跳转到其他需要登录的页面去
 router.beforeEach((to, from, next) => {
   if(to.matched.some(r=>r.meta.requiresAuth)){
-    if(store.state.isLogin){
+    if(localStorage.getItem('isLogin')){
       if(to.path=='/Login')
         next('/work'); 
       next();

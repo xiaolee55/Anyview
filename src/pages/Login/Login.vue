@@ -2,7 +2,7 @@
     <div>
        <canvas id="canvas"></canvas>
         <el-form ref="form"  label-width="80px">
-            <h1 style="color: #409eff">Anyview</h1>
+            <h1 style="color: #409eff;text-align: center">Anyview</h1>
             <el-form-item class="role">
                 <el-radio-group v-model="user.roleId">
                   <el-radio-button label="1">管理员</el-radio-button>
@@ -41,6 +41,7 @@
 </template>
 
 <script>
+ import canvas from '../../../static/canvas.js';
 export default {
   data () {
     return {
@@ -56,6 +57,7 @@ export default {
     }
   },
   mounted () {
+      canvas(60)   //执行canvas动画
       this.$store.dispatch('sendSchoolListReq')   //发送获取学校列表请求
     },
   methods: {
@@ -98,11 +100,8 @@ export default {
 html{
     height: 100%;
     }
-        body{margin: 0;height: 100%;
-            background: #fff;overflow: hidden;}
-            h1{
-              text-align: center;
-            }
+        body{margin: 0;height: 100%;    /*会影响全局样式*/
+            background: #fff}
             #canvas{display: block;width: 100%;height: 100%;}
             form{
                 position: absolute;

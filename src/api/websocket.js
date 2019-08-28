@@ -9,7 +9,7 @@ function getWebIP(){
 }
  
 function initWebSocket(){ //初始化weosocket
-    //ws地址120.24.163.117
+    //ws地址101.132.120.137
     var wsuri = 'ws://localhost:8889/anyview';
     websock = new WebSocket(wsuri);
     websock.onmessage = function(e){

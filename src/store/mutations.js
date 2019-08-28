@@ -42,6 +42,7 @@ export default {
          this.dispatch('sendQuestionContentReq',{id: state.questionList[0][0].eid, name: state.questionList[0][0].name})
     },
     getQuestionContentRes(state,e){
+        console.log(e);
         this.commit('updatedQuestDesc',e.content.questionContent.questionDescription)
         //这里直接修改presentQuestion的话watch无法监听到，只能通过commit修改
         this.commit('updatePresQues',{name:state.presentQuestion.name,content:e.content})

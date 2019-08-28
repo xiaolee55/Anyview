@@ -42,7 +42,7 @@
               @goTo='goTo'>
               </course>
             </div>
-            <h1>所有课程：</h1>
+            <h1>其他课程：</h1>
             <div class="all-course">
               <course courseName="C语言程序设计"  cardType="题目总数" @goTo='goTo'></course>
               <course courseName="Java语言程序设计"  cardType="题目总数" ></course>
@@ -62,12 +62,9 @@
 </template>
 <script>
 import course from '../../components/courseCard.vue';
+ import canvas from '../../../static/canvas.js';
 export default {
     created () {
-        // if(location.href.indexOf('#reloaded')==-1){
-        //   location.href=location.href+"#reloaded";
-        //   location.reload();
-        // }
         this.$store.dispatch('sendQuestionListReq')
         this.user=JSON.parse(window.localStorage.getItem('user'))
         this.$message({
@@ -75,6 +72,9 @@ export default {
           message: '欢迎您,'+this.user.name,
           type: 'success'
         });
+    },
+    mounted () {
+       canvas(60)   //执行canvas动画
     },
     data () {
       return {
@@ -103,7 +103,6 @@ export default {
   }
   body{
     margin: 0;
-    height: 100%;
     background-color: #fff;
   }
   .w{

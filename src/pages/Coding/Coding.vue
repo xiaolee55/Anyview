@@ -10,10 +10,21 @@
             class="collapse-font">
               <div 
               v-for="(question,i) in chap" 
-              :key="i" class="question-name" 
+              :key="i" 
+              class="question-name" 
               @click="getQuestionContent(question.eid,question.name)">
-                <el-checkbox v-model="checked" style="margin-right: 3px"></el-checkbox>
-                <span>{{question.name}}</span>
+                <span>
+                <i class='iconfont icon-weitongguo' v-if="questType === 1"></i>
+                <i class='iconfont icon-yitongguo' v-else-if="questType === 2"></i>
+                <i class='iconfont icon-weikaishi' v-else></i>
+                  {{question.name}}
+                </span>
+                <span class="quest-situation">
+                  <i class='iconfont icon-bianyi' title="编译成功次数">{{comSuccNum}}</i>
+                  <i class='iconfont icon-bianyishibai' title="编译失败次数">{{comFailNum}}</i>
+                  <i class='iconfont icon-chengzuyunxing' title="运行成功次数">{{runSuccNum}}</i>
+                  <i class='iconfont icon-yunxingshibai' title="运行失败次数">{{runFailNum}}</i>
+                </span>
               </div>
             </el-collapse-item>
           </el-collapse>    
@@ -133,6 +144,11 @@ export default {
           {name:'repeatDebug',class:'iconfont icon-chongfujianli banClick',title:'重复调试'},
         ],
         showSetMenu: false,
+        questType: 0,
+        comSuccNum: 0,
+        comFailNum: 0,
+        runSuccNum: 0,
+        runFailNum: 0,
         successMsg:['编译成功','开启调试'],
         failMsg:['编译失败','停止调试'],
         pan_1: 20,
@@ -570,11 +586,13 @@ export default {
          this.socket.sendSock(sendMsg,fun)
       },
       getCompileRes(e){
+        console.log(e);
         if(e.content.includes('成功'))
          this.compileFlag=true
          this.result.push({name:'compileRes',content:e.content+'!'})
       },
       getRunGroupRes(e){
+        console.log(e);
         this.result.push({name:'runGroupRes',content:e.content.output})
       },
       getRunSiginalRes(e){
@@ -583,6 +601,7 @@ export default {
         this.result.push({name:'runSiginalRes',content:e.content.output})
       },
       getStartDebugRes(e){
+        console.log(e.content.lineNum);
         if(e.content.error=="")
           this.debugFlag=true
         this.result.push({name:'startDebugRes',content:`开启调试 ：${e.content.output}`})
@@ -592,6 +611,7 @@ export default {
         this.$refs.ace[this.editableTabsValue-1].aceEditor.container.appendChild(this.$refs.dbhl[this.editableTabsValue-1])
       },
       getStepOverRes(e){
+        console.log(e);
         if(e.content.output.includes('Quit')){
           this.common('quitDebug')
           return
@@ -810,8 +830,16 @@ ul{
      z-index: 999;
 }
 .question-name{
+  font-size: 14px;
   padding: 5px 5px; 
   cursor: pointer;
+}
+.question-name span{
+  display: block;
+}
+.quest-situation i{
+  padding: 1px;
+  font-size: 12px;
 }
 .question-name:hover{
     background-color: #f5f7fa;
@@ -863,6 +891,9 @@ canvas{
   height: 25px;
   top: 0;
   right: 0;
+}
+.funMenu i{
+  margin-left: 20px;
 }
 .horizontal-list{
   position: relative;  /*设置层级需定位 */

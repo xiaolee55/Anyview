@@ -11,6 +11,7 @@ import PersonalCenter from '../pages/PersonalCenter/PersonalCenter.vue'
 Vue.use(VueRouter)
 
 export default new VueRouter({
+  mode: 'history',    //使用路由的history模式，去除#号
   // 所有路由
   routes: [
     {
