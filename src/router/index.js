@@ -16,6 +16,7 @@ export default new VueRouter({
   routes: [
     {
       path: '/login',
+      name: 'login',
       component: Login, // 返回路由组件的函数, 只有执行此函数才会加载路由组件, 这个函数在请求对应的路由路径时才会执行
       meta: {
         requiresAuth: true

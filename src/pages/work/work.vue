@@ -15,16 +15,16 @@
             </div>
             <div class="per-info">
                 <span style="margin-right: 10px">{{user.name}}</span>
-                <el-dropdown trigger="click" >
+                <el-dropdown trigger="click"  @command="clickItem">
                   <span class="user-icon">
                   </span>
-                  <el-dropdown-menu slot="dropdown" >
-                    <el-dropdown-item><i class="el-icon-menu" ></i>个人中心</el-dropdown-item>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item command='personal_center'><i class="el-icon-menu"></i>个人中心</el-dropdown-item>
                     <el-dropdown-item><i class="el-icon-bell"></i>我的消息</el-dropdown-item>
                     <el-dropdown-item><i class="el-icon-star-off"></i>我的收藏</el-dropdown-item>
                     <el-dropdown-item><i class="el-icon-tickets"></i>我的笔记</el-dropdown-item>
                     <el-dropdown-item><i class="el-icon-time"></i>我的进度</el-dropdown-item>
-                    <el-dropdown-item><i class="el-icon-warning"></i>退出账号</el-dropdown-item>
+                    <el-dropdown-item command="logout"><i class="el-icon-warning"></i>退出账号</el-dropdown-item>
                   </el-dropdown-menu>
                 </el-dropdown>
             </div>
@@ -39,7 +39,7 @@
               :totalNum="this.$store.state.totalNum"
               :questionId="40" 
               :questionCount="200" 
-              @goTo='goTo'>
+              @goTo='goTo("Coding")'>
               </course>
             </div>
             <h1>其他课程：</h1>
@@ -74,7 +74,7 @@ export default {
         });
     },
     mounted () {
-       canvas(60)   //执行canvas动画
+       canvas(30)   //执行canvas动画
     },
     data () {
       return {
@@ -82,9 +82,24 @@ export default {
       }
     },
     methods: {
-      goTo(){      
+      clickItem(command){
+        switch(command){
+          case 'personal_center': this.goTo('personalCenter');break;
+          case 'logout': this.logout();break;
+        }
+      },
+      logout(){
+        this.socket.sendSock({type: 5, content: this.user}, this.getLogoutRes)
+      },
+      getLogoutRes(e){
+       if(e.content.includes('退出')){
+          localStorage.clear()
+          this.goTo('login')
+        }
+    },
+      goTo(routerName){    
           this.$router.push({
-            name: 'Coding'
+            name: routerName,
         })
       }
     },
@@ -138,7 +153,7 @@ export default {
      border-radius: 50%;
      width: 30px;
      height: 30px;
-     background: url(https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1562660030075&di=f7004b3dd55e1ff805ab3064c26e9777&imgtype=0&src=http%3A%2F%2Fbpic.588ku.com%2Felement_origin_min_pic%2F17%2F12%2F24%2Ffc5730de1eeeb97f99f6a8e429710efb.jpg);
+     background: url(../PersonalCenter/images/touxiang.jpg) center center;
      color: black;
      cursor: pointer;
  }

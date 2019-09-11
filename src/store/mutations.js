@@ -19,6 +19,7 @@ export default {
     getQuestionListRes(state,e){
         state.totalNum=e.content[0].totalNum
         state.continue_tableName=e.content[0].tableName
+        state.schemeId=e.content[0].id
         let questionList=e.content[0].catalogs
 
         //将获取到的一维数组格式化为二维数组，分章节，章节里面分题目
@@ -39,26 +40,41 @@ export default {
           })        
           state.questionList.push(tempArr)
           // 默認打開的題目
-         this.dispatch('sendQuestionContentReq',{id: state.questionList[0][0].eid, name: state.questionList[0][0].name})
+         this.dispatch('sendQuestionContentReq',{
+             id: state.questionList[0][0].eid,
+             name: state.questionList[0][0].name,
+             pid:state.questionList[0][0].pid
+            })
     },
     getQuestionContentRes(state,e){
-        console.log(e);
+        console.log(e);   
+        //此处传入updatePresQuestion和传入updatedActiveQues的对象不能相同，否则会导致两者之间的修改互相影响
+        //主要原因还未知？？？
+        let name=state.presentQuestion.name
+        let id=state.presentQuestion.id
+        let content=e.content
+        let pre={name,id,content}
+        let act=JSON.parse(JSON.stringify(pre));    //深拷贝解决问题
         this.commit('updatedQuestDesc',e.content.questionContent.questionDescription)
-        //这里直接修改presentQuestion的话watch无法监听到，只能通过commit修改
-        this.commit('updatePresQues',{name:state.presentQuestion.name,content:e.content})
-        state.activeQuestion.push({name:state.presentQuestion.name,content:e.content}) //题目打开成功后将其存入数组，防止下次获取再次发送请求
+        //这里直接修改presentQuestion的话watch无法监听到，只能通过commit修改（？？？）
+        this.commit('updatePresQues',pre)
+        this.commit('updatedActiveQues',act) //题目打开成功后将其存入数组，防止下次获取再次发送请求
     },
-    saveAnswer(state,answer){
+    updateAnswer(state,answer){
+        // console.log(answer);
         state.presentQuestion.content.questionContent.studentAnswer=answer
     },
     updatePresQues(state,presentQuestion){
         state.presentQuestion=presentQuestion
     },
-    updatedActiveQues (state,list) {
-        state.activeQuestion=list
+    updatedActiveQues (state,question) {
+        state.activeQuestion.push(question)
     },
     updatedQuestDesc (state,desc) {
         state.questionDesc=desc
+    },
+    updateQuestionList(state,list){
+        state.questionList=list
     }
 
 }

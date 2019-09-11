@@ -68,4 +68,4 @@ function websocketOpen(e){
  
 initWebSocket();
  
-export{sendSock}
+export{sendSock,websocketclose}
