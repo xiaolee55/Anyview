@@ -10,6 +10,8 @@ export default {
     totalNum: 0,             //题目总数
     questionDesc: '',        //题目内容
     presentQuestion: {},     //当前所在题目
+    presName: '',
+    presId: '',
     activeQuestion:[],       //目前已打开题目的集合，关闭题目后从中移除
     solveTrends: [],         //做题动态
     schemeId: ''             //作业表ID

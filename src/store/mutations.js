@@ -46,19 +46,18 @@ export default {
              pid:state.questionList[0][0].pid
             })
     },
-    getQuestionContentRes(state,e){
-        console.log(e);   
+    getQuestionContentRes(state,e){  
         //此处传入updatePresQuestion和传入updatedActiveQues的对象不能相同，否则会导致两者之间的修改互相影响
-        //主要原因还未知？？？
-        let name=state.presentQuestion.name
-        let id=state.presentQuestion.id
+        //主要原因还未知？？？还未解决，bug：在点击已打开的某一题目a后在点击一道未打开的题目b，就会有a的name和id属性被修改为b的bug
+        //已解决，将name和id单独保存为变量即可，但是上一个问题需要深究
+        let name=state.presName
+        let id=state.presId
         let content=e.content
         let pre={name,id,content}
-        let act=JSON.parse(JSON.stringify(pre));    //深拷贝解决问题
-        this.commit('updatedQuestDesc',e.content.questionContent.questionDescription)
+        let act=JSON.parse(JSON.stringify(pre));    //深拷贝
         //这里直接修改presentQuestion的话watch无法监听到，只能通过commit修改（？？？）
         this.commit('updatePresQues',pre)
-        this.commit('updatedActiveQues',act) //题目打开成功后将其存入数组，防止下次获取再次发送请求
+        this.commit('updatedActiveQues',{act:act,flag:'add'}) //题目打开成功后将其存入数组，防止下次获取再次发送请求
     },
     updateAnswer(state,answer){
         // console.log(answer);
@@ -67,8 +66,10 @@ export default {
     updatePresQues(state,presentQuestion){
         state.presentQuestion=presentQuestion
     },
-    updatedActiveQues (state,question) {
-        state.activeQuestion.push(question)
+    updatedActiveQues (state,{act,flag}) {
+        flag=='add'
+        ?state.activeQuestion.push(act)
+        :state.activeQuestion=state.activeQuestion.filter((item)=>{return item.id!=act.id});
     },
     updatedQuestDesc (state,desc) {
         state.questionDesc=desc

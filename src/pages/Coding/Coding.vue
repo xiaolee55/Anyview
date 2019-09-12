@@ -15,8 +15,8 @@
               class="question-name" 
               @click="getQuestionContent(question.eid,question.name,question.pid)">
                 <span>
-                <i class='iconfont icon-weitongguo' v-if="questType === 1"></i>
-                <i class='iconfont icon-yitongguo' v-else-if="questType === 2"></i>
+                <!-- <i class='iconfont icon-weitongguo' v-if="questType === 1"></i> -->
+                <i class='iconfont icon-yitongguo' v-if="question.finishTime"></i>
                 <i class='iconfont icon-weikaishi' v-else></i>
                   {{question.name}}
                 </span>
@@ -149,7 +149,7 @@ export default {
       return {
         aceModes:[],
         aceTheme:'katzenmilch',
-        aceFont:'15px',
+        aceFont:'14px',
         _thisMode: '',
         horFunList:[
           {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
@@ -232,6 +232,7 @@ export default {
           this.aceFont=e.target.innerText
           for(let i=0;i<this.$refs.ace.length;i++) 
            this.$refs.ace[i].aceEditor.setFontSize(e.target.innerText)
+           console.log(this.$refs.ace);
         }
       },
       setEditor(command){
@@ -368,13 +369,12 @@ export default {
         let activeIndex=this.editableTabsValue;
         let tabs=this.editableTabs;
         let preQuestnName=this.$store.state.presentQuestion.name
-        let delQuestionName
+        let delQuestionName=tabs.find((item)=>item.name==targetIndex).title
         if(tabs.length==1)
           return;
         if (activeIndex === targetIndex) {  //关闭的标签是否为当前打开的题目
             tabs.forEach((tab, index) => {
               if (tab.name === targetIndex) {
-                delQuestionName=tab.title
                 let nextTab = tabs[index + 1] || tabs[index - 1];
                 if (nextTab) {
                   //更新当前题目
@@ -393,12 +393,15 @@ export default {
         this.editableTabs= filtTabs.map((tab,index)=>{ return {name:index+1+'',title:tab.title}})
         this.editableTabsValue= this.editableTabs.find(item=>item.title==preQuestnName).name
         this.tabIndex--;
+        let delQuestion=this.$store.state.activeQuestion.find(item=>item.name==delQuestionName)
+        let act=JSON.parse(JSON.stringify(delQuestion))     //深拷贝
         //更新打开的题目列表
-        this.$store.commit('updatedActiveQues',this.$store.state.activeQuestion.filter(item=>item.name!=delQuestionName))
+        this.$store.commit('updatedActiveQues',{act:act,flag:'move'})
        },  
       clickTab(target){  //手动点击tab切换当前题目
         //  this.common('saveAnswer')
          if(this.$store.state.presentQuestion.name!=target.label){
+           console.log(this.$store.state.activeQuestion);
            this.editableTabsValue = target.name
            this.$store.commit('updatePresQues',this.$store.state.activeQuestion.find(item=>item.name==target.label))
          }
@@ -661,7 +664,10 @@ export default {
           if(state_list.flat()[i].eid==state_pre.id){
             if(args[args.length-1]=='cmp')
               if(args[0]==-1)
-                state_list.flat()[i].cmpErrorCount++
+                if(state_list.flat()[i].cmpErrorCount)
+                  state_list.flat()[i].cmpErrorCount++
+                else
+                  state_list.flat()[i].cmpErrorCount=1
               else{
                 state_list.flat()[i].cmpErrorCount=args[0]
                 state_list.flat()[i].cmpRightCount=args[1]
@@ -683,6 +689,7 @@ export default {
          this.socket.sendSock(sendMsg,fun)
       },
       getCompileRes(e){
+        console.log(e);
         let content,cmpE=-1,cmpR=-1;
         this.result.pop()  //删除编译中的消息，让编译成功或者编译失败代替
         if(e.content.result){
@@ -705,6 +712,8 @@ export default {
          this.updateNum(cmpE,cmpR,'cmp')  
       },
       getRunGroupRes(e){
+        if(e.content.result.includes("成功"))
+          this.questType=2
         this.$store.state.solveTrends.push(this.createsolveTrend(e.content.right_num,e.content.error_num))
         this.result.pop()
         this.result.push({name:'runGroupRes',content:e.content.output})
@@ -763,6 +772,9 @@ export default {
       },
       getQuestionContent(id,name,pid){
         // this.common('saveAnswer')
+        //判断点击的是否是当前题，是就直接retuern
+        if(id==this.presentQuestion.id)
+          return 
         //若点击已经打开的题目，则不会再发送请求,直接在vuex中获取之前的题目
         let activeQuestion=this.$store.state.activeQuestion
         let pre=activeQuestion.find(item=>item.id==id)
@@ -794,9 +806,16 @@ export default {
           }
          },
         lineNum(){  //移动调试高亮光标
-          this.$refs.dbhl[this.editableTabsValue-1].style.top=`${this.$refs.ace[this.editableTabsValue-1].lineHeight*(this.lineNum-1)}px`
+          this.$refs.dbhl[this.editableTabsValue-1].style.top=`${this.$refs.ace[this.editableTabsValue-1].aceEditor.renderer.lineHeight*(this.lineNum-1)}px`
           this.$refs.ace[this.editableTabsValue-1].aceEditor.container.appendChild(this.$refs.dbhl[this.editableTabsValue-1])
         },
+        // aceFont(){
+        //   let lineHeight;
+        //   setTimeout(()=>{
+        //   })
+        //   this.$refs.dbhl[this.editableTabsValue-1].style.height=`${parseInt(this.aceFont)+3}px`
+        //   this.$refs.dbhl[this.editableTabsValue-1].style.top=`${(parseInt(this.aceFont)+3)*(this.lineNum-1)}px`
+        // },
         result() {
           this.$nextTick(() => {
             let container = this.$el.querySelector(".showResult");

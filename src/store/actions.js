@@ -16,8 +16,9 @@ export default{
         this._vm.socket.sendSock({type: 3, content: id}, this._mutations.getQuestionListRes[0])
     },
     sendQuestionContentReq(store,{id,name,pid}){
-        store.state.presentQuestion.name=name
-        store.state.presentQuestion.id=id
+        //此处不能直接将id和name存进presentQuestion
+        store.state.presName=name
+        store.state.presId=id
         this._vm.socket.sendSock({type: 4, content: id}, this._mutations.getQuestionContentRes[0])
     }
 }
