@@ -61,6 +61,7 @@
         type="card" 
         closable 
         :splitpanes-size="pan_2_1" 
+        :before-leave="changeTab"
         class="code-pane" 
         @tab-remove="removeTab"
         @tab-click="clickTab"
@@ -161,11 +162,11 @@ export default {
           {name:'more',class:'iconfont icon-gengduo',title:'更多'},
         ],
         verFunList:[
-          {name:'quitDebug',class:'iconfont icon-tingzhi banClick',title:'停止调试'},
           {name:'continueDebug',class:'iconfont icon-jixu banClick',title:'继续调试'},
           {name:'stepOver',class:'iconfont icon-xiayihang banClick',title:'下一步(不进入函数)'},
           {name:'stepInto',class:'iconfont icon-xiayibu banClick',title:'下一步(进入函数)'},
           {name:'repeatDebug',class:'iconfont icon-chongfujianli banClick',title:'重复调试'},
+          {name:'quitDebug',class:'iconfont icon-tingzhi banClick',title:'停止调试'}
         ],
         showSetMenu: false,
         questType: 0,
@@ -275,6 +276,15 @@ export default {
         this.$refs.topMenu.style.top=event.target.scrollTop+'px';
         this.$refs.bottomMenu.style.bottom=-event.target.scrollTop+'px';
       },
+      changeTab() {
+        if(this.debugFlag){
+          this.$alert('请先关闭本题调试', {
+            confirmButtonText: '确定'
+          });
+          return false
+        }
+        return true
+      },
       renderVar(variate){   //格式化变量数据
         if(!Array.isArray(variate))
           variate=[variate]
@@ -366,6 +376,8 @@ export default {
       },
       removeTab(targetIndex) {    //关闭标签
         // this.common('saveAnswer')
+        if(!this.changeTab())
+           return
         let activeIndex=this.editableTabsValue;
         let tabs=this.editableTabs;
         let preQuestnName=this.$store.state.presentQuestion.name
@@ -399,7 +411,8 @@ export default {
         this.$store.commit('updatedActiveQues',{act:act,flag:'move'})
        },  
       clickTab(target){  //手动点击tab切换当前题目
-        //  this.common('saveAnswer')
+         if(!this.changeTab())
+           return
          if(this.$store.state.presentQuestion.name!=target.label){
            console.log(this.$store.state.activeQuestion);
            this.editableTabsValue = target.name
@@ -408,6 +421,8 @@ export default {
        },
       lastQuestion(){
         // this.common('saveAnswer')
+        if(!this.changeTab())
+           return
         let state=this.$store.state
         if(state.presentQuestion.name=='第1题'||this.$store.state.activeQuestion.length==1)
           return
@@ -420,6 +435,8 @@ export default {
       },
       nextQuestion(){
         // this.common('saveAnswer')
+        if(!this.changeTab())
+           return
         let state=this.$store.state
         if(state.presentQuestion.name==`第${state.questionList.flat().length}题`)
           return
@@ -771,6 +788,8 @@ export default {
         console.log(e);
       },
       getQuestionContent(id,name,pid){
+        if(!this.changeTab())
+           return
         // this.common('saveAnswer')
         //判断点击的是否是当前题，是就直接retuern
         if(id==this.presentQuestion.id)
@@ -830,10 +849,11 @@ export default {
         }, 
         presentQuestion(){  //配合watch监听当前页面所在题目
           // 更新题目内容
+          clearTimeout(this.timer)
           this.$store.commit('updatedQuestDesc',this.$store.state.presentQuestion.content.questionContent.questionDescription)
           if(this.$store.state.presentQuestion.name)   
             this.addTab(this.$store.state.presentQuestion.name)
-          setTimeout(()=>{
+          this.timer=setTimeout(()=>{
               this.$refs.ace[this.editableTabsValue-1]
               .aceEditor
               .setValue(this.$store.state.presentQuestion.content.questionContent.studentAnswer,1)
