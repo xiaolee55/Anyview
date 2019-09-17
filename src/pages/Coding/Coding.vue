@@ -1,7 +1,7 @@
 <template>
   <div class="father">
     <!-- <div class="float-layer"></div> -->
-        <div class="question-list" ref="questList">
+    <el-drawer  ref="questList" :visible.sync="drawer" :direction="'rtl'" size="20%" :show-close="false">
           <h3>{{this.$store.state.continue_tableName}}</h3>
           <el-collapse>
             <el-collapse-item 
@@ -29,8 +29,7 @@
               </div>
             </el-collapse-item>
           </el-collapse>    
-          <div class="close-btn"><el-button @click="hideQuestList" >关闭</el-button></div>
-        </div>
+    </el-drawer>
     <splitpanes  :push-other-panes="true" watch-slots >
       <div :splitpanes-size="pan_1" class="question-content" :class="{'questContent-color': isQuestListOpen}" @scroll="fixButton">
         <div class="question-menu-top" ref="topMenu" :class="{'menu-color': isQuestListOpen}">
@@ -47,7 +46,7 @@
                 <li v-for="item in aceModes" :key='item.name' @click="setModes">{{item.name}}</li>
               </ul>
           <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" title="个人中心" @click='goTo'></i>
-          <i class="iconfont icon-liebiao" style="cursor:pointer" @click="showQuestList"></i>
+          <i class="iconfont icon-liebiao" style="cursor:pointer" @click="drawer=true"></i>
         </div>
          <div class="question-desc" ><p>{{this.$store.state.questionDesc}}</p></div>
          <div class="question-menu-bottom" ref="bottomMenu" :class="{'menu-color': isQuestListOpen}">
@@ -73,7 +72,12 @@
               :name="item.name"
             >
               <div class="debug-highlighted" ref="dbhl"></div>
-               <ace v-model="studentAnswer" ref="ace" @createBP="createBP">
+               <ace 
+               :content="studentAnswer" 
+               :fontSize="ace_font_size" 
+               ref="ace" 
+               @createBP="createBP"
+               @changeContent="test">
                </ace>
               <div class="funMenu"  @mousedown="mouseEvent('down')" @mouseup="mouseEvent('up')">
                   <ul class="horizontal-list">
@@ -150,6 +154,7 @@ export default {
       return {
         aceModes:[],
         aceTheme:'katzenmilch',
+        ace_font_size: 15,
         aceFont:'14px',
         _thisMode: '',
         horFunList:[
@@ -168,6 +173,7 @@ export default {
           {name:'repeatDebug',class:'iconfont icon-chongfujianli banClick',title:'重复调试'},
           {name:'quitDebug',class:'iconfont icon-tingzhi banClick',title:'停止调试'}
         ],
+        drawer: false,
         showSetMenu: false,
         questType: 0,
         pan_1: 20,
@@ -210,6 +216,11 @@ export default {
       }
     },
     methods: {
+      test(val){
+        if (this.studentAnswer !== val) {
+          this.studentAnswer = val
+        }
+      },
       beforeunloadFn (e) {    //刷新窗口时执行的函数
         if(this.runSig||this.debugFlag)
           this.common('quitDebug') 
@@ -230,7 +241,7 @@ export default {
             this.$refs.ace[i].aceEditor.setTheme(`ace/theme/${e.target.innerText}`)
         }
         else{
-          this.aceFont=e.target.innerText
+          this.ace_font_size=parseInt(e.target.innerText)
           for(let i=0;i<this.$refs.ace.length;i++) 
            this.$refs.ace[i].aceEditor.setFontSize(e.target.innerText)
            console.log(this.$refs.ace);
@@ -363,7 +374,7 @@ export default {
           
           setTimeout(()=>{
             this.$refs.ace[this.editableTabsValue-1].aceEditor.setTheme(`ace/theme/${this.aceTheme}`) 
-            this.$refs.ace[this.editableTabsValue-1].aceEditor.setFontSize(`ace/theme/${this.aceFont}`)   
+            this.$refs.ace[this.editableTabsValue-1].aceEditor.setFontSize(`ace/theme/${this.ace_font_size}`)   
           })
         }else{
             for(let i=0;i<this.editableTabs.length;i++){
@@ -828,13 +839,6 @@ export default {
           this.$refs.dbhl[this.editableTabsValue-1].style.top=`${this.$refs.ace[this.editableTabsValue-1].aceEditor.renderer.lineHeight*(this.lineNum-1)}px`
           this.$refs.ace[this.editableTabsValue-1].aceEditor.container.appendChild(this.$refs.dbhl[this.editableTabsValue-1])
         },
-        // aceFont(){
-        //   let lineHeight;
-        //   setTimeout(()=>{
-        //   })
-        //   this.$refs.dbhl[this.editableTabsValue-1].style.height=`${parseInt(this.aceFont)+3}px`
-        //   this.$refs.dbhl[this.editableTabsValue-1].style.top=`${(parseInt(this.aceFont)+3)*(this.lineNum-1)}px`
-        // },
         result() {
           this.$nextTick(() => {
             let container = this.$el.querySelector(".showResult");
@@ -1030,17 +1034,10 @@ ul{
 /* 问题内容板块结束 */
 
 /* 问题列表开始 */
-.question-list{
-     position: fixed;
-     height: 95%;
-     width: 13%;
-     left: -20%;
-     padding: 30px;
-     transition: all 0.4s;
-     background-color: white;
-     box-shadow: 5px 5px 5px #888888;
-     overflow: auto;
-     z-index: 999;
+.el-drawer{
+  height: 90%;
+  padding: 15px;
+  overflow: auto!important; 
 }
 .question-name{
   font-size: 14px;

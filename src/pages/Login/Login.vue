@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div id="login">
        <canvas id="canvas"></canvas>
         <el-form ref="form"  label-width="80px">
             <h1 style="color: #409eff;text-align: center">Anyview</h1>
@@ -99,19 +99,19 @@ export default {
 <style type="text/css">
 html{
     height: 100%;
+    font-size: 16px;
     }
-        body{margin: 0;height: 100%;    /*会影响全局样式*/
-            background: #fff}
+        body{margin: 0;height: 100%;}
             #canvas{display: block;width: 100%;height: 100%;}
             form{
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: 30%;
+                width: 500px;
                 padding: 50px;
                 transform: translate(-50%,-50%); /*使元素本身向左移动宽度的一半*/
                 background-color: rgba(255,255,255,0.5);
-                border-radius: 8%;
+                border-radius: 2rem;
                 box-shadow: 0 0 12px 1px grey;
                 transition: height .5s .5s;
 }

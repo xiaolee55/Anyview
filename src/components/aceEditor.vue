@@ -1,6 +1,6 @@
 
 <template>
-  <div class="ace-container" ref="ace" @click="setBP">
+  <div class="ace-container" ref="ace" @click="setBP" >
     <!-- 官方文档中使用 id，这里禁止使用，在后期打包后容易出现问题，使用 ref 或者 DOM 就行 -->
   </div>
 </template>
@@ -17,17 +17,19 @@
     mounted () {
       this.aceEditor = ace.edit(this.$refs.ace, {
         autoScrollEditorIntoView: false,
-        fontSize: 14, // 编辑器内字体大小
-        theme: this.themePath, // 默认设置的主题
-        mode: this.modePath, // 默认设置的语言模式
-        tabSize: 4, // 制表符设置为 4 个空格大小
-      })
-      this.aceEditor.setOptions({
-				enableBasicAutocompletion: true,
+        fontSize: this.fontSize, 
+        theme: `ace/theme/${this.theme}`, 
+        mode: `ace/mode/${this.mode}`, 
+        tabSize: 4,
+        enableBasicAutocompletion: true,
 				enableSnippets: true,
-				enableLiveAutocompletion: true
+        enableLiveAutocompletion: true,
       })
-      this.aceEditor.on('change', this.change)   //在编辑器上注册change事件
+      this.aceEditor.on("guttermousedown", function(e) {e.stop()},true);    //禁止gutter上的mousedown事件
+      this.aceEditor.on('change', () => {
+        this.beforeContent = this.aceEditor.getValue()
+        this.$emit('changeContent', this.aceEditor.getValue())
+      })
       this.lineHeight=this.aceEditor.renderer.lineHeight
     },
     data () {
@@ -39,19 +41,36 @@
       }
     },
     props: {
-      test:{
+      theme: {
         type: String,
-        default: "#include 'stdio.h' "
+        default: "katzenmilch"
+      },
+      fontSize:{
+        type: Number,
+        default: 15
+      },
+      mode:{
+        type: String,
+        default: "c_cpp"
+      },
+      content: {
+        type: String,
+        default: ""
       }
+      
     },
     methods: {
         setBP(){
           this.$emit('createBP');
-        },
-        change () {
-            this.$emit('input', this.aceEditor.getValue())
+        }
+    },
+    watch: {
+      content(value) {
+        if (this.beforeContent !== value) {
+          this.aceEditor.setValue(value, 1)
         }
     }
+    },
   }
 </script>
 
