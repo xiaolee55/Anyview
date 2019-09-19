@@ -26,7 +26,7 @@
         enableLiveAutocompletion: true,
       })
       this.aceEditor.on("guttermousedown", function(e) {e.stop()},true);    //禁止gutter上的mousedown事件
-      this.aceEditor.on('change', () => {
+      this.aceEditor.on('input', () => {    //将change换成input则原来的bug就没有了，原来题目切换的时候也会出现圆点
         this.beforeContent = this.aceEditor.getValue()
         this.$emit('changeContent', this.aceEditor.getValue())
       })
@@ -66,10 +66,18 @@
     },
     watch: {
       content(value) {
-        if (this.beforeContent !== value) {
-          this.aceEditor.setValue(value, 1)
+        if (this.beforeContent !== value) {   //还未开始输入代码时这里会执行，即刚打开题目时执行
+          this.aceEditor.setValue(value,1)
         }
-    }
+      },
+      fontSize(val){
+        if(val)
+          this.aceEditor.setFontSize(val)
+      },
+      theme(val){
+        if(val)
+          this.aceEditor.setTheme(`ace/theme/${val}`)        
+      }
     },
   }
 </script>

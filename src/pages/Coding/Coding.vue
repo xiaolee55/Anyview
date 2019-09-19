@@ -43,7 +43,7 @@
                   </el-dropdown-menu>
             </el-dropdown>
               <ul ref="setMenu" v-if='showSetMenu'  class="setting-menu">
-                <li v-for="item in aceModes" :key='item.name' @click="setModes">{{item.name}}</li>
+                <li v-for="item in setArr" :key='item' @click="setModes">{{item}}</li>
               </ul>
           <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" title="个人中心" @click='goTo'></i>
           <i class="iconfont icon-liebiao" style="cursor:pointer" @click="drawer=true"></i>
@@ -58,9 +58,9 @@
         <el-tabs
         v-model="editableTabsValue" 
         type="card" 
-        closable 
+        closable
         :splitpanes-size="pan_2_1" 
-        :before-leave="changeTab"
+        :before-leave="closeDebug"
         class="code-pane" 
         @tab-remove="removeTab"
         @tab-click="clickTab"
@@ -71,13 +71,15 @@
               :label="item.title"
               :name="item.name"
             >
+            <span slot="label">{{item.title}}<b style="margin-left:3px;" v-if="!item._save">●</b></span>
               <div class="debug-highlighted" ref="dbhl"></div>
-               <ace 
+               <ace
                :content="studentAnswer" 
                :fontSize="ace_font_size" 
+               :theme="ace_theme"
                ref="ace" 
                @createBP="createBP"
-               @changeContent="test">
+               @changeContent="changeAnswer">
                </ace>
               <div class="funMenu"  @mousedown="mouseEvent('down')" @mouseup="mouseEvent('up')">
                   <ul class="horizontal-list">
@@ -132,6 +134,7 @@ import ace from '../../components/aceEditor.vue'
 let ace_layer=document.querySelector(".ace_layer");
 export default {
     created () {
+      this.is_save=[]
       this.user=JSON.parse(window.localStorage.getItem('user'))
       if(this.$route.params.name){
         let reqQuestion=this.$store.state.questionList.flat().find(item=>item.name==this.$route.params.name)    //数组扁平化之后再进行过滤
@@ -152,10 +155,8 @@ export default {
     },
     data () {
       return {
-        aceModes:[],
-        aceTheme:'katzenmilch',
+        ace_theme:'katzenmilch',
         ace_font_size: 15,
-        aceFont:'14px',
         _thisMode: '',
         horFunList:[
           {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
@@ -216,10 +217,37 @@ export default {
       }
     },
     methods: {
-      test(val){
-        if (this.studentAnswer !== val) {
+      changeAnswer(val){  //输入框内容改变
+        let curr_name=this.$store.state.presentQuestion.name
+        if (this.studentAnswer != val) {
+          this.changeQueState(curr_name,false)
           this.studentAnswer = val
+          this.beforeAnswer=this.studentAnswer
         }
+      },
+      saveAnswer(){  //保存代码，改变题目保存状态
+        let curr_name=this.$store.state.presentQuestion.name
+        this.changeQueState(curr_name,true)
+      },
+      changeQueState(name,state){   //改变题目的保存状态，即改变小圆点
+        let tab_arr=this.editableTabs
+        this.editableTabs=tab_arr.map((item)=>(name==item.title)?Object.assign({},item,{_save:state}):item)
+      },
+      confirmSave(){    //提示是否保存代码
+         this.$confirm('是否要保存未保存的代码?', '提示', {
+          confirmButtonText: '保存',
+          cancelButtonText: '取消',
+          type: 'warning',
+          center: true
+        }).then(() => {
+          this.$message({
+            type: 'success',
+            message: '保存成功!'
+          });
+          this.common("saveAnswer")
+        }).catch(() => {
+            return false
+        });        
       },
       beforeunloadFn (e) {    //刷新窗口时执行的函数
         if(this.runSig||this.debugFlag)
@@ -235,17 +263,9 @@ export default {
         this.showSetMenu=false 
       },
       setModes(e){
-        if(this._thisMode=='theme'){
-          this.aceTheme=e.target.innerText
-          for(let i=0;i<this.$refs.ace.length;i++)
-            this.$refs.ace[i].aceEditor.setTheme(`ace/theme/${e.target.innerText}`)
-        }
-        else{
-          this.ace_font_size=parseInt(e.target.innerText)
-          for(let i=0;i<this.$refs.ace.length;i++) 
-           this.$refs.ace[i].aceEditor.setFontSize(e.target.innerText)
-           console.log(this.$refs.ace);
-        }
+        this._thisMode=='theme'
+        ?this.ace_theme=e.target.innerText
+        :this.ace_font_size=parseInt(e.target.innerText)
       },
       setEditor(command){
          switch(command){
@@ -264,16 +284,9 @@ export default {
       },
       modifyModes(flag){
         this.showSetMenu=true
-        if(flag=='theme')
-          this.aceModes=[{name:'katzenmilch',path:'ace/theme/katzenmilch'},
-          {name:'chrome',path:'ace/theme/chrome'},
-          {name:'github',path:'ace/theme/github'},
-          {name:'eclipse',path:'ace/theme/eclipse'},
-          {name:'monokai',path:'ace/theme/monokai'},
-          {name:'sqlserver',path:'ace/theme/sqlserver'},
-          {name:'twilight',path:'ace/theme/twilight'}]
-        else
-           this.aceModes=[{name:'12px'},{name:'13px'},{name:'14px'},{name:'15px'},{name:'16px'},{name:'17px'},{name:'18px'},{name:'19px'},{name:'20px'}]
+        let arr1=['katzenmilch','chrome','github','eclipse','monokai','sqlserver','twilight']
+        let arr2=['12px','13px','14px','15px','16px','17px','18px','19px','20px']
+        this.setArr=(flag=='theme')?arr1:arr2
         this.$nextTick(()=>{
           this.$refs.setMenu.style.top=this.$refs.elDropdown.$el.offsetTop+'px'
           this.$refs.setMenu.style.left=this.$refs.elDropdown.$el.offsetLeft+this.$refs.elDropdown.$el.offsetWidth+'px'
@@ -287,7 +300,7 @@ export default {
         this.$refs.topMenu.style.top=event.target.scrollTop+'px';
         this.$refs.bottomMenu.style.bottom=-event.target.scrollTop+'px';
       },
-      changeTab() {
+      closeDebug() {
         if(this.debugFlag){
           this.$alert('请先关闭本题调试', {
             confirmButtonText: '确定'
@@ -336,6 +349,7 @@ export default {
             bp.fill();
             // bp.clearRect(0,0,canvas.width,canvas.height);
         }
+        console.log(this.bpRow);
       },
       mouseEvent(flag){   //设置图标被点击时的样式改变
         if(event.srcElement.tagName==="I"){
@@ -348,13 +362,39 @@ export default {
             }
         }
       },
-      showQuestList(){   //显示题目列表
-          this.isQuestListOpen=true;
-          this.$refs.questList.style.left='0'
-      },
-      hideQuestList(){    //隐藏题目列表
-          this.isQuestListOpen=false;
-          this.$refs.questList.style.left='-20%'
+      updateTabData(targetIndex){
+        let activeIndex=this.editableTabsValue;
+        let tabs=this.editableTabs;
+        let preQuestnName=this.$store.state.presentQuestion.name
+        let delTab=tabs.find((item)=>item.name==targetIndex)
+        let delQuestionName=delTab.title
+            if(tabs.length==1)
+              return;
+            if (activeIndex === targetIndex) {  //关闭的标签是否为当前打开的题目
+                tabs.forEach((tab, index) => {
+                  if (tab.name === targetIndex) {
+                    let nextTab = tabs[index + 1] || tabs[index - 1];
+                    if (nextTab) {
+                      //更新当前题目
+                      preQuestnName=nextTab.title
+                      this.$store.state.activeQuestion.forEach((item)=>{
+                          if(item.name==preQuestnName){
+                              this.$store.commit('updatePresQues',item)
+                          }
+                        })
+                    }
+                  }
+                });
+            }
+            //更新标签数组，保证序号连接，更新当前标签的序号，更新标签长度
+            let filtTabs = tabs.filter(tab => tab.name !== targetIndex);
+            this.editableTabs= filtTabs.map((tab,index)=>Object.assign({},tab,{name:index+1+''}))
+            this.editableTabsValue= this.editableTabs.find(item=>item.title==preQuestnName).name
+            this.tabIndex--;
+            let delQuestion=this.$store.state.activeQuestion.find(item=>item.name==delQuestionName)
+            let act=JSON.parse(JSON.stringify(delQuestion))     //深拷贝
+            //更新打开的题目列表
+            this.$store.commit('updatedActiveQues',{act:act,flag:'move'})
       },
       addTab(targetName) {      //增加标签
         let flag = this.editableTabs.every((item)=>{  //是否点击了重复标签
@@ -368,17 +408,13 @@ export default {
           let newTab = { 
             title: targetName,
             name: newTabName,
+            _save: true
           }
           this.editableTabsValue = newTabName;
           this.editableTabs.push(newTab);
-          
-          setTimeout(()=>{
-            this.$refs.ace[this.editableTabsValue-1].aceEditor.setTheme(`ace/theme/${this.aceTheme}`) 
-            this.$refs.ace[this.editableTabsValue-1].aceEditor.setFontSize(`ace/theme/${this.ace_font_size}`)   
-          })
         }else{
             for(let i=0;i<this.editableTabs.length;i++){
-              if(this.editableTabs[i].title==targetName){
+              if(this.editableTabs[i].title==targetName){ 
                   this.editableTabsValue = this.editableTabs[i].name
                   break
               }
@@ -387,52 +423,41 @@ export default {
       },
       removeTab(targetIndex) {    //关闭标签
         // this.common('saveAnswer')
-        if(!this.changeTab())
+        if(!this.closeDebug())
            return
-        let activeIndex=this.editableTabsValue;
-        let tabs=this.editableTabs;
-        let preQuestnName=this.$store.state.presentQuestion.name
-        let delQuestionName=tabs.find((item)=>item.name==targetIndex).title
-        if(tabs.length==1)
-          return;
-        if (activeIndex === targetIndex) {  //关闭的标签是否为当前打开的题目
-            tabs.forEach((tab, index) => {
-              if (tab.name === targetIndex) {
-                let nextTab = tabs[index + 1] || tabs[index - 1];
-                if (nextTab) {
-                  //更新当前题目
-                  preQuestnName=nextTab.title
-                  this.$store.state.activeQuestion.forEach((item)=>{
-                      if(item.name==preQuestnName){
-                          this.$store.commit('updatePresQues',item)
-                      }
-                    })
-                }
-              }
+        let tabs=this.editableTabs;   
+        let delTab=tabs.find((item)=>item.name==targetIndex)
+        if(!delTab._save){
+          this.$confirm('是否要保存未保存的代码?', '提示', {
+            confirmButtonText: '保存',
+            cancelButtonText: '取消',
+            type: 'warning',
+            center: true
+          }).then(() => {
+            this.$message({
+              type: 'success',
+              message: '保存成功!'
             });
+             this.common("saveAnswer")
+             this.updateTabData(targetIndex)
+          }).catch(() => {
+              this.updateTabData(targetIndex)
+          });  
+        }else{
+          this.updateTabData(targetIndex)
         }
-        //更新标签数组，保证序号连接，更新当前标签的序号，更新标签长度
-        let filtTabs = tabs.filter(tab => tab.name !== targetIndex);
-        this.editableTabs= filtTabs.map((tab,index)=>{ return {name:index+1+'',title:tab.title}})
-        this.editableTabsValue= this.editableTabs.find(item=>item.title==preQuestnName).name
-        this.tabIndex--;
-        let delQuestion=this.$store.state.activeQuestion.find(item=>item.name==delQuestionName)
-        let act=JSON.parse(JSON.stringify(delQuestion))     //深拷贝
-        //更新打开的题目列表
-        this.$store.commit('updatedActiveQues',{act:act,flag:'move'})
        },  
       clickTab(target){  //手动点击tab切换当前题目
-         if(!this.changeTab())
+         if(!this.closeDebug())
            return
          if(this.$store.state.presentQuestion.name!=target.label){
-           console.log(this.$store.state.activeQuestion);
            this.editableTabsValue = target.name
            this.$store.commit('updatePresQues',this.$store.state.activeQuestion.find(item=>item.name==target.label))
          }
        },
       lastQuestion(){
         // this.common('saveAnswer')
-        if(!this.changeTab())
+        if(!this.closeDebug())
            return
         let state=this.$store.state
         if(state.presentQuestion.name=='第1题'||this.$store.state.activeQuestion.length==1)
@@ -446,7 +471,7 @@ export default {
       },
       nextQuestion(){
         // this.common('saveAnswer')
-        if(!this.changeTab())
+        if(!this.closeDebug())
            return
         let state=this.$store.state
         if(state.presentQuestion.name==`第${state.questionList.flat().length}题`)
@@ -503,13 +528,6 @@ export default {
       clearResult(){
         this.result=[]
       },
-      saveAnswer(e){   
-        this.$notify({
-          title: '保存成功',
-          type: 'success',
-          duration: '500',
-          position: 'bottom-right'
-        });},
       createsolveTrend(rightNum,errorNum){      //创建每次运行产生的消息对象，以便在个人界面中浏览
         let a={}
         a.chapName=this.$store.state.presentQuestion.content.questionFullName.substr(0,3)
@@ -544,7 +562,6 @@ export default {
           case 'runGroup':
             if(!this.compileFlag){
               this.result.push({name:'runError',content:'请先编译！'})
-              return
             }
             if(this.debugFlag)
              return
@@ -683,7 +700,7 @@ export default {
         }
         setTimeout(()=>{
              this.sendReq(sendMsg,fun)
-        })
+        },20)
       },
       updateNum(...args){    //更新题目的运行和编译的成功与失败次数
         let state_list=this.$store.state.questionList
@@ -713,11 +730,9 @@ export default {
       sendReq(sendMsg,fun){
         if(sendMsg===''&&fun==='')
         return
-        console.log('发送消息',sendMsg);
          this.socket.sendSock(sendMsg,fun)
       },
       getCompileRes(e){
-        console.log(e);
         let content,cmpE=-1,cmpR=-1;
         this.result.pop()  //删除编译中的消息，让编译成功或者编译失败代替
         if(e.content.result){
@@ -753,7 +768,6 @@ export default {
         this.result.push({name:'runSiginalRes',content:e.content.output})
       },
       getStartDebugRes(e){
-        console.log('开始调试',e);
         this.result.pop();
         if(e.content.error=="")
           this.debugFlag=true
@@ -763,7 +777,6 @@ export default {
         this.lineNum=e.content.lineNum
       },
       getStepOverRes(e){
-        console.log('下一步',e);
         if(e.content.output.includes('Quit')
         ||this.$refs.ace[this.editableTabsValue-1].aceEditor.session.getLength()<e.content.lineNum){
           this.common('quitDebug')
@@ -790,7 +803,6 @@ export default {
         this.result.push({name:'quitDebugRes',content:"终止调试！"})
       },
       getContinueDebugRes(e){
-        console.log('继续调试',e);
         this.lineNum=e.content.lineNum
         this.variate=e.content.variate
         this.renderVariate=this.renderVar(this.variate)
@@ -799,7 +811,7 @@ export default {
         console.log(e);
       },
       getQuestionContent(id,name,pid){
-        if(!this.changeTab())
+        if(!this.closeDebug())
            return
         // this.common('saveAnswer')
         //判断点击的是否是当前题，是就直接retuern
@@ -853,15 +865,14 @@ export default {
         }, 
         presentQuestion(){  //配合watch监听当前页面所在题目
           // 更新题目内容
+          this.bpRow=''    //清除上一道题的断点信息
           clearTimeout(this.timer)
           this.$store.commit('updatedQuestDesc',this.$store.state.presentQuestion.content.questionContent.questionDescription)
           if(this.$store.state.presentQuestion.name)   
             this.addTab(this.$store.state.presentQuestion.name)
           this.timer=setTimeout(()=>{
-              this.$refs.ace[this.editableTabsValue-1]
-              .aceEditor
-              .setValue(this.$store.state.presentQuestion.content.questionContent.studentAnswer,1)
-          })
+            this.studentAnswer=this.$store.state.presentQuestion.content.questionContent.studentAnswer
+          },20)
         }
       },
     computed:{  
