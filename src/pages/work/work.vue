@@ -1,185 +1,174 @@
 <template>
     <div>
-      <canvas id="canvas"></canvas>
-        <div class="container">
-          <div class="header w">
-            <div class="logo">
-              <h1 style="color: #409eff">Anyview</h1>
-            </div>
-            <div class="menu-bar">
-                <el-input
-                placeholder="请输入内容"
-                prefix-icon="el-icon-search"
-                size="small">
-              </el-input>
-            </div>
-            <div class="per-info">
-                <span style="margin-right: 10px">{{user.name}}</span>
-                <el-dropdown trigger="click"  @command="clickItem">
-                  <span class="user-icon">
-                  </span>
-                  <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item command='personal_center'><i class="el-icon-menu"></i>个人中心</el-dropdown-item>
-                    <el-dropdown-item><i class="el-icon-bell"></i>我的消息</el-dropdown-item>
-                    <el-dropdown-item><i class="el-icon-star-off"></i>我的收藏</el-dropdown-item>
-                    <el-dropdown-item><i class="el-icon-tickets"></i>我的笔记</el-dropdown-item>
-                    <el-dropdown-item><i class="el-icon-time"></i>我的进度</el-dropdown-item>
-                    <el-dropdown-item command="logout"><i class="el-icon-warning"></i>退出账号</el-dropdown-item>
-                  </el-dropdown-menu>
-                </el-dropdown>
-            </div>
+      <el-header class="work-header">
+        <el-row type="flex" justify="space-around">
+        <el-col :span="6" style="position:relative">
+          <div>
+            <img src="./images/Anyview.svg" alt="Anyview可视化编程平台" class="header-logo">
+            <canvas id="canvas"></canvas>
           </div>
-          <div class="content w">
-            <h1 style="margin-top: 30px">继续题目：</h1>
-            <div class="latest-course">
-              <course 
-              v-cloak
-              :courseName="this.$store.state.continue_tableName"
-              cardType="上次做到" 
-              :totalNum="this.$store.state.totalNum"
-              :questionId="40" 
-              :questionCount="200" 
-              @goTo='goTo("Coding")'>
-              </course>
-            </div>
-            <h1>其他课程：</h1>
-            <div class="all-course">
-              <course courseName="C语言程序设计"  cardType="题目总数" @goTo='goTo'></course>
-              <course courseName="Java语言程序设计"  cardType="题目总数" ></course>
-              <course courseName="离散数学实践"  cardType="题目总数"></course>
-              <course courseName="C#语言程序设计"  cardType="题目总数"></course>
-              <course courseName="数据结构"  cardType="题目总数"></course>   
-              <course courseName="操作系统"  cardType="题目总数"></course>   
-            </div>
+        </el-col>
+        <el-col :span="6"><div><el-input placeholder="请输入内容"  prefix-icon="el-icon-search"></el-input></div></el-col>
+        <el-col :span="6">
+          <div>
+            <el-dropdown trigger="hover" @command="clickItem">
+              <span>
+                <el-avatar  class="header-avatar"  
+                            shape="square" 
+                            :size="45" 
+                            fit="fill" 
+                            src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg">
+                </el-avatar>
+              <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command='personal_center'><i class="el-icon-menu"></i>个人中心</el-dropdown-item>
+              <el-dropdown-item><i class="el-icon-bell"></i>我的消息</el-dropdown-item>
+              <el-dropdown-item><i class="el-icon-star-off"></i>我的收藏</el-dropdown-item>
+              <el-dropdown-item><i class="el-icon-tickets"></i>我的笔记</el-dropdown-item>
+              <el-dropdown-item><i class="el-icon-time"></i>我的进度</el-dropdown-item>
+              <el-dropdown-item command="logout"><i class="el-icon-warning"></i>退出账号</el-dropdown-item>
+              </el-dropdown-menu>
+              </span>
+            </el-dropdown>
+            <span class="user-name"><i>{{user.name}}</i></span>
           </div>
-          <div class="footer">
-            <span>© 广东工业大学Anyview工作室</span>
-            <span>地址：大学城校区工学一号馆620</span>
-            <span>问题反馈：1084235321@qq.com</span>
-          </div>
-        </div>
+        </el-col>
+      </el-row>
+      </el-header>
+      <el-main class="work-main w">
+        <work-card :courseName="courseName"
+                   :chapNum="chapNum"
+                   :questionNum="totalNum"
+                   :finishNum="finishNum"
+                   :is_first="isFirst"
+                   @goToCoding="goToCoding"></work-card>
+        <work-card></work-card>
+        <work-card></work-card>
+      </el-main>
+      <el-footer>
+        <span>©</span>
+        <span>广东工业大学</span>
+        <span>可视化创新与系统工具研究工作室</span>
+        <span><a href="">Anyview团队</a></span>
+      </el-footer>
     </div>
 </template>
 <script>
-import course from '../../components/courseCard.vue';
- import canvas from '../../../static/canvas.js';
+ import canvas from 'static/canvas.js';
+ import workCard from 'components/course-card.vue';
+ import {getQuestionList,getLogout} from '@/api/work'
+ import {setCache,getCache,removeCache} from 'static/cache.js';
+ import * as types from '@/api/config'
+ import {mapState,mapMutations,mapGetters} from 'vuex'
+
 export default {
-    created () {
-        this.$store.dispatch('sendQuestionListReq')
-        this.user=JSON.parse(window.localStorage.getItem('user'))
-        this.$message({
-          showClose: true,
-          message: '欢迎您,'+this.user.name,
-          type: 'success'
-        });
-    },
     mounted () {
-       canvas(30)   //执行canvas动画
+      canvas(6,"#409EFF")   //执行canvas动画
+      this._getQuestionList()
     },
     data () {
       return {
-        user: {}
+        finishNum: 0 ,
+        isFirst: true,
+        totalNum: 0
       }
     },
     methods: {
-      clickItem(command){
+      _getQuestionList() {
+        getQuestionList(this.user.id).then((e)=>{
+          let content = e.content[0]
+          this.totalNum = content.totalNum
+          this.setCourseName(content.tableName)
+          this.setQuestionList(content.catalogs)
+        })
+      },
+      clickItem(command) {
         switch(command){
-          case 'personal_center': this.goTo('personalCenter');break;
           case 'logout': this.logout();break;
         }
       },
-      logout(){
-        this.socket.sendSock({type: 5, content: this.user}, this.getLogoutRes)
-      },
-      getLogoutRes(e){
-       if(e.content.includes('退出')){
-          localStorage.clear()
-          this.goTo('login')
-        }
-    },
-      goTo(routerName){    
-          this.$router.push({
-            name: routerName,
+      logout() {
+        getLogout(this.user).then((e)=>{
+          if(e.type === types.LOGOUT_SUCCESS_TYPE){
+            this.changeRoute("login")
+            removeCache("user")
+          }
         })
-      }
+      },
+      goToCoding(){
+        this.changeRoute("coding")
+      },
+      changeRoute(routeName){
+        this.$router.replace(routeName)
+      },
+      ...mapMutations({
+        setQuestionList: 'SET_QUESTION_LIST',
+        setCourseName: 'SET_COURSE_NAME',
+      }) 
+    },
+    computed: {
+      user() {
+        return JSON.parse(getCache("user"))
+      },
+      chapNum() {
+        return this.questionList.length
+      },
+       ...mapGetters([
+          'courseName',
+          'questionList'
+       ])
     },
     components: {
-     course   
+     workCard
     }
 }
 </script>
 
 <style>
-[v-cloak] {
-    display: none !important;
-}
-  html{
-      height: 100%;
-  }
-  body{
-    margin: 0;
-    background-color: #fff;
-  }
-  .w{
-    width: 80%;
-    margin: 0 auto;
-  }
-  #canvas{
-    position: fixed;
-    display: block;
-    width: 100%;
-    height: 100%;
-    z-index:-99;
+  @import "../../assets/css/base.css";
+</style>
+<style lang="scss" scoped>
+    #canvas{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
     }
-  .container{
-    height: 100%;
-  }
-  /* header部分开始 */
-  .header{
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #C0C4CC;
-  }
-  .menu-bar{
-    display: flex;
-    align-items:center;
-  }
-  .per-info{
-    display: flex;
-    align-items:center;   
-  }
-   .user-icon{
-     float: right;
-     border-radius: 50%;
-     width: 30px;
-     height: 30px;
-     background: url(../PersonalCenter/images/touxiang.jpg) center center;
-     color: black;
-     cursor: pointer;
- }
-   /* header部分结束 */
-
-   /* content部分开始 */
-    .latest-course,.all-course{
-      display: flex;
-      flex-wrap:wrap;
+   .w{
+     width: 80%;
+     margin: 0 auto;
+   }
+   .work-header{
+     height: 20%!important;   //组件库由于有默认样式，加important覆盖
+     margin-top: 30px;
+     .header-logo{
+       cursor: pointer;
+       margin-top: -100px;
+       height: 250px;
+       width: 250px;
+     }
+     div{
+       text-align: center;
+     }
+     .header-avatar{
+       cursor: pointer;
+     }
+     .user-name{
+      color: rgb(144, 164, 174);
+      cursor: pointer;
+      padding: 5px;
+      font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;
+     }
+   }
+    .el-dropdown-menu{
+      width: 200px!important; 
     }
-   /* content部分结束 */
 
-   /* footer部分开始 */
-   .footer{
-     display: flex;
-     justify-content: space-around;
-     align-items: center;
-     width: 100%;
-     height: 30px;
-     border-top: 1px solid  #DCDCDC;
-     font-size: 12px;
-     font-weight: 300;
-     color: grey;
+   .work-main{
+    //  height: 76%;
    }
-   .footer span{
-     margin-right: 30px;
-   }
-   /* footer部分结束 */
+  .el-card{
+     margin-bottom:100px;
+  }
 </style>

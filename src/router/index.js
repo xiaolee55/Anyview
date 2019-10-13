@@ -4,7 +4,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Login from '../pages/Login/Login.vue'
-import work from '../pages/work/work.vue'
+import work from '../pages/Work/Work.vue'
 import Coding from '../pages/Coding/Coding.vue'
 import PersonalCenter from '../pages/PersonalCenter/PersonalCenter.vue'
 // 声明使用插件
@@ -31,8 +31,8 @@ export default new VueRouter({
       }
     },
     {
-      path: '/Coding',
-      name: 'Coding',
+      path: '/coding',
+      name: 'coding',
       component: Coding,
       meta: {
         requiresAuth: true
@@ -46,11 +46,11 @@ export default new VueRouter({
     {
       path: '/',
       component: Login,
-      redirect: '/Login'   //重定向
+      redirect: '/login'   //重定向
     },
     {
       path: '**',   // 错误路由
-      redirect: '/Login'   //重定向
+      redirect: '/login'   //重定向
     },
   ]
 })

@@ -1,128 +1,40 @@
 <template>
-  <div class="father">
-    <!-- <div class="float-layer"></div> -->
-    <el-drawer  ref="questList" :visible.sync="drawer" :direction="'rtl'" size="20%" :show-close="false">
-          <h3>{{this.$store.state.continue_tableName}}</h3>
-          <el-collapse>
-            <el-collapse-item 
-            :title="chap[0].chapName" 
-            v-for="(chap,index) in this.$store.state.questionList" 
-            :key="index" 
-            class="collapse-font">
-              <div 
-              v-for="(question,i) in chap" 
-              :key="i" 
-              class="question-name" 
-              @click="getQuestionContent(question.eid,question.name,question.pid)">
-                <span>
-                <!-- <i class='iconfont icon-weitongguo' v-if="questType === 1"></i> -->
-                <i class='iconfont icon-yitongguo' v-if="question.finishTime"></i>
-                <i class='iconfont icon-weikaishi' v-else></i>
-                  {{question.name}}
-                </span>
-                <span class="quest-situation">
-                  <i class='iconfont icon-bianyi' title="编译成功次数">{{question.cmpRightCount}}</i>
-                  <i class='iconfont icon-bianyishibai' title="编译失败次数">{{question.cmpErrorCount}}</i>
-                  <i class='iconfont icon-chengzuyunxing' title="运行成功次数">{{question.runResult}}</i>
-                  <i class='iconfont icon-yunxingshibai' title="运行失败次数">{{question.runErrCount}}</i>
-                </span>
-              </div>
-            </el-collapse-item>
-          </el-collapse>    
+  <div class="code-pane">
+    <el-drawer :visible.sync="showListPane" 
+                direction="rtl"
+                size="20%" 
+                :show-close="false">
+      <question-list :list="questionList" :title="courseName" @getContent="_getQuestionContent"></question-list>
     </el-drawer>
-    <splitpanes  :push-other-panes="true" watch-slots >
-      <div :splitpanes-size="pan_1" class="question-content" :class="{'questContent-color': isQuestListOpen}" @scroll="fixButton">
-        <div class="question-menu-top" ref="topMenu" :class="{'menu-color': isQuestListOpen}">
-            <el-dropdown trigger="click"  @command="setEditor" :hide-on-click="false" @visible-change='hidSetMenu'>
-                  <span  class="iconfont icon-zidingyi" title="设置">
-                  </span>
-                    <el-dropdown-menu slot="dropdown" ref='elDropdown'>
-                    <el-dropdown-item command="主题"><i class="el-icon-menu"></i>主题<i class="el-icon-arrow-right"></i></el-dropdown-item>
-                    <el-dropdown-item command="字体"><i class="el-icon-edit"></i>字体<i class="el-icon-arrow-right"></i></el-dropdown-item>
-                    <el-dropdown-item command="帮助"><i class="el-icon-question"></i>帮助<i class="el-icon-arrow-right"></i></el-dropdown-item>
-                  </el-dropdown-menu>
-            </el-dropdown>
-              <ul ref="setMenu" v-if='showSetMenu'  class="setting-menu">
-                <li v-for="item in setArr" :key='item' @click="setModes">{{item}}</li>
-              </ul>
-          <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" title="个人中心" @click='goTo'></i>
-          <i class="iconfont icon-liebiao" style="cursor:pointer" @click="drawer=true"></i>
-        </div>
-         <div class="question-desc" ><p>{{this.$store.state.questionDesc}}</p></div>
-         <div class="question-menu-bottom" ref="bottomMenu" :class="{'menu-color': isQuestListOpen}">
-          <el-button type="primary" round style="margin-right:20px" @click="lastQuestion">上一题</el-button>
-           <el-button type="primary" round style="margin-right:20px" @click="nextQuestion">下一题</el-button>
-        </div>
-      </div>
-      <splitpanes horizontal :push-other-panes="true" :splitpanes-size="pan_2" watch-slots  @resize="modifyDiv" class="editor-pane">
-        <el-tabs
-        v-model="editableTabsValue" 
-        type="card" 
-        closable
-        :splitpanes-size="pan_2_1" 
-        :before-leave="closeDebug"
-        class="code-pane" 
-        @tab-remove="removeTab"
-        @tab-click="clickTab"
-        >
-            <el-tab-pane
-              v-for="item in editableTabs"
-              :key="item.name"
-              :label="item.title"
-              :name="item.name"
-            >
-            <span slot="label">{{item.title}}<b style="margin-left:3px;" v-if="!item._save">●</b></span>
-              <div class="debug-highlighted" ref="dbhl"></div>
-               <ace
-               :content="studentAnswer" 
-               :fontSize="ace_font_size" 
-               :theme="ace_theme"
-               ref="ace" 
-               @createBP="createBP"
-               @changeContent="changeAnswer">
-               </ace>
-              <div class="funMenu"  @mousedown="mouseEvent('down')" @mouseup="mouseEvent('up')">
-                  <ul class="horizontal-list">
-                    <li v-for="item in horFunList" :key="item.name">
-                      <el-tooltip :content="item.title" placement="bottom" effect="light">
-                        <i :class="item.class" @click="common(item.name)"></i>
-                      </el-tooltip>
-                    </li>
-                  </ul>
-                  <transition name="verList">
-                   <transition-group tag="ul" class="vertical-list" v-if="showVerList">
-                    <li v-for="item in verFunList" :key="item.name">
-                      <el-tooltip :content="item.title" placement="left" effect="light">
-                        <i :class="item.class" @click="common(item.name)"></i>
-                      </el-tooltip>
-                    </li>
-                   </transition-group>
-                </transition>             
-              </div> 
-            </el-tab-pane>
-        </el-tabs> 
-        <div :splitpanes-size="pan_2_2" class='show-pane'>
-            <div class="result-menu">
-              <el-tooltip content="清屏" placement="bottom" effect="light">
-                <i class="iconfont icon-qingkong" @click='clearResult'></i>
-              </el-tooltip>
-            </div>
-            <div class="showResult" ref="resShow" :style="{height: initHeight}">
-              <p
-              :class="{success:item.content.includes('成功'),
-              fail:item.content.includes('失败'),
-              ing:item.content.includes('正在')}"
-              v-for="(item,index) in result" 
-              :key="index" 
-              v-html="item.content">
-              </p>
-           </div>
-        </div>
+    <debug-pane></debug-pane>
+    <splitpanes :push-other-panes="true" watch-slots v-if="debugStatus">
+      <splitpanes :splitpanes-size="65" horizontal  watch-slots @resize="_updataWdHeight">
+        <el-tabs v-model="tab" type="card" :splitpanes-size="50" style="height:100%" class="visual-desc">
+          <el-tab-pane label="题目描述" name="desc">
+            <question-description  @openList="showListPane=true" @getContent="_getQuestionContent"></question-description>
+          </el-tab-pane>
+          <el-tab-pane label="可视化" name="visual">
+            <visual-pane></visual-pane>
+          </el-tab-pane>
+        </el-tabs>
+        <splitpanes :splitpanes-size="40"  watch-slots>
+          <variate-pane :splitpanes-size="50"></variate-pane>
+          <watch-pane :splitpanes-size="50"></watch-pane>
+        </splitpanes>
+        <wrong-data :splitpanes-size="10" ref="wrongData"></wrong-data>
       </splitpanes>
-        <div :splitpanes-size="pan_3" class='debug-pane'>
-            <el-tree :data="renderVariate" :props="defaultProps" :default-expand-all='true'></el-tree>
-        </div>
-        <div :splitpanes-size="pan_4" class='visual-pane'></div>
+      <splitpanes :splitpanes-size="35"  @resize="_updataOpPHeight" horizontal  watch-slots>
+        <editor-pane :splitpanes-size="75" ></editor-pane>
+        <output-pane :splitpanes-size="25" ref="outputPane"></output-pane>
+      </splitpanes>
+    </splitpanes>
+
+    <splitpanes  :push-other-panes="true" watch-slots v-if="!debugStatus">
+      <question-description :splitpanes-size="20"  @openList="showListPane=true" @getContent="_getQuestionContent"></question-description>
+      <splitpanes  :push-other-panes="true" watch-slots horizontal :splitpanes-size="80" @resize="_updataOpPHeight">  
+        <editor-pane :splitpanes-size="80" ></editor-pane>
+        <output-pane :splitpanes-size="20" ref="outputPane"></output-pane>
+      </splitpanes>
     </splitpanes>
   </div>
 </template>
@@ -130,766 +42,144 @@
 <script>
 import Splitpanes from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
-import ace from '../../components/aceEditor.vue'
-let ace_layer=document.querySelector(".ace_layer");
+import ace from 'components/aceEditor'
+
+import QuestionList from 'components/question-list'
+import QuestionDescription from 'components/question-description'
+import EditorPane from 'components/editor-pane'
+import OutputPane from 'components/output-pane'
+import VisualPane from 'components/visual-pane'
+import DebugPane from 'components/debug-pane'
+import WatchPane from 'components/watch-pane'
+import VariatePane from 'components/variate-pane'
+import WrongData from 'components/wrong-data'
+
+import * as fun from '@/api/coding'
+import {getCache,setSessionCache,getSessionCache} from 'static/cache.js';
+import {Question} from 'static/class'
+import {mapGetters,mapMutations} from 'vuex'
+
 export default {
     created () {
-      this.is_save=[]
-      this.user=JSON.parse(window.localStorage.getItem('user'))
-      if(this.$route.params.name){
-        let reqQuestion=this.$store.state.questionList.flat().find(item=>item.name==this.$route.params.name)    //数组扁平化之后再进行过滤
-        this.$store.dispatch('sendQuestionContentReq',{id:reqQuestion.eid,name:this.$route.params.name,pid:reqQuestion.pid})
-      }else{
-        this.$store.dispatch('sendQuestionListReq')
-      }
-      if(this.$route.params.code)
-        this.code = this.$route.params.code
+      window.addEventListener('beforeunload',this.beforeunloadFn)
       this.initHeight = `${document.documentElement.clientHeight*0.15}px`  //初始化输出框的高度
     },
     mounted() {
-      window.addEventListener('beforeunload', e => this.beforeunloadFn(e))
+      if(!this.courseName){
+        this.getCacheData()
+      }
     },
     destroyed() {
-      window.removeEventListener('beforeunload', e => this.beforeunloadFn(e))
-
+      window.removeEventListener('beforeunload', this.beforeunloadFn)
     },
     data () {
       return {
-        ace_theme:'katzenmilch',
-        ace_font_size: 15,
-        _thisMode: '',
-        horFunList:[
-          {name:'compile',class:'iconfont icon-bianyi',title:'编译'},
-          {name:'runGroup',class:'iconfont icon-chengzuyunxing',title:'运行'},
-          {name:'startDebug',class:'iconfont icon-tiaoshi',title:'调试'},
-          {name:'runSiginal',class:'iconfont icon-danzuyunxing',title:'单组运行'},
-          {name:'fillScreen',class:'iconfont icon-fangda',title:'全屏'},
-          {name:'saveAnswer',class:'iconfont icon-baocun',title:'保存'},
-          {name:'more',class:'iconfont icon-gengduo',title:'更多'},
-        ],
-        verFunList:[
-          {name:'continueDebug',class:'iconfont icon-jixu banClick',title:'继续调试'},
-          {name:'stepOver',class:'iconfont icon-xiayihang banClick',title:'下一步(不进入函数)'},
-          {name:'stepInto',class:'iconfont icon-xiayibu banClick',title:'下一步(进入函数)'},
-          {name:'repeatDebug',class:'iconfont icon-chongfujianli banClick',title:'重复调试'},
-          {name:'quitDebug',class:'iconfont icon-tingzhi banClick',title:'停止调试'}
-        ],
-        drawer: false,
-        showSetMenu: false,
-        questType: 0,
-        pan_1: 20,
-        pan_2: 70,
-        pan_3:10,
-        pan_4: 0,
-        pan_2_1: 85,
-        pan_2_2: 15,
-        initHeight: 1,
-        isFillScreen:false,
-        isSuccess: false,
-        isFail: false,
-        isQuestListOpen: false,
-        showVerList: false,
-        bpRow: '',
-        activeIcon:{
-          compile: 1,
-          run: 1,
-          debug: 1,
-          nextStep: 1,
-          more: 1
-        },
-        studentAnswer: '',
-        editableTabsValue: '1',
-        editableTabs: [],
-        tabIndex: 0,
-        user: {},
-        checked: true,
-        lineNum:1,
-        result:[],
-        variate:[],  //用于存放后端取到的变量数据
-        renderVariate:[],  //格式化后的变量数据
-        defaultProps: {
-          children: 'children',
-          label: 'label'
-        },
-        compileFlag: false,
-        debugFlag: false,
-        runSig: false
+        tab: "desc",
+        showListPane: true,
       }
     },
     methods: {
-      changeAnswer(val){  //输入框内容改变
-        let curr_name=this.$store.state.presentQuestion.name
-        if (this.studentAnswer != val) {
-          this.changeQueState(curr_name,false)
-          this.studentAnswer = val
-          this.beforeAnswer=this.studentAnswer
-        }
-      },
-      saveAnswer(){  //保存代码，改变题目保存状态
-        let curr_name=this.$store.state.presentQuestion.name
-        this.changeQueState(curr_name,true)
-      },
-      changeQueState(name,state){   //改变题目的保存状态，即改变小圆点
-        let tab_arr=this.editableTabs
-        this.editableTabs=tab_arr.map((item)=>(name==item.title)?Object.assign({},item,{_save:state}):item)
-      },
-      confirmSave(){    //提示是否保存代码
-         this.$confirm('是否要保存未保存的代码?', '提示', {
-          confirmButtonText: '保存',
-          cancelButtonText: '取消',
-          type: 'warning',
-          center: true
-        }).then(() => {
-          this.$message({
-            type: 'success',
-            message: '保存成功!'
-          });
-          this.common("saveAnswer")
-        }).catch(() => {
-            return false
-        });        
-      },
-      beforeunloadFn (e) {    //刷新窗口时执行的函数
-        if(this.runSig||this.debugFlag)
-          this.common('quitDebug') 
-          this.common('saveAnswer')
-      },
-      goTo(){
-        this.$router.push({
-            name: 'personalCenter'
-        })
-      },
-      hidSetMenu(){
-        this.showSetMenu=false 
-      },
-      setModes(e){
-        this._thisMode=='theme'
-        ?this.ace_theme=e.target.innerText
-        :this.ace_font_size=parseInt(e.target.innerText)
-      },
-      setEditor(command){
-         switch(command){
-           case '主题':
-            this._thisMode='theme'
-            this.modifyModes('theme')
-            break;
-           case '字体':
-            this._thisMode='font'
-            this.modifyModes('font')
-            break;  
-          //  case '帮助': 
-          //   this.help()
-          //   break;
-         }
-      },
-      modifyModes(flag){
-        this.showSetMenu=true
-        let arr1=['katzenmilch','chrome','github','eclipse','monokai','sqlserver','twilight']
-        let arr2=['12px','13px','14px','15px','16px','17px','18px','19px','20px']
-        this.setArr=(flag=='theme')?arr1:arr2
-        this.$nextTick(()=>{
-          this.$refs.setMenu.style.top=this.$refs.elDropdown.$el.offsetTop+'px'
-          this.$refs.setMenu.style.left=this.$refs.elDropdown.$el.offsetLeft+this.$refs.elDropdown.$el.offsetWidth+'px'
-        })
-      },
-      modifyDiv(e){ 
-        //这个地方通过修改vue中的data再绑定到style不行，会导致拉伸条不能动，只能通过ref的方式直接操作DOM，原因未知，猜测是拉伸库的源码做了限制
-        this.$refs.resShow.style.height=e[1].width*document.documentElement.clientHeight/100+'px'
-      },
-      fixButton(event){
-        this.$refs.topMenu.style.top=event.target.scrollTop+'px';
-        this.$refs.bottomMenu.style.bottom=-event.target.scrollTop+'px';
-      },
-      closeDebug() {
-        if(this.debugFlag){
-          this.$alert('请先关闭本题调试', {
-            confirmButtonText: '确定'
-          });
-          return false
-        }
-        return true
-      },
-      renderVar(variate){   //格式化变量数据
-        if(!Array.isArray(variate))
-          variate=[variate]
-        let arr=[];
-        for(let item of variate){
-            let temp={}
-            temp.label=item.name
-            temp.children=new Array({},{},{})
-            temp.children[0].label=`type: ${item.type}`
-            temp.children[1].label=`name: ${item.name}`
-            if(Array.isArray(item.value)){
-               temp.children[2].label=`value: ${item.value[0]}`
-               temp.children[2].children=this.renderVar(item.value[1])
-            }else{
-               temp.children[2].label=`value: ${item.value}`
-            }
-           arr.push(temp)
-        }
-        return arr
-      },
-      createBP(){   //添加或者移除断点（用了lowB的DOM操作
-        if(event.target.tagName==="CANVAS"){
-          this.bpRow=this.bpRow.replace(event.target.parentNode.innerText,'')  
-           event.target.parentNode.removeChild(event.target) 
-        }
-        if(event.target.classList.contains("ace_gutter-cell")){
-            this.bpRow+=`,${event.target.innerText}`    //获取行号
-            let canvas=document.createElement("canvas")
-            // canvas.id='cv'+(this.bpRow+1)
-            canvas.width=49
-            canvas.height=this.$refs.ace[0].lineHeight    //获取当前显示器下编辑器的行高
-            event.target.appendChild(canvas);
-            let bp=canvas.getContext("2d");
-            bp.fillStyle="#FF0000";
-            bp.beginPath();
-            bp.arc(25,8,5,0,Math.PI*2,true);
-            bp.closePath();
-            bp.fill();
-            // bp.clearRect(0,0,canvas.width,canvas.height);
-        }
-        console.log(this.bpRow);
-      },
-      mouseEvent(flag){   //设置图标被点击时的样式改变
-        if(event.srcElement.tagName==="I"){
-            switch(event.srcElement.title){
-              case "编译": (flag==="down")?this.activeIcon.compile=0.5:this.activeIcon.compile=1;break;
-              case "运行": (flag==="down")?this.activeIcon.run=0.5:this.activeIcon.run=1;break;
-              case "调试": (flag==="down")?this.activeIcon.debug=0.5:this.activeIcon.debug=1;break;
-              case "下一步": (flag==="down")?this.activeIcon.nextStep=0.5:this.activeIcon.nextStep=1;break;
-              case "更多": (flag==="down")?this.activeIcon.more=0.5:this.activeIcon.more=1;break;
-            }
-        }
-      },
-      updateTabData(targetIndex){
-        let activeIndex=this.editableTabsValue;
-        let tabs=this.editableTabs;
-        let preQuestnName=this.$store.state.presentQuestion.name
-        let delTab=tabs.find((item)=>item.name==targetIndex)
-        let delQuestionName=delTab.title
-            if(tabs.length==1)
-              return;
-            if (activeIndex === targetIndex) {  //关闭的标签是否为当前打开的题目
-                tabs.forEach((tab, index) => {
-                  if (tab.name === targetIndex) {
-                    let nextTab = tabs[index + 1] || tabs[index - 1];
-                    if (nextTab) {
-                      //更新当前题目
-                      preQuestnName=nextTab.title
-                      this.$store.state.activeQuestion.forEach((item)=>{
-                          if(item.name==preQuestnName){
-                              this.$store.commit('updatePresQues',item)
-                          }
-                        })
-                    }
-                  }
-                });
-            }
-            //更新标签数组，保证序号连接，更新当前标签的序号，更新标签长度
-            let filtTabs = tabs.filter(tab => tab.name !== targetIndex);
-            this.editableTabs= filtTabs.map((tab,index)=>Object.assign({},tab,{name:index+1+''}))
-            this.editableTabsValue= this.editableTabs.find(item=>item.title==preQuestnName).name
-            this.tabIndex--;
-            let delQuestion=this.$store.state.activeQuestion.find(item=>item.name==delQuestionName)
-            let act=JSON.parse(JSON.stringify(delQuestion))     //深拷贝
-            //更新打开的题目列表
-            this.$store.commit('updatedActiveQues',{act:act,flag:'move'})
-      },
-      addTab(targetName) {      //增加标签
-        let flag = this.editableTabs.every((item)=>{  //是否点击了重复标签
-          if(item.title===targetName)
-            return false
-          else
-            return true
-        })
-        if(flag){         
-          let newTabName = ++this.tabIndex + '';
-          let newTab = { 
-            title: targetName,
-            name: newTabName,
-            _save: true
-          }
-          this.editableTabsValue = newTabName;
-          this.editableTabs.push(newTab);
+      _getQuestionContent(_question){
+        let index = Number(_question.eid)
+        let openQuestions = this.openQuestions
+        let question = openQuestions.get(index)
+        if(question){
+          this.updateCurrentData({index,question})
         }else{
-            for(let i=0;i<this.editableTabs.length;i++){
-              if(this.editableTabs[i].title==targetName){ 
-                  this.editableTabsValue = this.editableTabs[i].name
-                  break
-              }
+          fun.getQuestionContent(_question.eid).then((e) => {
+            const id = _question.eid
+            const name = _question.name
+            const number = _question.number
+            const  description = e.content.questionContent.questionDescription
+            const answer =  e.content.questionContent.studentAnswer
+            const newAnswer = e.content.questionContent.studentAnswer
+            const content = e.content
+            const saveStatus = true
+            const compileStatus = false
+            const debugStatus = false
+            let question = new Question({id, name, number, description, answer, newAnswer,content, saveStatus,compileStatus,debugStatus})
+            this.updateCurrentData({index,question,openQuestions})
+          }) 
+        }
+      },
+      updateCurrentData({index,question,openQuestions}) {
+          //更新当前题目索引
+          this.setCurrentIndex(index)
+          //更新当前题目
+          this.setCurrentQuestion(question)
+          //更新已打开题目数组
+          if(openQuestions){
+            openQuestions.set(index, question)
+            this.setOpenQuestions(openQuestions)
           }
-        }
       },
-      removeTab(targetIndex) {    //关闭标签
-        // this.common('saveAnswer')
-        if(!this.closeDebug())
-           return
-        let tabs=this.editableTabs;   
-        let delTab=tabs.find((item)=>item.name==targetIndex)
-        if(!delTab._save){
-          this.$confirm('是否要保存未保存的代码?', '提示', {
-            confirmButtonText: '保存',
-            cancelButtonText: '取消',
-            type: 'warning',
-            center: true
-          }).then(() => {
-            this.$message({
-              type: 'success',
-              message: '保存成功!'
-            });
-             this.common("saveAnswer")
-             this.updateTabData(targetIndex)
-          }).catch(() => {
-              this.updateTabData(targetIndex)
-          });  
-        }else{
-          this.updateTabData(targetIndex)
-        }
-       },  
-      clickTab(target){  //手动点击tab切换当前题目
-         if(!this.closeDebug())
-           return
-         if(this.$store.state.presentQuestion.name!=target.label){
-           this.editableTabsValue = target.name
-           this.$store.commit('updatePresQues',this.$store.state.activeQuestion.find(item=>item.name==target.label))
-         }
-       },
-      lastQuestion(){
-        // this.common('saveAnswer')
-        if(!this.closeDebug())
-           return
-        let state=this.$store.state
-        if(state.presentQuestion.name=='第1题'||this.$store.state.activeQuestion.length==1)
-          return
-        let questionName=`第${state.presentQuestion.name.replace(/[^0-9]/ig,"")-1}题`;
-        let presQuestion=state.activeQuestion.find(item=>item.name==questionName)
-        let reqQuestion=state.questionList.flat().filter(item=>item.name==questionName)   //数组扁平化之后再进行过滤
-        presQuestion
-        ?this.$store.commit('updatePresQues',presQuestion)
-        :this.$store.dispatch('sendQuestionContentReq',{id:reqQuestion.eid,name:questionName,pid:reqQuestion.pid})
+      openQuestionList() {
+        this.showListPane = true
       },
-      nextQuestion(){
-        // this.common('saveAnswer')
-        if(!this.closeDebug())
-           return
-        let state=this.$store.state
-        if(state.presentQuestion.name==`第${state.questionList.flat().length}题`)
-          return
-        let questionName=`第${Number(state.presentQuestion.name.replace(/[^0-9]/ig,""))+1}题`;
-        let presQuestion=state.activeQuestion.find(item=>{
-          return item.name==questionName
-        })
-        let reqQuestion=state.questionList.flat().find(item=>{    //数组扁平化之后再进行过滤
-          return item.name==questionName
-        })
-        presQuestion
-        ?this.$store.commit('updatePresQues',presQuestion)
-        :this.$store.dispatch('sendQuestionContentReq',{id:reqQuestion.eid,name:questionName,pid:reqQuestion.pid})
+      _updataOpPHeight(e) {
+        this.$refs.outputPane.updataOpPHeight(e)
       },
-      fillScreen(){
-           if(this.isFillScreen){
-              for(let i=0;i<this.horFunList.length;i++){  //更换图标
-                  if(this.horFunList[i].name=='fillScreen'){
-                    this.horFunList[i].class=this.horFunList[i].class.replace('icon-fangda','icon-suoxiao')
-                    break;
-                  }
-              }
-              this.$nextTick(()=>{
-                this.$el.querySelector('.code-pane').scrollTop=this.$el.querySelector('.code-pane').scrollHeight
-                this.$el.querySelector('.code-pane').parentNode.style.height=100+'%'
-                this.$el.querySelector('.show-pane').parentNode.style.height=0+'%'
-                this.$el.querySelector('.question-content').parentNode.style.width=0+'%'
-                this.$el.querySelector('.editor-pane').parentNode.style.width=100+'%'
-                this.$el.querySelector('.debug-pane').parentNode.style.width=0+'%'
-                this.$el.querySelector('.visual-pane').parentNode.style.width=0+'%'
+      _updataWdHeight(e) {
+        this.$refs.wrongData.updataWdHeight(e)
+      },
+      getCacheData() {
+        let _questionList = JSON.parse(getSessionCache("questionList"))
+        let _courseName = getSessionCache("courseName")
+        this.setQuestionList(_questionList)
+        this.setCourseName(_courseName)  
+      },
+      setCacheData() {
+        let _questionlist = JSON.stringify(this.questionList)
+        let _courseName = this.courseName
+        setSessionCache("questionList", _questionlist)
+        setSessionCache("courseName",_courseName)
+      },
+      beforeunloadFn() {    //刷新窗口时执行的函数
+        this.setCacheData()
+      },
 
-              })
-            }
-            else{
-              for(let i=0;i<this.horFunList.length;i++){
-                  if(this.horFunList[i].name=='fillScreen'){
-                    this.horFunList[i].class=this.horFunList[i].class.replace('icon-suoxiao','icon-fangda')
-                    break;
-                  }
-              }
-              this.$nextTick(()=>{
-                this.$el.querySelector('.code-pane').scrollTop=0
-                this.$el.querySelector('.code-pane').parentNode.style.height=85+'%'
-                this.$el.querySelector('.show-pane').parentNode.style.height=15+'%'
-                this.$el.querySelector('.question-content').parentNode.style.width=20+'%'
-                this.$el.querySelector('.editor-pane').parentNode.style.width=70+'%'
-                this.$el.querySelector('.debug-pane').parentNode.style.width=10+'%'
-                this.$el.querySelector('.visual-pane').parentNode.style.width=0+'%'
-
-              })
-            }
-        },
-      clearResult(){
-        this.result=[]
-      },
-      createsolveTrend(rightNum,errorNum){      //创建每次运行产生的消息对象，以便在个人界面中浏览
-        let a={}
-        a.chapName=this.$store.state.presentQuestion.content.questionFullName.substr(0,3)
-        a.name=this.$store.state.presentQuestion.name
-        a.rightNum=rightNum
-        a.errorNum=errorNum
-        a.time=`${new Date().getFullYear()}/${new Date().getMonth() + 1}/${new Date().getDate()} ${new Date().getHours()}:${new Date().getMinutes()}`
-        return a
-      },
-      common(flag){  //编辑器所有按钮的总入口
-        let sendMsg=''
-        let fun=''
-        switch(flag){
-          case 'compile':
-            if(this.debugFlag)
-              return
-            this.result.push({name:'compiling',content:'正在编译...<i class="el-icon-loading"></i>'})
-            this.$store.commit('updateAnswer',this.studentAnswer)
-            sendMsg={
-              type: 10,
-              content: {
-                  questionRes:this.$store.state.presentQuestion.content,
-                  questionId: this.$store.state.presentQuestion.id,
-                  eId: this.$store.state.presentQuestion.id,
-                  schemeId: this.$store.state.schemeId,
-                  studentId: JSON.parse(localStorage.getItem('user')).id 
-              }
-            }
-            fun=this.getCompileRes
-            break;
-
-          case 'runGroup':
-            if(!this.compileFlag){
-              this.result.push({name:'runError',content:'请先编译！'})
-            }
-            if(this.debugFlag)
-             return
-             this.result.push({name:'running',content:'正在运行...<i class="el-icon-loading"></i>'})
-              sendMsg={
-                type: 161,
-                content: {
-                  questionFullName: this.$store.state.presentQuestion.content.questionFullName,
-                  // questionId: this.$store.state.presentQuestion.id,
-									eID: this.$store.state.presentQuestion.id,
-                  schemeId: this.$store.state.schemeId,
-                  studentId: JSON.parse(localStorage.getItem('user')).id                   
-                }
-              }
-              fun=this.getRunGroupRes
-            break;
-
-          case 'runSiginal':
-            if(!this.compileFlag){
-              this.result.push({name:'runError',content:'请先编译！'})
-              return
-            }
-            if(this.debugFlag)
-             return
-            sendMsg={
-              type: 11,
-              content:{
-                questionFullName: this.$store.state.presentQuestion.content.questionFullName
-              }
-            }
-            fun=this.getRunSiginalRes
-            break;
-
-          case 'startDebug':
-            if(!this.compileFlag){
-              this.result.push({name:'debugError',content:'请先编译！'})
-              return
-            }
-            if(this.runSig){
-              this.common('quitDebug')
-            }
-            if(this.debugFlag)
-             return
-            this.result.push({name:'startDebuging',content:'开启调试中...<i class="el-icon-loading"></i>'})
-            sendMsg={
-              type: 1,
-              content: {
-                bp: this.bpRow.substring(1),
-                questionFullName: this.$store.state.presentQuestion.content.questionFullName
-              } 
-            }
-            fun=this.getStartDebugRes
-            break;         
-          case 'stepInto':
-            if(!this.debugFlag)
-             return
-            sendMsg={
-              type: 2,
-              content: {
-                bp: this.bpRow.substring(1),
-                questionFullName: this.$store.state.presentQuestion.content.questionFullName
-              } 
-            }
-            fun=this.getStepIntoRes
-            break;
-
-          case 'stepOver':
-            if(!this.debugFlag)
-             return
-            sendMsg={
-              type: 121,
-              content: {
-                bp: this.bpRow.substring(1),
-                questionFullName: this.$store.state.presentQuestion.content.questionFullName
-              } 
-            }
-            fun=this.getStepOverRes
-            break;
-
-          case 'quitDebug':
-            sendMsg={
-              type: 141,
-              content: {
-                bp: this.bpRow.substring(1),
-                questionFullName: this.$store.state.presentQuestion.content.questionFullName
-              } 
-            }
-            fun=this.getQuitDebugRes
-            break; 
-
-          case 'continueDebug':
-            if(!this.debugFlag)
-             return
-            sendMsg={
-              type: 191,
-              content: {
-                bp: this.bpRow.substring(1),
-                questionFullName: this.$store.state.presentQuestion.content.questionFullName
-              } 
-            }
-            fun=this.getContinueDebugRes
-            break;
-          case 'repeatDebug':
-            if(!this.debugFlag)
-             return
-            sendMsg={
-              type: 23,
-              content: {
-                bp: this.bpRow.substring(1),
-                questionFullName: this.$store.state.presentQuestion.content.questionFullName
-              } 
-            }
-            fun=this.getRepeatDebugRes
-            break;
-          case 'saveAnswer':
-            this.$store.commit('updateAnswer',this.studentAnswer)
-            sendMsg={
-              type: 82,
-              content: {
-                  questionRes:this.$store.state.presentQuestion.content,
-                  questionId: this.$store.state.presentQuestion.id,
-                  eId: this.$store.state.presentQuestion.id,
-                  schemeId: this.$store.state.schemeId,
-                  studentId: JSON.parse(localStorage.getItem('user')).id 
-              }
-            }
-            fun=this.saveAnswer
-            break;
-          case 'fillScreen':
-            this.isFillScreen=!this.isFillScreen
-            this.fillScreen()
-            break; 
-          case 'more':
-            this.showVerList=!this.showVerList
-            break;
-        }
-        setTimeout(()=>{
-             this.sendReq(sendMsg,fun)
-        },20)
-      },
-      updateNum(...args){    //更新题目的运行和编译的成功与失败次数
-        let state_list=this.$store.state.questionList
-        let state_pre=this.$store.state.presentQuestion
-        for(let i=0;i<state_list.flat().length;i++){
-          if(state_list.flat()[i].eid==state_pre.id){
-            if(args[args.length-1]=='cmp')
-              if(args[0]==-1)
-                if(state_list.flat()[i].cmpErrorCount)
-                  state_list.flat()[i].cmpErrorCount++
-                else
-                  state_list.flat()[i].cmpErrorCount=1
-              else{
-                state_list.flat()[i].cmpErrorCount=args[0]
-                state_list.flat()[i].cmpRightCount=args[1]
-              }
-            else{
-                state_list.flat()[i].runErrCount=args[0]
-            }
-            // state_list[i].runErrCount=runE
-            // state_list[i].runResult=runR
-            break;  
-          }
-        }
-        this.$store.commit('updateQuestionList',state_list)
-      },
-      sendReq(sendMsg,fun){
-        if(sendMsg===''&&fun==='')
-        return
-         this.socket.sendSock(sendMsg,fun)
-      },
-      getCompileRes(e){
-        let content,cmpE=-1,cmpR=-1;
-        this.result.pop()  //删除编译中的消息，让编译成功或者编译失败代替
-        if(e.content.result){
-          this.compileFlag=true
-          content='编译成功'
-          cmpE=e.content.cmpErrorCount
-          cmpR=e.content.cmpCount-e.content.cmpErrorCount
-        }else{
-          this.compileFlag=false
-          for (let i = 0; i < e.content.length; i++) {
-            if(e.content[i]=='I')
-             if(e.content[i+1]=='n'){
-              e.content=e.content.slice(0,i-1)+'<br/>'+e.content.slice(i)
-              i=i+4
-            }
-         }
-         content=e.content
-        }
-         this.result.push({name:'compileRes',content:content})
-         this.updateNum(cmpE,cmpR,'cmp')  
-      },
-      getRunGroupRes(e){
-        if(e.content.result.includes("成功"))
-          this.questType=2
-        this.$store.state.solveTrends.push(this.createsolveTrend(e.content.right_num,e.content.error_num))
-        this.result.pop()
-        this.result.push({name:'runGroupRes',content:e.content.output})
-        this.result.push({name:'num',content:`正确次数: ${e.content.right_num}&nbsp;&nbsp;错误次数: ${e.content.error_num}`})
-        this.updateNum(e.content.runErrCount,'run') 
-      },
-      getRunSiginalRes(e){
-        this.runSig=true
-        this.result.push({name:'runSiginalRes',content:e.content.output})
-      },
-      getStartDebugRes(e){
-        this.result.pop();
-        if(e.content.error=="")
-          this.debugFlag=true
-        this.result.push({name:'startDebugRes',content:`开启调试 ：${e.content.output}`})
-        this.variate=e.content.variate
-        this.renderVariate=this.renderVar(this.variate)
-        this.lineNum=e.content.lineNum
-      },
-      getStepOverRes(e){
-        if(e.content.output.includes('Quit')
-        ||this.$refs.ace[this.editableTabsValue-1].aceEditor.session.getLength()<e.content.lineNum){
-          this.common('quitDebug')
-          return
-          }
-        this.result.push({name:'nextStep',content:e.content.output})  
-        this.variate=e.content.variate
-        this.renderVariate=this.renderVar(this.variate)
-        this.lineNum=e.content.lineNum
-      },
-      getStepIntoRes(e){
-        if(e.content.output.includes('Quit')
-        ||this.$refs.ace[this.editableTabsValue-1].aceEditor.session.getLength()<e.content.lineNum){
-          this.common('quitDebug')
-          return
-          }
-        this.variate=e.content.variate
-        this.renderVariate=this.renderVar(this.variate)
-        this.lineNum=e.content.lineNum
-      },
-      getQuitDebugRes(e){
-        this.renderVariate=[]
-        this.debugFlag=false
-        this.result.push({name:'quitDebugRes',content:"终止调试！"})
-      },
-      getContinueDebugRes(e){
-        this.lineNum=e.content.lineNum
-        this.variate=e.content.variate
-        this.renderVariate=this.renderVar(this.variate)
-      },
-      getRepeatDebugRes(e){
-        console.log(e);
-      },
-      getQuestionContent(id,name,pid){
-        if(!this.closeDebug())
-           return
-        // this.common('saveAnswer')
-        //判断点击的是否是当前题，是就直接retuern
-        if(id==this.presentQuestion.id)
-          return 
-        //若点击已经打开的题目，则不会再发送请求,直接在vuex中获取之前的题目
-        let activeQuestion=this.$store.state.activeQuestion
-        let pre=activeQuestion.find(item=>item.id==id)
-        pre
-        ?this.$store.commit('updatePresQues',pre)
-        :this.$store.dispatch('sendQuestionContentReq',{id,name,pid})
-      },
+      ...mapMutations({
+        setQuestionList: 'SET_QUESTION_LIST',
+        setCourseName: 'SET_COURSE_NAME',
+        setCurrentQuestion: 'SET_CURRENT_QUESTION',
+        setCurrentIndex: 'SET_CURRENT_INDEX',
+        setOpenQuestions: 'SET_OPEN_QUESTIONS'
+      }) 
     
     },
-    watch:{
-        compileFlag(){
+    computed:{
+        openQuestions() {
+          return new Map(this.openQuestionsArr)
         },
-        debugFlag(){    //监听调试是否开启并改变相应图标样式
-          if(this.debugFlag){
-            //显示高亮条并将其作为编辑器的子元素，否则会相对编辑器的容器定位，代码滚动时会出错
-            this.$refs.dbhl[this.editableTabsValue-1].style.display='block'
-            this.$refs.dbhl[this.editableTabsValue-1].style.height=this.$refs.ace[this.editableTabsValue-1].aceEditor.renderer.lineHeight+'px'
-            this.verFunList=this.verFunList.map((item)=>{let a=item;a.class=a.class.replace('banClick','');return a;})
-            this.horFunList=this.horFunList.map((item)=>{item.class+=' banClick';return item})
-            if(!this.showVerList)
-              this.common('more')
-          }
-          else{
-            this.$refs.dbhl[this.editableTabsValue-1].style.display='none'
-            this.verFunList=this.verFunList.map((item)=>{item.class+=' banClick';return item})
-            this.horFunList=this.horFunList.map((item)=>{let a=item;a.class=a.class.replace('banClick','');return a;})
-            if(this.showVerList)
-              this.common('more')
-          }
-         },
-        lineNum(){  //移动调试高亮光标
-          this.$refs.dbhl[this.editableTabsValue-1].style.top=`${this.$refs.ace[this.editableTabsValue-1].aceEditor.renderer.lineHeight*(this.lineNum-1)}px`
-          this.$refs.ace[this.editableTabsValue-1].aceEditor.container.appendChild(this.$refs.dbhl[this.editableTabsValue-1])
+        debugStatus() {
+          return this.currentQuestion.debugStatus
         },
-        result() {
-          this.$nextTick(() => {
-            let container = this.$el.querySelector(".showResult");
-            let height=container.scrollHeight
-            let top=container.scrollTop         
-            for(let i=0;i<height-top;i++){   //使用定时器让滚动条慢慢滚到底部,此处循环次数待定
-              setTimeout(function(){
-                container.scrollTop++;
-              },0.8*i)
-            }
-          })
-        }, 
-        presentQuestion(){  //配合watch监听当前页面所在题目
-          // 更新题目内容
-          this.bpRow=''    //清除上一道题的断点信息
-          clearTimeout(this.timer)
-          this.$store.commit('updatedQuestDesc',this.$store.state.presentQuestion.content.questionContent.questionDescription)
-          if(this.$store.state.presentQuestion.name)   
-            this.addTab(this.$store.state.presentQuestion.name)
-          this.timer=setTimeout(()=>{
-            this.studentAnswer=this.$store.state.presentQuestion.content.questionContent.studentAnswer
-          },20)
-        }
-      },
-    computed:{  
-        presentQuestion(){    //配合watch监听当前页面所在题目
-          return this.$store.state.presentQuestion
-        }
-        
+        ...mapGetters([
+          "questionList",
+          "courseName",
+          "questionDescription",
+          "currentQuestion",
+          "openQuestionsArr"
+        ]),
       },
       components: {
         Splitpanes,
-        ace
+        ace,
+        QuestionList,
+        QuestionDescription,
+        EditorPane,
+        DebugPane,
+        VisualPane,
+        OutputPane,
+        WatchPane,
+        VariatePane,
+        WrongData
    }
 }
 </script>
 
 <style>
-/*基本样式开始*/
+  /*基本样式开始*/
 html{
     height: 100%;
     /* overflow:hidden; */
@@ -903,15 +193,13 @@ ul{
    white-space:nowrap;
    list-style: none;
    padding: 0;
+   margin: 0;
 }
-.float-layer{
-  position: fixed;
-  height: 100%;
-  background-color: #848484;
-  opacity: 0.5;
-  z-index: 999;
+li{
+  display: inline-block;
+  padding: 0 10px;
 }
-.father{
+.code-pane{
     font: 500 16px/20px "Microsoft yahei";
     height: 100%;
     width: 100%;
@@ -922,13 +210,15 @@ ul{
 
 .splitpanes--vertical > .splitpanes__splitter {
   position: relative;
-  min-width: 9px;
+  min-width: 11px !important;
   background-color: #fff;
+  cursor: ew-resize	;
 }
 .splitpanes--horizontal > .splitpanes__splitter {
   position: relative;
-  min-height: 9px;
+  min-height: 11px;
   background-color: #fff;
+  cursor: ns-resize;
 }
 .splitpanes--vertical > .splitpanes__splitter::before {
   margin-left: -2px;
@@ -975,232 +265,43 @@ ul{
 	background-color: rgba(0,0,0,0.4);
 }
 /*基本样式结束*/
+</style>
 
-/* 问题内容板块开始 */
-.question-content{
-     position: relative;
-     height: 100%;
-     overflow-y: scroll;
-     overflow-x: hidden;
-     transition: all 0.5s ease;
-}
-.question-desc{
-  position: absolute;
-  top: 5%;
-  height: 0;
-  width: 100%;
-  height: 100%;
-}
-.question-desc p{
- border: #888888 1px solid; 
- margin: 10px;
- padding: 10px;
-}
-.question-menu-top,.question-menu-bottom{
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: 5%;
-  background-color: white;
-  transition: background-color 0.6s ease;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  z-index: 5;
-}
-.question-menu-top{
-  top: 0;
-  padding-top: 10px;
-}
-.question-menu-bottom{
-  bottom: 0;
-  padding-bottom: 10px;
-}
-.questContent-color{
-  background-color: rgba(0,0,0,0.5);
-}
-.menu-color{
-  background-color: rgba(0,0,0,0);
-}
-.setting-menu{
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  z-index: 2011;
-  margin: 5px 0.8px;
-  border: 1px solid #EBEEF5;
-  background-color: #FFF;
-  color: #303133;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
-}
-.setting-menu li{
-  padding: 7px 30px;
-  cursor: pointer;
-}
-.setting-menu li:hover{
-    background-color: #f5f7fa;
-    color: #409eff;
-}
-/* 问题内容板块结束 */
-
-/* 问题列表开始 */
+<style lang="scss">
 .el-drawer{
-  height: 90%;
-  padding: 15px;
-  overflow: auto!important; 
+    height: 90%;
+    padding: 15px;
+    overflow: auto!important; 
 }
-.question-name{
-  font-size: 14px;
-  padding: 5px 5px; 
-  cursor: pointer;
-}
-.question-name span{
-  display: block;
-}
-.quest-situation i{
-  padding: 1px;
-  font-size: 12px;
-}
-.question-name:hover{
-    background-color: #f5f7fa;
-    color: #409eff;
-}
-.el-collapse-item__header{
-  font-size: 18px;
-}
-.close-btn{
-  position: absolute;
-  top: 1%;
-  right: 4%;
-}
-/* 问题列表结束 */
 
 /* 编码面板开始 */
-.el-tabs__header{
+ .el-tabs__header{
   margin-bottom: 0px;
   border-bottom: 1px solid transparent!important;
 }
-.el-tabs__item{
-  height: 30px;
+.el-tabs__item {
+  padding: 0 10px;
   line-height: 30px;
-  font-size: 12px;
-}
-.code-pane,.el-tabs__content,.el-tab-pane{
-  height: 100%;
-}
-.el-tab-pane,.code-pane{ 
-  overflow-y: scroll;
-}
-  /*将code-pane的大滚动条调小，因为如果大的话会和el-tab-pane的滚动条相近，效果不好*/
-.code-pane::-webkit-scrollbar   {
-	width: 0.01px;
-	background-color: white;
-}
-.code-pane::-webkit-scrollbar-thumb
-{
-	background-color: white;
+  height: 30px;
 }
 canvas{
   position: absolute;
   left: -10px;
   z-index: 33;
 }
-.funMenu{
-  position: absolute;
-  width: 50%;
-  height: 25px;
-  top: 0;
-  right: 0;
-}
-.horizontal-list{
-  position: relative;  /*设置层级需定位 */
-  height: 30px;
-  margin: 0;
-  margin-right: 20px;
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  z-index: 2;
-}
-.horizontal-list li{
-  margin-left: 20px;
-  float: right;
-}
-.vertical-list{
-  position: relative;  /*设置层级需定位 */
-  width: 14px;
-  float: right;
-  margin: 0;
-  margin-right: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  z-index: 2;
-}
-.vertical-list li{
-  margin-bottom: 10px;
-}
-.show-pane{
-  position: relative;
-}
-.showResult{
-  /* padding: 0px 10px; */
-  margin: 0px;
-  overflow-y: scroll;
-}
-.result-menu{
-  position: absolute;
-  margin: 0px 20px;
-  top: 0;
-  right: 0;
-  display: flex; 
-  justify-content: flex-end;
-  line-height: 16px;
-}
-.fail{
-  background-color: #f2dede;
-  color: #a94442;
-}
-.success{
-  color: #21d376;
-}
-.ing{
-  color: DarkGray;
-}
-.banClick:before{
-  color: #848484!important;
-}
-.debug-highlighted{
-  position: absolute;
-  left: 0;
-  width: 100%;
-  background-color: rgba(255,10,10,0.2);
-  display: none;
-  z-index: 1;
-  transition: top 0.2s;
-}
-.ace_gutter-cell,#breakPoint{
+.ace_gutter-cell{
   cursor: pointer;
 }
-/* 过渡效果开始 */
-.verList-enter,.verList-leave-to{
-   transform: translateY(0);
-   opacity: 1;
+/* #pane-desc{
+  display: flex;
+} */
+.el-tabs {
+  display: flex;
+  flex-direction: column;
 }
-.verList-enter-active, .verList-leave-active {
-  transition: all .5s;
+.el-tabs__content,.el-tab-pane{
+  flex: 1;
+  display: flex;
 }
-.verList-enter, .verList-leave-to {
-   transform:translateY(-30px);
-   opacity: 0;
-}
-/* 过渡效果结束 */
 /* 编码面板结束 */
-
-/* 调试面板开始 */
-#pane_2{
-  overflow: scroll;
-}
-/* 调试面板结束 */
 </style>

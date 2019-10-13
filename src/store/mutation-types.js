@@ -1,3 +1,9 @@
-/*
-包含n个mutation的type名称的常量，用来注册函数名
-*/
+
+export const SET_QUESTION_LIST = 'SET_QUESTION_LIST'
+export const SET_COURSE_NAME = 'SET_COURSE_NAME'
+export const SET_CURRENT_QUESTION = 'SET_CURRENT_QUESTION'
+export const SET_CURRENT_INDEX = 'SET_CURRENT_INDEX'
+export const SET_OPEN_QUESTIONS = 'SET_OPEN_QUESTIONS'
+export const SET_STUDENT_ANSWER = 'SET_STUDENT_ANSWER'
+export const SET_OUTPUT_DATA = 'SET_OUTPUT_DATA'
+export const SET_DEBUG_DATA = 'SET_DEBUG_DATA'

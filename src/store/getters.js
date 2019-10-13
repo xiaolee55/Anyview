@@ -1,10 +1,40 @@
-/*
-基于state的getter计算属性的对象
-*/
-export default {
-    getQuestDesc: (state)=>{
-        // console.log(state);
-        // return state.presentQuestion.content.questionContent.questionDescription
-        // return 'a'
-      }
+export const questionList = (state) => {
+  
+  if(Array.isArray(state.questionList[0]))
+    return state.questionList
+
+  // 将获取到的一维数组格式化为二维数组，分章节，章节里面分题目
+  let list=new Array()
+  let tempArr= new Array()
+  let temp=state.questionList[0]
+  state.questionList.forEach((item,index)=>{           
+    item.name=`第${index+1}题`
+    item.number= index
+    if(item.chapName != temp.chapName){
+      list.push(tempArr)
+      tempArr=new Array()
+    }
+    tempArr.push(item)
+    temp=item
+    })        
+    list.push(tempArr)
+    return list
 }
+
+export const courseName = state => state.courseName
+
+export const currentQuestion = state => state.currentQuestion ? state.currentQuestion : {}
+
+export const openQuestionsArr = state => Array.from(state.openQuestions)
+
+export const currentIndex = state => state.currentIndex
+
+export const questionDescription = state => state.currentQuestion ? state.currentQuestion.description : ""
+
+export const studentAnswer = state => state.currentQuestion ? state.currentQuestion.answer : ""
+
+export const outputData = state => state.outputData
+
+export const currentOutput = state => state.outputData[state.currentIndex]
+
+export const currentDebug = state =>  state.debugData[state.currentIndex] ? state.debugData[state.currentIndex] : {}
