@@ -1,4 +1,4 @@
-const dataTree = [
+export const dataTree = [
     {
         id: 1,
         root: true,
@@ -62,7 +62,7 @@ const dataTree = [
 
 
 
-const dataLinkList = [
+export const dataLinkList = [
     {
         id: 1,
         root: true,

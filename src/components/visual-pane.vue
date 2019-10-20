@@ -7,9 +7,8 @@
 
 <script>
 import {TreeVisualization} from 'static/boundle'
-import {dataTree} from 'static/data'
-import {newDataTree} from 'static/data_new'
-
+import {dataTree} from 'common/js/data'
+import {newDataTree} from 'common/js/data_new'
 export default {
   mounted() {
     this.main = new TreeVisualization(document.getElementById("container"),1000,600)
@@ -29,5 +28,4 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 </style>

@@ -2,7 +2,29 @@
     <el-tabs v-model="nowIndex"  
              type="card"  
              class="editor-tabs"
-             @tab-click="clickTab">
+             :before-leave="beforeLeave">
+          <div class="fun-menu">
+              <ul class="horizontal-list">
+                <li>
+                  <i class="iconfont icon-bianyi" 
+                      title="编译(F5)" 
+                      @click="compile"
+                     :class="{'ing':iconStatus.compile==1,'not-ing': iconStatus.compile==2}"></i>
+                </li>
+                <li>
+                  <i class="iconfont icon-chengzuyunxing" title="运行(F7)" @click="runGroup"
+                    :class="{'ing':iconStatus.runGroup==1,'not-ing': iconStatus.runGroup==2}"></i>
+                </li>
+                <li>
+                  <i class="iconfont icon-tiaoshi" title="调试(F8)" @click="startDebug"
+                     :class="{'ing':iconStatus.debug==1,'not-ing': iconStatus.debug==2}"></i>
+                </li>
+                <li>
+                  <i class="iconfont icon-baocun" title="保存(Ctrl+S)" @click="saveAnswer(currentQuestion.newAnswer)"
+                     :class="{'ing':iconStatus.save==1,'not-ing': iconStatus.save==2}"></i>
+                </li>
+              </ul>          
+          </div>
       <el-tab-pane v-for="item in openQuestionsArr" 
                    :key="item[0]"
                    :name="`${item[0]}`"
@@ -11,27 +33,17 @@
         <span slot="label">
           <i class="iconfont icon-c"></i>
           <span>{{item[1].name}}</span>
-          <i :class="item[1].saveStatus? 'el-icon-close' : 'iconfont icon-yuan' "  :id="`${item[0]}`"  @click.stop="removeTab"></i>
+          <i :class="item[1].saveStatus? 'el-icon-close' : 'iconfont icon-yuan' "  :id="`${item[0]}`" @click.stop="removeTab"></i>
         </span>
           <ace :content= "item[1].answer"
                 :debugLine= "debugLine"
                 @changeContent= "changeContent" 
-                @getVal= "saveAnswer" 
+                @save= "saveAnswer"
+                @compile= "compile"
+                @runGroup= "runGroup"
+                @debug= "startDebug"
                 @setBP= "setBP">
           </ace>
-          <div class="fun-menu">
-              <ul class="horizontal-list">
-                <li>
-                  <i class="iconfont icon-bianyi" title="编译" @click="compile"></i>
-                </li>
-                <li>
-                  <i class="iconfont icon-chengzuyunxing" title="运行" @click="runGroup"></i>
-                </li>
-                <li>
-                  <i class="iconfont icon-tiaoshi" title="调试" @click="startDebug"></i>
-                </li>
-              </ul>          
-          </div>
       </el-tab-pane>
     </el-tabs>
 </template>
@@ -40,19 +52,52 @@
 import ace from 'components/aceEditor'
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
+import {analyseToVisual} from 'common/js/analyseToVisual.js'
 import {mapGetters,mapMutations,mapActions} from 'vuex'
   export default {
+    data () {
+      return {
+        iconStatus: {
+          compile: 0,
+          runGroup: 0,
+          debug: 0,
+          save: 0
+        }
+      }
+    },
     methods: {
       setBP(bp) {
         const index = this.currentIndex
         const _obj = {"bp" : bp.join(",")}
         this.setDebugData({index,_obj})
       },
+      changeIconStatus(iconKey){
+        Object.keys(this.iconStatus).forEach((key)=>{
+          this.iconStatus[key] = (key == iconKey) ? 1 : 2
+        })
+      },
+      resetIconStatus() {
+        Object.keys(this.iconStatus).forEach((key)=>{
+          this.iconStatus[key] = 0
+        })
+      },
+      checkIconStatus() {   //只要有任一个图标不是0（正常状态），则返回false，表明有状态在执行
+        let flag = true   //forEach return无效
+        Object.keys(this.iconStatus).forEach((key)=>{
+         if(this.iconStatus[key] != 0){
+            flag = false
+          }
+        })
+        return flag
+      },
       compile(event,_fun=()=>{}) {
         if(this.debugStatus){
           this.promptCloseDebug('请先关闭调试')
           return
         }
+        if(!this.checkIconStatus())   //有其他动作未结束则返回
+          return
+        this.changeIconStatus("compile")  //进行中，修改图标样式
         const res = this.currentQuestion
         const index = this.currentIndex
         res.content.questionContent.studentAnswer = res.newAnswer
@@ -65,6 +110,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
 
         fun.getCompileMsg(content).then((e)=>{
           if(e.type == types.COMPILE_SUCCESS_TYPE){
+            this.resetIconStatus()  //动作结束，修改图标样式
             this.updataOutputData()  //编译返回数据后删除‘编译中’的提示
             const _content = format(e.content)
             if(_content) {
@@ -96,6 +142,9 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
           this.promptCloseDebug('请先关闭调试')
           return
         }
+        if(!this.checkIconStatus())
+          return
+        this.changeIconStatus("runGroup")  //进行中，修改图标样式
         const compileStatus = this.currentQuestion.compileStatus
         const _runGroup = () => {
               const questionFullName = this.currentQuestion.content.questionFullName
@@ -105,7 +154,8 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               this.updataOutputData("info", "运行中", "")
 
               fun.getRunGroupMsg(content).then((e)=>{
-                if(e.type == types.RUN_GROUP_SUCCESS_TYPE){ 
+                if(e.type == types.RUN_GROUP_SUCCESS_TYPE){
+                  this.resetIconStatus()  //动作结束，修改图标样式
                   const _content = e.content.output
                   this.updataOutputData()  //编译返回数据后删除进行中的提示
                   this.updataOutputData("success", "运行成功", _content)
@@ -113,6 +163,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               })
             }
         if(!compileStatus){
+          this.resetIconStatus()
           this.compile({},_runGroup)
         }else{
           _runGroup()
@@ -128,17 +179,23 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
           this.updataOutputData("danger","未设置断点")
           return
         }
+        if(!this.checkIconStatus())
+          return
+        this.changeIconStatus("debug")  //进行中，修改图标样式
         const _this = this   //vue默认严格模式，非严格模式指向window，函数没有直接调用者的话this指向undefined，比如下面的_startDebug函数中的this
         const compileStatus = _this.currentQuestion.compileStatus
         const _startDebug = function(){ //绑定函数作用域
           const questionFullName = this.currentQuestion.content.questionFullName
           const eID = this.currentIndex
           const content= {bp,questionFullName,eID}
-
           this.updataOutputData("info", "开启调试中", "")
           fun.getStartDebugMsg(content).then((e) => {
             if(e.type == types.START_DEBUG_SUCCESS_TYPE){
-              console.log(e);
+              console.log('start',e)
+              // analyseToVisual(e)
+              if(e.content.backTrace.length>1)
+                this.setVarAnimation(false)
+              this.resetIconStatus()  //动作结束，修改图标样式
               this.updataOutputData()   //移除“调试中”的标签
               const _content = e.content.output
               this.updataOutputData("success", "开启调试成功", _content)    //更新在输出窗口的消息
@@ -157,6 +214,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         }.bind(_this)
 
         if(!compileStatus){   //如果未编译则先编译再执行
+          this.resetIconStatus()
           _this.compile({},_startDebug)
         }else{
           _startDebug()
@@ -166,12 +224,15 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         this.setOutput({style, label, _content})
       },
       saveAnswer(answer,index=this.currentIndex) {
-        console.log(answer,index);
+        if(!this.checkIconStatus())
+          return
+         this.iconStatus["save"] = 1
         const content = {}
         content.eID = index
         content.studentCode =answer
 
         fun.getSaveAnswerMsg(content).then((e) => {
+          this.iconStatus["save"] = 0
           if(e.type = types.SAVE_ANSWER_SUCCESS_TYPE)
             this.updataStatus("saveStatus", true, answer)
         })
@@ -188,26 +249,31 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
       },
       promptMessage(name) {
         return  this.$confirm(`是否要保存${name}代码？`, '提示', {
+                  distinguishCancelAndClose: true,
                   confirmButtonText: '保存',
                   cancelButtonText: '不保存',
                   type: 'warning'
                 })
       },
       promptCloseDebug(message) {
-         this.$alert(message, {
+        return this.$alert(message, {
           confirmButtonText: '确定',
-          center: true
-        });
+          center: true,
+          showClose: false
+        })
       },
-      clickTab(tab) {
-        if(this.debugStatus){
-          this.promptCloseDebug('请先关闭调试')
-          return
-        }
-        let newQuestion = this.openQuestions.get(Number(tab.name))
+      clickTab(item) {
+        let newQuestion = this.openQuestions.get(Number(item))
         //更新当前的题目索引和当前题目
-        this.setCurrentIndex(tab.name)
+        this.setCurrentIndex(item)
         this.setCurrentQuestion(newQuestion)
+      },
+      beforeLeave(item) {
+        if(this.debugStatus){
+         this.promptCloseDebug('请先关闭调试')
+         return false
+        }
+        this.clickTab(item)
       },
       removeTab(e) {
         if(this.debugStatus){
@@ -223,15 +289,15 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               //发送保存请求
               _this.saveAnswer(removeQuestion.newAnswer,removeIndex)
               updataTabs()
-            }).catch(() => {  
-              updataTabs()
+            }).catch(action => {
+              (action == 'cancel') ? updataTabs(): ''
             })
         }else{
           updataTabs()
         }
         //更新tabs数据
         function updataTabs() {
-          // if(openQuestions.size == 1)
+          console.log(124324)
           if(removeIndex == _this.currentIndex && openQuestions.size!=1) {
             let newQuestion = openQuestions.get(_this.currentIndex)
             let preQuestion = openQuestions.get(_this.currentIndex)
@@ -243,7 +309,12 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
             //更新当前题目，和当前题目索引
             _this.setCurrentIndex(newQuestion.id)
             _this.setCurrentQuestion(newQuestion)
-          } 
+          }
+          if(openQuestions.size == 1) {
+            _this.setCurrentIndex(0)
+            _this.setCurrentQuestion(null)
+            _this.setListOpen(true)
+          }
           //更新已打开题目数组
           openQuestions.delete(removeIndex)
           _this.setOpenQuestions(openQuestions)
@@ -251,14 +322,17 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
       },
       ...mapActions([
         "setStatus" ,
-        "setOutput"
+        "setOutput",
+        "clearAll"
       ]),
       ...mapMutations({
+        setListOpen: 'SET_LIST_OPEN',
         setCurrentIndex: "SET_CURRENT_INDEX",
         setCurrentQuestion: 'SET_CURRENT_QUESTION',
         setOpenQuestions: "SET_OPEN_QUESTIONS",
         setOutputData :"SET_OUTPUT_DATA",
-        setDebugData: "SET_DEBUG_DATA"
+        setDebugData: "SET_DEBUG_DATA",
+        setVarAnimation: "SET_VARIATE_ANIMATION"
       })
     },
     computed: {
@@ -309,11 +383,28 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
     height: 100%;
     overflow-y: scroll;
   }
-
   .editor-tabs /deep/{
     // 修改element默认样式
     .el-icon-close {
+      transition: none;
       width: 12px!important;
+    }
+    .el-tabs__content {
+      position: static;
+    }
+    .el-tabs__nav-scroll {
+      width: calc(100% - 184px);
+    }
+    .el-tabs__nav-next{
+      right: 189px;
+    }
+    .el-tabs__nav-next, .el-tabs__nav-prev {
+        line-height: 32px;
+        font-size: 17px;
+        color: #409EFF;
+    }
+    .el-tabs__nav-next:active, .el-tabs__nav-prev:active{
+      color: #F56C6C;
     }
   }
   /*按钮栏处理*/
@@ -321,7 +412,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
     position: absolute;
     top: 0;
     right: 0;
-    margin: 5px 20px 0 0;
+    margin: 5px 10px 0 0;
   }
   .horizontal-list{
     position: relative;  /*设置层级需定位 */
@@ -332,8 +423,17 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
     z-index: 2;
   }
   .horizontal-list li{
-    margin-left: 30px;
+    margin-left: 10px;
     float: right;
+  }
+  .ing {
+    animation: rotating 2s linear infinite;
+  }
+  .ing:before {
+    color: #F56C6C;
+  }
+  .not-ing:before {
+    color: grey;
   }
 
 </style>

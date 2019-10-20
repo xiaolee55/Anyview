@@ -10,10 +10,10 @@
         <div 
         v-for="(question,index) in chap" 
         :key="index" 
-        class="question-name" 
+        class="question-name"
         @click="getContent(question)">
           <span>
-          <i class='iconfont icon-yitongguo' v-if="question.finishTime"></i>
+          <i class='iconfont icon-yitongguo' v-if="question.firstPastTime"></i>
           <i class='iconfont icon-weikaishi' v-else></i>
             {{question.name}}
           </span>
@@ -47,6 +47,7 @@ export default {
     }
   },
   computed: {
+    
   },
 }
 </script>

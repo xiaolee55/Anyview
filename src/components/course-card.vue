@@ -77,7 +77,7 @@ export default {
     },
     computed: {
         finishProgress() {
-            return this.questionNum==0 ? 0 : this.finishNum/this.questionNum*100
+            return this.questionNum==0 ? 0 : Number((this.finishNum/this.questionNum*100).toFixed(1))
         },
         status() {
             return this.is_first ? "开始" : "继续"

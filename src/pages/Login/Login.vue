@@ -8,7 +8,7 @@
         <div >
         <el-form label-width="100px" :model="user" status-icon :rules="rules" ref="user">
           <el-form-item label="账号"  prop="username">
-            <el-input type="username" placeholder="请输入账号" v-model.number="user.username"></el-input>
+            <el-input type="username" placeholder="请输入账号" v-model="user.username"></el-input>
           </el-form-item>
           <el-form-item label="密码"  prop="password" >
             <el-input type="password"  placeholder="请输入密码" v-model="user.password" show-password></el-input>
@@ -43,8 +43,8 @@
 </template>
 
 <script>
- import canvas from 'static/canvas.js';
- import {setCache,getCache} from 'static/cache.js';
+ import canvas from 'common/js/canvas';
+ import {setCache,getCache} from 'common/js/cache';
  import {getSchoolMsg,getLoginMsg} from '@/api/login'
  import * as types from '@/api/config'
 
@@ -54,7 +54,7 @@ export default {
       rules: {
         username: [
           { required: true, message: '账号不能为空'},
-          { type: 'number', message: '账号必须为数字值'}
+          { type: 'string', message: '账号必须为数字值'}
         ],
         password: [
           { required: true, message: '密码不能为空'}
@@ -80,6 +80,9 @@ export default {
       this._getSchoolist()
     },
   methods: {
+      _input(c) {
+        console.log(c)
+      },
       _getSchoolist(){
         getSchoolMsg('获取学校列表').then((e)=>{
           if(e.type === types.SCHOOL_SUCCESS_TYPE){
@@ -127,7 +130,7 @@ export default {
 </script>
 
 <style>
-    @import "../../assets/css/base.css";
+   @import "../../assets/css/base.css";
 </style>
 
 <style lang="scss" scoped>
@@ -142,7 +145,6 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
   }
   .login-content{
     height: 66%;

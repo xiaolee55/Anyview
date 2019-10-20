@@ -33,8 +33,21 @@ export const questionDescription = state => state.currentQuestion ? state.curren
 
 export const studentAnswer = state => state.currentQuestion ? state.currentQuestion.answer : ""
 
-export const outputData = state => state.outputData
+export const outputData = state => state.currentQuestion? state.outputData : ""
 
 export const currentOutput = state => state.outputData[state.currentIndex]
 
 export const currentDebug = state =>  state.debugData[state.currentIndex] ? state.debugData[state.currentIndex] : {}
+
+export const listOpen = state => state.listOpen
+
+export const varAnimation = state => state.animation
+
+export const finishNum = state => {
+  let num = 0
+  state.questionList.forEach((item,index)=>{           
+    if(item.firstPastTime)
+      num++
+  }) 
+  return num
+}

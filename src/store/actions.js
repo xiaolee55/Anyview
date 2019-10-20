@@ -30,6 +30,9 @@ const actions = {
                         <span class=${dataClass}>${_content}</span>` 
                     : ""
     commit(types.SET_OUTPUT_DATA,{index,content})
+  },
+  clearAllCurrentData({commit,state}, index) {
+    // this.
   }
 }
 

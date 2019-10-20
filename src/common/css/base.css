@@ -1,46 +1,96 @@
 @charset "UTF-8";
-html{
+  /*基本样式开始*/
+  html{
     height: 100%;
-    overflow:hidden;
+    /* overflow:hidden; */
 }
 body{
     height: 100%;
-    font: 500 16px/32px "Microsoft yahei";
     margin: 0;
     padding: 0;
 }
-button{
-    border-color: rgba(0,0, 0,0);
-    border-radius: 10%;
-    color: white;
-    outline: none;
- }
- ::-webkit-scrollbar {/*滚动条整体样式*/
-    width: 10px;     /*高宽分别对应横竖滚动条的尺寸*/
-    height: 1px;
+ul{
+   white-space:nowrap;
+   list-style: none;
+   padding: 0;
+   margin: 0;
 }
-::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
-        border-radius: 10px;
-        background-color: MediumAquamarine;
-        background-image: -webkit-linear-gradient(45deg, rgba(255, 255, 255, .2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, .2) 75%, transparent 75%, transparent);
-    }
-::-webkit-scrollbar-track {/*滚动条里面轨道*/
-        background: #EDEDED;
-    }
-.w{
-    width: 90%;
-    margin: 0 auto;
+li{
+  padding: 0 10px;
 }
- a{
-    color: black;
-    text-decoration: none; 
+a{
+  /* text-decoration:none !important; */
+  color:white !important;
 }
-button{
-    border-color: rgba(0,0, 0,0);
-    border-radius: 10%;
-    color: white;
-    outline: none;
- }
- li{
-     list-style: none;
- }
+footer{
+  height: 4%!important;
+  background-color: #409EFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+footer span{
+  margin: 5px;
+}
+.splitpanes,.splitpanes__pane {
+  background: white;
+}
+
+.splitpanes--vertical > .splitpanes__splitter {
+  position: relative;
+  min-width: 11px !important;
+  background-color: #fff;
+  cursor: ew-resize!important;
+}
+.splitpanes--horizontal > .splitpanes__splitter {
+  position: relative;
+  min-height: 11px!important;
+  background-color: #fff;
+  cursor: ns-resize!important;
+}
+.splitpanes--vertical > .splitpanes__splitter::before {
+  margin-left: -2px;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 30px;
+}
+.splitpanes--vertical > .splitpanes__splitter::after {
+  margin-left: 1px;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 30px; 
+}
+.splitpanes--horizontal > .splitpanes__splitter::before {
+  margin-top: -2px;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 1px;
+}
+.splitpanes--horizontal > .splitpanes__splitter::after {
+  margin-top: 1px;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 1px;
+}
+.splitpanes__splitter::after,.splitpanes__splitter::before{
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background-color: rgba(0,0,0,.15);
+  -webkit-transition: background-color .3s;
+  transition: background-color .3s;
+}
+  /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
+::-webkit-scrollbar
+{
+	width: 10px;
+	background-color: white;
+}
+/*定义滑块 内阴影+圆角*/
+::-webkit-scrollbar-thumb
+{
+    background-color: rgba(0,0,0,0.4);
+}

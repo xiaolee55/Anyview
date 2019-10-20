@@ -20,7 +20,7 @@
                             src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg">
                 </el-avatar>
               <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command='personal_center'><i class="el-icon-menu"></i>个人中心</el-dropdown-item>
+              <el-dropdown-item command='perCenter'><i class="el-icon-menu"></i>个人中心</el-dropdown-item>
               <el-dropdown-item><i class="el-icon-bell"></i>我的消息</el-dropdown-item>
               <el-dropdown-item><i class="el-icon-star-off"></i>我的收藏</el-dropdown-item>
               <el-dropdown-item><i class="el-icon-tickets"></i>我的笔记</el-dropdown-item>
@@ -53,21 +53,20 @@
     </div>
 </template>
 <script>
- import canvas from 'static/canvas.js';
+ import canvas from 'common/js/canvas';
  import workCard from 'components/course-card.vue';
  import {getQuestionList,getLogout} from '@/api/work'
- import {setCache,getCache,removeCache} from 'static/cache.js';
+ import {setCache,getCache,removeCache} from 'common/js/cache';
  import * as types from '@/api/config'
  import {mapState,mapMutations,mapGetters} from 'vuex'
 
 export default {
     mounted () {
-      canvas(6,"#409EFF")   //执行canvas动画
+      canvas(5,"#409EFF")   //执行canvas动画
       this._getQuestionList()
     },
     data () {
       return {
-        finishNum: 0 ,
         isFirst: true,
         totalNum: 0
       }
@@ -83,6 +82,7 @@ export default {
       },
       clickItem(command) {
         switch(command){
+          case 'perCenter' : this.goToPerCenter('personalCenter');break;
           case 'logout': this.logout();break;
         }
       },
@@ -94,13 +94,18 @@ export default {
           }
         })
       },
-      goToCoding(){
+      goToPerCenter(){
+        this.changeRoute("personalCenter")
+      },
+      goToCoding() {
+        this.openQuestionsArr.length?this.setListOpen(false):this.setListOpen(true)
         this.changeRoute("coding")
       },
       changeRoute(routeName){
         this.$router.replace(routeName)
       },
       ...mapMutations({
+        setListOpen: 'SET_LIST_OPEN',
         setQuestionList: 'SET_QUESTION_LIST',
         setCourseName: 'SET_COURSE_NAME',
       }) 
@@ -114,7 +119,9 @@ export default {
       },
        ...mapGetters([
           'courseName',
-          'questionList'
+          'questionList',
+          'finishNum',
+          "openQuestionsArr"
        ])
     },
     components: {
@@ -123,17 +130,15 @@ export default {
 }
 </script>
 
-<style>
-  @import "../../assets/css/base.css";
-</style>
 <style lang="scss" scoped>
+@import "../../assets/css/base.css";
     #canvas{
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: -1;
+        z-index: 1;
     }
    .w{
      width: 80%;
@@ -160,13 +165,6 @@ export default {
       padding: 5px;
       font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;
      }
-   }
-    .el-dropdown-menu{
-      width: 200px!important; 
-    }
-
-   .work-main{
-    //  height: 76%;
    }
   .el-card{
      margin-bottom:100px;

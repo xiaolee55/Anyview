@@ -1,5 +1,6 @@
 import * as types from './mutation-types'
 import Vue from 'vue'
+import { stat } from 'fs'
 
 const mutations = {
     [types.SET_QUESTION_LIST](state, questionList) {
@@ -7,6 +8,9 @@ const mutations = {
     },
     [types.SET_COURSE_NAME](state, courseName) {
         state.courseName = courseName
+    },
+    [types.SET_LIST_OPEN](state,status) {
+        state.listOpen = status
     },
     [types.SET_CURRENT_QUESTION](state,currentQuestion) {          //控制当前视口所在题目的数据
         state.currentQuestion = currentQuestion
@@ -21,6 +25,11 @@ const mutations = {
         state.studentAnswer = studentAnswer
     },
     [types.SET_OUTPUT_DATA](state,{index,content}) {        //控制输出窗口的数据
+        //用解构赋值，函数调用方一定要传值，否则会报index is undefined这类错误
+        if(index==-1){
+            Vue.delete(state.outputData,state.currentIndex)
+            return 
+        }
         const arr = state.outputData[index] ? state.outputData[index] : []
         content ? arr.push(content) : arr.pop()
         Vue.set(state.outputData,index,arr)
@@ -37,6 +46,9 @@ const mutations = {
             Vue.set(stateObj,i,_obj[i])
        }
         Vue.set(state.debugData,index,stateObj)
+    },
+    [types.SET_VARIATE_ANIMATION](state,animation) {
+        state.animation = animation
     }
 
 }

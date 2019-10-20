@@ -1,6 +1,8 @@
 <template>
-  <div class="code-pane">
-    <el-drawer :visible.sync="showListPane" 
+  <div class="code-pane" v-loading="loading"
+                         element-loading-text="题目加载中"
+                         element-loading-background="rgba(0, 0, 0, 0)">
+    <el-drawer :visible.sync="listStatus" 
                 direction="rtl"
                 size="20%" 
                 :show-close="false">
@@ -8,32 +10,32 @@
     </el-drawer>
     <debug-pane></debug-pane>
     <splitpanes :push-other-panes="true" watch-slots v-if="debugStatus">
-      <splitpanes :splitpanes-size="65" horizontal  watch-slots @resize="_updataWdHeight">
+      <splitpanes :splitpanes-size="65" horizontal  watch-slots  @resize="resizeLeft">
         <el-tabs v-model="tab" type="card" :splitpanes-size="50" style="height:100%" class="visual-desc">
           <el-tab-pane label="题目描述" name="desc">
-            <question-description  @openList="showListPane=true" @getContent="_getQuestionContent"></question-description>
+            <question-description @getContent="_getQuestionContent"></question-description>
           </el-tab-pane>
           <el-tab-pane label="可视化" name="visual">
             <visual-pane></visual-pane>
           </el-tab-pane>
         </el-tabs>
         <splitpanes :splitpanes-size="40"  watch-slots>
-          <variate-pane :splitpanes-size="50"></variate-pane>
-          <watch-pane :splitpanes-size="50"></watch-pane>
+          <variate-pane :splitpanes-size="50" ref="variatePane"></variate-pane>
+          <watch-pane :splitpanes-size="50" ref="watchPane"></watch-pane>
         </splitpanes>
         <wrong-data :splitpanes-size="10" ref="wrongData"></wrong-data>
       </splitpanes>
-      <splitpanes :splitpanes-size="35"  @resize="_updataOpPHeight" horizontal  watch-slots>
-        <editor-pane :splitpanes-size="75" ></editor-pane>
+      <splitpanes :splitpanes-size="35" horizontal  watch-slots >
+        <editor-pane :splitpanes-size="75" ref="editorPane"></editor-pane>
         <output-pane :splitpanes-size="25" ref="outputPane"></output-pane>
       </splitpanes>
     </splitpanes>
 
     <splitpanes  :push-other-panes="true" watch-slots v-if="!debugStatus">
-      <question-description :splitpanes-size="20"  @openList="showListPane=true" @getContent="_getQuestionContent"></question-description>
-      <splitpanes  :push-other-panes="true" watch-slots horizontal :splitpanes-size="80" @resize="_updataOpPHeight">  
-        <editor-pane :splitpanes-size="80" ></editor-pane>
-        <output-pane :splitpanes-size="20" ref="outputPane"></output-pane>
+          <question-description  @openList="showListPane=true" @getContent="_getQuestionContent" style="height:100%"></question-description>
+      <splitpanes  :push-other-panes="true" watch-slots horizontal :splitpanes-size="80">  
+        <editor-pane :splitpanes-size="75" ref="editorPane"></editor-pane>
+        <output-pane :splitpanes-size="25" ref="outputPane"></output-pane>
       </splitpanes>
     </splitpanes>
   </div>
@@ -55,8 +57,8 @@ import VariatePane from 'components/variate-pane'
 import WrongData from 'components/wrong-data'
 
 import * as fun from '@/api/coding'
-import {getCache,setSessionCache,getSessionCache} from 'static/cache.js';
-import {Question} from 'static/class'
+import {getCache,setSessionCache,getSessionCache} from 'common/js/cache';
+import {Question} from 'common/js/class'
 import {mapGetters,mapMutations} from 'vuex'
 
 export default {
@@ -75,10 +77,19 @@ export default {
     data () {
       return {
         tab: "desc",
-        showListPane: true,
+        loading: false,
+        lastHeight: "",
+        changeVal: 0
       }
     },
     methods: {
+      resizeLeft(e) {
+        const val = (e[1].width-this.lastHeight)*document.body.clientHeight/100
+        if(val<100)
+          this.changeVal+=val
+        this.$refs.variatePane.fixedFun(this.changeVal)
+        this.lastHeight = e[1].width
+      },
       _getQuestionContent(_question){
         let index = Number(_question.eid)
         let openQuestions = this.openQuestions
@@ -86,7 +97,10 @@ export default {
         if(question){
           this.updateCurrentData({index,question})
         }else{
+          this.loading = true
           fun.getQuestionContent(_question.eid).then((e) => {
+            console.log("题目信息",e)
+            this.loading = false
             const id = _question.eid
             const name = _question.name
             const number = _question.number
@@ -113,15 +127,6 @@ export default {
             this.setOpenQuestions(openQuestions)
           }
       },
-      openQuestionList() {
-        this.showListPane = true
-      },
-      _updataOpPHeight(e) {
-        this.$refs.outputPane.updataOpPHeight(e)
-      },
-      _updataWdHeight(e) {
-        this.$refs.wrongData.updataWdHeight(e)
-      },
       getCacheData() {
         let _questionList = JSON.parse(getSessionCache("questionList"))
         let _courseName = getSessionCache("courseName")
@@ -139,6 +144,7 @@ export default {
       },
 
       ...mapMutations({
+        setListOpen: 'SET_LIST_OPEN',
         setQuestionList: 'SET_QUESTION_LIST',
         setCourseName: 'SET_COURSE_NAME',
         setCurrentQuestion: 'SET_CURRENT_QUESTION',
@@ -154,7 +160,16 @@ export default {
         debugStatus() {
           return this.currentQuestion.debugStatus
         },
+        listStatus: {
+          get() {
+            return this.listOpen
+          },
+          set() {
+            this.setListOpen(false)
+          }
+        },
         ...mapGetters([
+          "listOpen",
           "questionList",
           "courseName",
           "questionDescription",
@@ -179,129 +194,50 @@ export default {
 </script>
 
 <style>
-  /*基本样式开始*/
-html{
-    height: 100%;
-    /* overflow:hidden; */
-}
-body{
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
-ul{
-   white-space:nowrap;
-   list-style: none;
-   padding: 0;
-   margin: 0;
-}
-li{
-  display: inline-block;
-  padding: 0 10px;
-}
-.code-pane{
-    font: 500 16px/20px "Microsoft yahei";
-    height: 100%;
-    width: 100%;
+   @import '../../common/css/base.css';
+   /* 这个组件不一定嵌套在code-pane里面，所以不能嵌套修改 */
+  .el-drawer {    
+    padding: 15px;
+    overflow: auto!important;
   }
-.splitpanes,.splitpanes__pane {
-  background: white;
-}
-
-.splitpanes--vertical > .splitpanes__splitter {
-  position: relative;
-  min-width: 11px !important;
-  background-color: #fff;
-  cursor: ew-resize	;
-}
-.splitpanes--horizontal > .splitpanes__splitter {
-  position: relative;
-  min-height: 11px;
-  background-color: #fff;
-  cursor: ns-resize;
-}
-.splitpanes--vertical > .splitpanes__splitter::before {
-  margin-left: -2px;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 30px;
-}
-.splitpanes--vertical > .splitpanes__splitter::after {
-  margin-left: 1px;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 30px; 
-}
-.splitpanes--horizontal > .splitpanes__splitter::before {
-  margin-top: -2px;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 1px;
-}
-.splitpanes--horizontal > .splitpanes__splitter::after {
-  margin-top: 1px;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 1px;
-}
-.splitpanes__splitter::after,.splitpanes__splitter::before{
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  background-color: rgba(0,0,0,.15);
-  -webkit-transition: background-color .3s;
-  transition: background-color .3s;
-}
-  /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
-::-webkit-scrollbar
-{
-	width: 10px;
-	background-color: white;
-}
-/*定义滑块 内阴影+圆角*/
-::-webkit-scrollbar-thumb
-{
-	background-color: rgba(0,0,0,0.4);
-}
-/*基本样式结束*/
+  .el-drawer__header {
+    margin-bottom: 10px;
+  }
 </style>
 
-<style lang="scss">
-.el-drawer{
-    height: 90%;
-    padding: 15px;
-    overflow: auto!important; 
+<style lang="scss" scoped>
+.code-pane /deep/ {
+  canvas {
+      position: absolute;
+      left: -10px;
+      z-index: 33;
+  }
+  li {
+    display: inline-block;
+  }
+  .el-tabs__header{
+    margin-bottom: 0px!important;
+    border-bottom: 1px solid transparent!important;
+  }
+  .el-tabs__item {
+    padding: 0 10px;
+    line-height: 30px;
+    height: 30px;
+  }
+  .ace_gutter-cell{
+    cursor: pointer;
+  }
+  /* #pane-desc{
+    display: flex;
+  } */
+  .el-tabs {
+    display: flex;
+    flex-direction: column;
+  }
+  .el-tabs__content,.el-tab-pane{
+    flex: 1;
+    display: flex;
+  }
 }
 
-/* 编码面板开始 */
- .el-tabs__header{
-  margin-bottom: 0px;
-  border-bottom: 1px solid transparent!important;
-}
-.el-tabs__item {
-  padding: 0 10px;
-  line-height: 30px;
-  height: 30px;
-}
-canvas{
-  position: absolute;
-  left: -10px;
-  z-index: 33;
-}
-.ace_gutter-cell{
-  cursor: pointer;
-}
-/* #pane-desc{
-  display: flex;
-} */
-.el-tabs {
-  display: flex;
-  flex-direction: column;
-}
-.el-tabs__content,.el-tab-pane{
-  flex: 1;
-  display: flex;
-}
-/* 编码面板结束 */
 </style>

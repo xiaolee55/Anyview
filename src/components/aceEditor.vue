@@ -1,7 +1,7 @@
 <template>
-  <div class="ace-container" ref="ace" @click="updataBP">
-    {{content}}
-    <div class="debug-highlighted" ref="dbhl"></div>
+  <!-- 此处{{content}}不要换行，否则会给编辑区自动加上换行符 -->
+  <div class="ace-container" ref="ace">{{content}}
+  <div class="debug-highlighted" ref="dbhl"></div>
   </div>
 </template>
 
@@ -25,30 +25,50 @@
 				enableSnippets: true,
         enableLiveAutocompletion: true,
       })
-      //取消默认事件
-      this.aceEditor.on("guttermousedown", function(e) {e.stop()},true);    //禁止gutter上的mousedown事件
+      let editor = this.aceEditor
+      let _this  = this
+      //监听断点事件
+      this.aceEditor.on("guttermousedown", function(e){ 
+          e.stop() 
+          const target = e.domEvent.target; 
+          const row = e.getDocumentPosition().row 
+          if(!target.className.includes("ace_gutter-cell"))
+            return
+          else if(target.className.includes("iconfont")){
+            e.editor.session.clearBreakpoint(row)
+            return  
+          }else{
+            if (e.clientX > 45 + target.getBoundingClientRect().left) 
+              return; 
+            e.editor.session.setBreakpoint(row,"iconfont icon-duandian")
+          }
+            _this.updataBP(e.editor.session.getBreakpoints())
+      }) 
       //监听输入
       this.aceEditor.on('input', () => {    //将change换成input则原来的bug就没有了，原来题目切换的时候也会出现圆点
         this.beforeContent = this.aceEditor.getValue()
         this.$emit('changeContent', this.aceEditor.getValue())
       })
       //绑定键位
-      this.aceEditor.commands.addCommand({
-        name: "save",
-        bindKey:{
-          win: 
-          'Ctrl-S', 
-          mac: 
-          'Command-S' 
-        },
-        exec: this.getVal
-        })
-        this.lineHeight=this.aceEditor.renderer.lineHeight
+      const bindKey=(name,winKey,macKey,callBack)=> {
+        const obj={}
+        obj.name=name
+        obj.bindKey={}
+        obj.bindKey.win = winKey
+        obj.bindKey.mac = macKey
+        obj.exec = callBack
+        this.aceEditor.commands.addCommand(obj)
+      }
+      bindKey("save","Ctrl-S","Command-S",this.save)
+      bindKey("compile","F5","F5",this.compile)
+      bindKey("runGroup","F7","F7",this.runGroup)
+      bindKey("debug","F8","F8",this.debug)
+      
+      this.lineHeight=this.aceEditor.renderer.lineHeight
 
     },
     data () {
       return {
-        bpRow: []
       }
     },
     props: {
@@ -75,33 +95,30 @@
       
     },
     methods: {
-      updataBP(){  //添加或者移除断点（用了lowB的DOM操作
-        const target = event.target
-        if(target.tagName==="CANVAS"){
-          this.bpRow = this.bpRow.filter((item,index)=>item!=target.parentNode.innerText)  
-          target.parentNode.removeChild(event.target)
-          this.$emit("setBP",this.bpRow)
-        }
-        if(target.classList.contains("ace_gutter-cell")){
-            this.bpRow.push(event.target.innerText)    //获取行号
-            const canvas=document.createElement("canvas")
-            // canvas.id='cv'+(this.bpRow+1)
-            canvas.width=49
-            canvas.height=this.lineHeight
-            target.appendChild(canvas);
-            let bp=canvas.getContext("2d");
-            bp.fillStyle="#FF0000";
-            bp.beginPath();
-            bp.arc(25,8,5,0,Math.PI*2,true);
-            bp.closePath();
-            bp.fill();
-            // bp.clearRect(0,0,canvas.width,canvas.height);
-          this.$emit("setBP",this.bpRow)
-        }
+      updataBP(bpRows){
+        if(!bpRows)
+          return
+        let arr=[]  
+          bpRows.forEach((_,index)=>{
+            console.log(index)
+            arr.push(index+1)
+          })
+          this.$emit("setBP",arr)
       },
-        getVal() {
-          this.$emit('getVal', this.aceEditor.getValue())
-        },
+      save() {
+        console.log(this.aceEditor.getValue())
+        this.$emit('save', this.aceEditor.getValue())
+      },
+      compile() {
+        this.$emit('compile')
+      },
+      runGroup() {
+        this.$emit('runGroup')
+      },
+      debug() {
+        this.$emit('debug')
+      }
+
     },
     watch: {
       content(value) {
@@ -118,6 +135,7 @@
           this.aceEditor.setTheme(`ace/theme/${val}`)        
       },
       debugLine(val) {
+        this.aceEditor.gotoLine(val-1);
         this.aceEditor.getSession().removeMarker(this.mark)
         if(val>0){
            this.mark = this.aceEditor.session.addMarker(new ace.Range(val-1, 0, val-1, 2000),"debug-line","fullLine", false);
@@ -138,13 +156,18 @@
 </script>
 
 <style>
-  .ace_editor{
-    width: 100%;
-    height: 100%;
-  }
-  .debug-line {
-    background:  rgba(255,10,10,0.5);
-    position: absolute;
-    z-index: 1000;
-  }
+.ace-container {
+  width: 100%;
+}
+.debug-line {   /*高亮行*/
+  background:  rgb(252,215,207);
+  position: absolute;
+  z-index: 50;
+}
+.ace_gutter-cell.icon-duandian:before{ /*断点*/
+  font-size: 14px;
+  position: absolute;
+  left: 3px;
+  top: 2px;
+}
 </style>

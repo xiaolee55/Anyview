@@ -1,6 +1,6 @@
 <template>
-    <div :style="{height: initHeight}" ref="wrongData" style="display:flex;flex-direction: column;">
-      <el-tag type="danger" effect="dark" class="wrong-data-title">错误数据集</el-tag>
+    <div ref="wrongData" class="wrd-pane">
+      <el-tag type="warning" effect="dark" class="wrong-data-title"><b>未通过测试数据</b></el-tag>
       <div  class="wrong-data-container">
         <div  class="wrong-data-item" v-for="(item,index) in wrongData" :key= "index">
             <p  :class= "banIndex.includes(index)? 'ban-data': ''" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item"></p>
@@ -16,12 +16,8 @@
 
 <script>
 export default {
-  created () {
-     this.initHeight = `${document.documentElement.clientHeight*0.10}px`  //初始化输出框的高度
-  },  
   data () {
       return {
-         initHeight: 0,
          banIndex : [],
          wrongData: [`Fibonacci(k, m): <br>Fibonacci(k, m): <br>F(0,6)=ERROR F(1,4)=ERROR1`,
                     `Fibonacci(k, m): <br>Fibonacci(k, m): <br>F(0,6)=ERROR F(1,4)=ERROR2`,
@@ -32,10 +28,6 @@ export default {
   computed: {
   },
   methods: {
-    updataWdHeight(e) {
-      //这个地方通过修改vue中的data再绑定到style不行，会导致拉伸条不能动，只能通过ref的方式直接操作DOM，原因未知，猜测是拉伸库的源码做了限制
-      this.initHeight=e[2].width*document.documentElement.clientHeight/100+'px'
-    },
     banData(index) {
       this.banIndex.push(index)
     },
@@ -52,6 +44,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+    .wrd-pane {
+        height: 100%;
+    }
     .wrong-data-title {
         width: 100%;
         text-align: center;
@@ -59,7 +54,7 @@ export default {
         line-height: 15px;
     }
     .wrong-data-container {
-        flex: 1;
+        height: calc(100% - 20px);
         margin-top: 5px;
         overflow: auto;
     }

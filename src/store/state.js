@@ -9,5 +9,7 @@ export default {
     openQuestions: new Map(),
     studentAnswer: "",
     outputData: {},
-    debugData: {}
+    debugData: {},
+    listOpen: true,
+    animation: true
 }

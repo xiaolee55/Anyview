@@ -9,7 +9,8 @@ function initWebSocket(){ //初始化websocket
     websocket = new WebSocket(url);
     websocket.onclose = function(e){
         close=true
-    	console.log("connection closed (" + e.code + ")")
+        alert("与服务器的连接已断开，请刷新网页重试")
+        console.log('websocket 断开: ' + e.code + ' ' + e.reason + ' ' + e.wasClean)
     }
     websocket.onopen = function () {
 	    console.log("连接成功");
@@ -24,7 +25,9 @@ function sendMsg(data){
     // console.log(data)
     if (websocket.readyState === websocket.OPEN) {
         //若是ws开启状态
-        websocket.send(JSON.stringify(data))
+        // console.log("sendData",data)
+        console.log("send",data)
+        websocket.send(JSON.stringify(data),data)
     }else {
         // 若未开启 ，则等待1s后重新调用
         if(!close)

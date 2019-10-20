@@ -1,8 +1,8 @@
 <template>
   <div class="question-content" @scroll="fixButton">
     <div class="question-menu-top" ref="topMenu">
-      <i class="iconfont icon-xuanzekemu" style="cursor:pointer" title="选择题库"></i>
-      <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" title="个人中心"></i>
+      <i class="iconfont icon-xuanzekemu" style="cursor:pointer" title="选择题库" @click="goToWork"></i>
+      <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" title="个人中心" @click="goToPerCenter"></i>
       <i class="iconfont icon-liebiao" style="cursor:pointer" title="打开列表" @click="openList"></i>
     </div>
       <div class="question-desc" ><p>{{questionDescription}}</p></div>
@@ -17,12 +17,21 @@
 import {mapGetters,mapMutations} from 'vuex'
 export default {
   methods: {
+    goToWork() {
+      this.goTo("work")
+    },
+    goToPerCenter() {
+      this.goTo("personalCenter")
+    },
+    goTo(routeName) {
+      this.$router.replace(routeName)
+    },
     openList() {
       if(this.debugStatus){
         this.promptCloseDebug('请先关闭调试')
         return
       }
-      this.$emit("openList")
+      this.setListOpen(true)
     },
     fixButton(event){
       this.$refs.topMenu.style.top=event.target.scrollTop+'px';
@@ -70,6 +79,7 @@ export default {
       });
       },
     ...mapMutations({
+      setListOpen: 'SET_LIST_OPEN',
       setCurrentIndex: "SET_CURRENT_INDEX",
       setCurrentQuestion: 'SET_CURRENT_QUESTION',
       setOpenQuestions: "SET_OPEN_QUESTIONS"
@@ -83,6 +93,7 @@ export default {
       return this.currentQuestion.debugStatus
     },
     ...mapGetters([
+      "listOpen",
       "questionList",
       "openQuestionsArr",
       "currentIndex",
