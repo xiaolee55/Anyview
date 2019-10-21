@@ -8,6 +8,7 @@
       <div class="question-desc" ><p>{{questionDescription}}</p></div>
       <div class="question-menu-bottom" ref="bottomMenu">
       <el-button type="primary" round style="margin-right:20px" @click="previousQuestion">上一题</el-button>
+      <debug-pane></debug-pane>
         <el-button type="primary" round style="margin-right:20px" @click="nextQuestion">下一题</el-button>
     </div>
   </div>
@@ -15,6 +16,7 @@
 
 <script>
 import {mapGetters,mapMutations} from 'vuex'
+import DebugPane from 'components/debug-pane'
 export default {
   methods: {
     goToWork() {
@@ -24,6 +26,8 @@ export default {
       this.goTo("personalCenter")
     },
     goTo(routeName) {
+      if(this.debugStatus)
+        this.promptCloseDebug('请先关闭调试')
       this.$router.replace(routeName)
     },
     openList() {
@@ -84,6 +88,9 @@ export default {
       setCurrentQuestion: 'SET_CURRENT_QUESTION',
       setOpenQuestions: "SET_OPEN_QUESTIONS"
     })
+  },
+  components:{
+    DebugPane
   },
   computed: {
     openQuestions() {

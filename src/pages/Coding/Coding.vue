@@ -8,7 +8,6 @@
                 :show-close="false">
       <question-list :list="questionList" :title="courseName" @getContent="_getQuestionContent"></question-list>
     </el-drawer>
-    <debug-pane></debug-pane>
     <splitpanes :push-other-panes="true" watch-slots v-if="debugStatus">
       <splitpanes :splitpanes-size="65" horizontal  watch-slots  @resize="resizeLeft">
         <el-tabs v-model="tab" type="card" :splitpanes-size="50" style="height:100%" class="visual-desc">

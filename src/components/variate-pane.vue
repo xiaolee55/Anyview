@@ -19,10 +19,10 @@
               <i class="el-icon-caret-bottom" v-if="isExpand==index" @click="collapseVars(strs,index)"></i>
               <span v-for="(str,i) in strs" :key="str" :class="funClass(i,index,trace)">{{ str }}</span>
             </el-tag>
-            <el-tree :data="renderVar" 
-                    :props="defaultProps" 
-                    :highlight-current="true"
-                    v-if="trace== index"
+            <el-tree :data= "renderVar" 
+                    :props= "defaultProps" 
+                    :highlight-current= "true"
+                    v-if= "trace== index"
                     default-expand-all>
               <span class="custom-tree-node" slot-scope="{ node }">
                 <span v-for="(item,index) in node.label" :key="item">
@@ -48,6 +48,7 @@ export default {
           children: 'varChild',
           label: 'varInfo'
         },
+        saveVariateArr: {},
         itemIdArr: [],
         oldVariate: "",
         transformArr:[]
@@ -170,6 +171,7 @@ export default {
     computed: {
       backTrace() {
         const backTrace = this.currentDebug.backTrace
+        const variate = this.currentDebug.variate
         if(!backTrace)
           return
         this.trace = 0
@@ -181,6 +183,7 @@ export default {
         return backTrace ? finalBackTrace: [] 
       },
       renderVar() {   //格式化变量数据
+        const sign = this.currentDebug.backTrace[0]
         let format = (variate,oldVariate)=> {
           variate = Array.isArray(variate) ? variate : [variate]
           oldVariate = Array.isArray(oldVariate ) ? oldVariate  : [oldVariate ]
@@ -195,6 +198,7 @@ export default {
             }
             let formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
             obj.varInfo = [formatName,": ",item.value]
+            obj.sign = sign
             if(item.innerObj) 
               obj.varChild = format(item.innerObj,oldVariate[index].innerObj)
             tempArr.push(obj)
@@ -206,7 +210,8 @@ export default {
           this.oldVariate = variate
         let render =  variate ? format(variate,this.oldVariate) : []
         this.oldVariate = variate
-        return render;
+        this.saveVariateArr[sign]=render
+        return this.saveVariateArr[sign];
       },
       ...mapGetters([
         "currentIndex",

@@ -14,6 +14,11 @@ const actions = {
   },
   setOutput({commit,state},{style, label, _content=""}) {
     const index = state.currentIndex
+    if(!label&&_content){
+      const content = `<span>${_content}</span>` 
+      commit(types.SET_OUTPUT_DATA,{index,content})
+      return
+    }
     const date = `${new Date().getHours().toString().padStart(2,"0")}:
                   ${new Date().getMinutes().toString().padStart(2,"0")}:
                   ${new Date().getSeconds().toString().padStart(2,"0")}`

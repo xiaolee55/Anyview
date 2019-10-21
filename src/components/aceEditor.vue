@@ -23,7 +23,7 @@
         tabSize: 2,
         enableBasicAutocompletion: true,
 				enableSnippets: true,
-        enableLiveAutocompletion: true,
+        enableLiveAutocompletion: true
       })
       let editor = this.aceEditor
       let _this  = this
@@ -44,6 +44,7 @@
           }
             _this.updataBP(e.editor.session.getBreakpoints())
       }) 
+      this.aceEditor.resize();
       //监听输入
       this.aceEditor.on('input', () => {    //将change换成input则原来的bug就没有了，原来题目切换的时候也会出现圆点
         this.beforeContent = this.aceEditor.getValue()
@@ -65,7 +66,6 @@
       bindKey("debug","F8","F8",this.debug)
       
       this.lineHeight=this.aceEditor.renderer.lineHeight
-
     },
     data () {
       return {

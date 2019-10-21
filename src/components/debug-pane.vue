@@ -91,7 +91,7 @@ export default {
       if(e.content.output)
         this.setOutput({
                         style: "",
-                        label: "下组数据",
+                        label: "",
                         _content: e.content.output
                       })
     },
@@ -170,11 +170,11 @@ export default {
 
 <style lang="scss" scoped>
   .debug-menu {
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    transform:translate(-50%,-50%);
-    background-color: white;
+    // position: fixed;
+    // top: 500px;
+    // left: 40%;
+    // transform:translate(-50%,-50%);
+    // background-color: white;
     z-index: 50;
   }
   .debug-menu /deep/{ 

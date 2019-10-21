@@ -7,36 +7,34 @@
         <i class="el-icon-minus var-add" @click="hideSearch" v-if="!addIcon" title="删除变量"></i>
         <i class="el-icon-question" title="单击“+”号或双击空白处可跟踪想观察的变量或表达式"></i>
     </el-tag>
-  </div>
-  <div @dblclick="showSearch" class="var-container">
-    <div v-for="item in finalVariates" :key= "item.name" >
-      <el-tag 
-            :contenteditable= "editable"
-            class="var-tag"
-            @blur.native= "editable=false"
-            @input= "varInput($event)" 
-            @dblclick.stop.native.prevent= "changeContenteditable">
-      <span >{{ `${item.name}:   ${item.val}` }}</span>
-      <i class="el-icon-remove var-add" @click.stop= "removeVariate(item.name)" :title= "`删除变量${item.name}`"></i>
-    </el-tag>
-    <el-tree :data= "item.desc"
-        :props="defaultProps" 
-        :default-expand-all="false">
-      <span class="custom-tree-node" slot-scope="{ node }">
-        <span v-for="(item,index) in node.label" :key="item" >
-          <span :class="varClass(index,item)">{{item}}</span>
+    </div>
+    <div @dblclick="showSearch" class="var-container">
+      <el-tree :data= "finalTree"
+          v-if="finalTree.length"
+          :props="defaultProps"
+          empty-text = ""
+          node-key = "sign"
+          @node-expand= "nodeExpand"
+          @node-collapse= "nodeCollapse"
+          :default-expanded-keys= "expandedNodeList">
+        <span class="custom-tree-node" slot-scope="{ node, data}" :class="{'tree-title-class': node.level==1}">
+          <i class="el-icon-minus expand-icon" v-if= "!node.childNodes.length"></i>
+          <i class="el-icon-caret-right expand-icon" v-else-if= "!expandedNodeList.includes(data.sign)"></i>
+          <i class="el-icon-caret-bottom expand-icon" v-else></i>
+          <span v-for="(item,index) in node.label" :key="item">
+            <span :class="varClass(index,item,node)">{{item}}</span>
+          </span>
+          <i class="el-icon-remove-outline var-delete-icon" v-if="node.level==1" @click= "removeVariate(node,data.sign)"></i>
         </span>
-      </span>
-    </el-tree>
-  </div>
-  <el-tag contenteditable="true" 
-          v-if= "showInput"  
-          @blur.native= "addVariate"  
-          @input.native= "varInput($event)" 
-          style= "width:50%"
-          @keyup.enter.native="addVariate">
-  </el-tag>
-  </div>
+      </el-tree> 
+        <el-tag contenteditable="true" 
+              v-if= "showInput"  
+              @blur.native= "addVariate"  
+              @input.native= "varInput($event)" 
+              style= "width:50%"
+              @keyup.enter.native="addVariate">
+      </el-tag>
+    </div>
   </div>
 </template>
 
@@ -61,11 +59,11 @@ export default {
       showInput: false,
       addIcon: true,
       changeKey: [],
-      plainVarArr: [],
+      inputOrderArr: [],
       oldVariatesMap: {},
       oldVariate: "",
       status: true,
-      removeVar: '',
+      expandedNodeList: [],
       defaultProps: {
         children: 'varChild',
         label: 'varInfo'
@@ -73,21 +71,37 @@ export default {
     }
   },
   methods: {
-    varClass(index,item) {
+    nodeExpand(data,node,component) {
+      this.expandedNodeList.push(data.sign); // 在节点展开是添加到默认展开数组
+    },
+    nodeCollapse(data) {
+      this.expandedNodeList=this.expandedNodeList.filter(item=>item!=data.sign) // 收起时删除数组里对应选项
+      if(data.varChild){
+        data.varChild.forEach((item,index)=>{
+          this.nodeCollapse(data.varChild[index])
+        })   
+      }
+    },
+    varClass(index,item,node) {
       return index==0 ? 'var-name': item.charAt(0)==0&&item[1]=="x" ? 'point-val' : ''
     },
     changeContenteditable(e) {    //双击当前变量修改为可输入
       this.editable=true
       this.focus = true
     },
-    removeVariate(varName) {             //点击减号时移除当前变量
-      this.removeVar = varName
+    removeVariate(_,varName) {             //点击减号时移除当前变量
+      if(!this.status)
+        return
+      this.status = false
+      this.inputOrderArr=this.inputOrderArr.filter((item=>item!=varName))
+      this.expandedNodeList=this.expandedNodeList.filter(item=>item!=varName)
       const content = {addPoints: "",delPoints: varName}
       fun.getWatchPointMsg(content).then(e => {
         if(e.type == types.SET_POINT_SUCCESS_TYPE){
           const index = this.currentIndex
           const _obj = {watchPoint: e.content }
           this.setDebugData({index,_obj})
+          this.status = true
         }
       })
     },
@@ -109,80 +123,20 @@ export default {
       const variateName = this.variateInput.replace(/\s*/g,"")   //过滤掉输入字符的空格
       if(!variateName)      //空变量直接过滤
        return 
-      this.hideSearch()     //隐藏输入框
-      if(!this.plainVarArr.find((item)=>variateName==item.name)){
-        this.plainVarArr.push({name:variateName,val:''})
+      if(!this.inputOrderArr.find((item)=>variateName==item)){
+        this.inputOrderArr.push(variateName)
       }
       const content = {addPoints: variateName,delPoints:""}
       fun.getWatchPointMsg(content).then(e => {
         if(e.type == types.SET_POINT_SUCCESS_TYPE){
+          this.hideSearch()     //隐藏输入框
           console.log("watch面板数据",e)
-          this.status = true
           const index = this.currentIndex
           const _obj = {watchPoint: e.content }
           this.setDebugData({index,_obj})
+          this.status = true
         }
       })
-    },
-    variatesTitle(watchPoint) {
-      const oldMap = this.oldVariatesMap
-      const newMap = watchPoint
-      if(this.removeVar){
-        this.plainVarArr=this.plainVarArr.filter(_item=>_item.name!=this.removeVar)
-        this.removeVar = ""
-        return
-      }
-      for(let key in oldMap){
-        if(oldMap[key]&&newMap[key]&&oldMap[key] != newMap[key]){ //发生变化的变量
-          this.changeKey.push(key)
-          setTimeout(() => {
-              this.changeKey.pop()
-            }, 1000);
-        }
-      }
-      this.plainVarArr.forEach((item,i)=>{   //让值按顺序显示
-        if(newMap[item.name]&&newMap[item.name]!="未找到"){
-         this.plainVarArr[i].val = newMap[item.name].value
-        }
-        else if(newMap[item.name]&&newMap[item.name]=="未找到"){
-          this.plainVarArr[i].val = "未找到"
-        }
-      })
-      this.oldVariatesMap = watchPoint
-      return this.plainVarArr
-    },
-    variatesDesc(watchPoint) {
-      const newArr = []
-      let firstDeep = true
-      for(let key in watchPoint){
-        if(watchPoint[key]=="未找到"){
-          let temp = {}
-          temp.name = key
-          temp.value = "未找到"
-          temp.type = "无"
-          watchPoint[key] = temp
-        }
-        newArr.push(watchPoint[key])
-      }
-      let format = (variate,firstDeep)=> {
-        variate = Array.isArray(variate) ? variate : [variate]
-        let tempArr = []
-        variate.forEach((item,index)=>{
-          let obj = {}
-          let formatName
-          (!firstDeep)
-            ?formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
-            :formatName = item.name
-          obj.varInfo = [formatName,": ",item.value]
-          if(item.innerObj) 
-            obj.varChild = format(item.innerObj,false)
-          tempArr.push(obj)
-        })
-        return tempArr
-      }
-      let variate = newArr
-      let render =  variate ? format(variate,firstDeep) : []
-      return render 
     },
     ...mapMutations({
       setCurrentIndex: "SET_CURRENT_INDEX",
@@ -193,22 +147,38 @@ export default {
     })
   },
   computed: {
-    finalVariates() {
-        const watchPoint = this.currentDebug.watchPoint   //用于开启监听
-        const title = this.variatesTitle(watchPoint)
-        const desc = this.variatesDesc(watchPoint)
-        const final = []
-        const merge = (name)=>{
-          for (let i = 0; i < desc.length; i++) {
-            if(desc[i].varInfo[0]==name)
-              return [desc[i]]
-            }
-          return []
-        }
-        title.forEach((item,index)=>{
-          final.push({name:item.name,val:item.val,desc:merge(item.name)})
+    finalTree() {
+      let watchPointMap = this.currentDebug.watchPoint
+      const inputOrderArr = this.inputOrderArr
+      const watchPointArr=[]
+      let finalArr = []
+      Object.keys(watchPointMap).forEach((key)=>{   //将后端传来的Map结构转为数组结构，供format函数使用
+        let item = watchPointMap[key]
+        if(item == "未找到")
+          item = {name:key,value:"未找到",type:""}
+        watchPointArr.push(item)
+      })
+      let format = (variate)=> {
+        variate = Array.isArray(variate) ? variate : [variate]
+        let tempArr = []
+        variate.forEach((item,index)=>{
+          let obj = {}
+          obj.sign = item.name
+          let formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
+          obj.varInfo = [formatName,": ",item.value]
+          if(item.innerObj) 
+            obj.varChild = format(item.innerObj)
+          tempArr.push(obj)
         })
-        return final
+        return tempArr
+      }
+      let disOrderArr = format(watchPointArr)   //格式化变量
+      inputOrderArr.forEach((key)=>{    //按用户输入顺序排序变量
+        const tree = disOrderArr.find(item=>item.sign==key)
+        if(tree)
+          finalArr.push(disOrderArr.find(item=>item.sign==key))
+      })
+      return finalArr
     },
     debugStatus() {
       return this.currentQuestion.debugStatus
@@ -229,7 +199,12 @@ export default {
     height: 100%;
     font-family: "Courier New";
     .el-tree-node{
-      font-size: 14px;
+      font-size: 15px;
+      margin-bottom: 10px;
+      background-color: rgb(248,248,248);
+    }
+    .el-tree-node__expand-icon {
+      display: none!important;
     }
   }
   .watch-title {
@@ -254,14 +229,32 @@ export default {
     line-height: 30px;
     cursor: pointer;
   }
-  .change-tag {
-    transition: all 1s;
-    background-color: blue;
-  }
   .var-name {
     color: rgb(112,48,160);
   }
   .point-val {
     color: rgb(127, 127, 127)
+  }
+  .tree-title-class {
+    position: relative;
+    background-color: #ecf5ff;
+    display: inline-block;
+    height: 30px;
+    width: 100%;
+    padding: 0 10px;
+    line-height: 30px;
+    color: #409eff;
+    border: 1px solid #d9ecff;
+  }
+  .var-delete-icon {
+    position: absolute;
+    right: 20px;
+    line-height: 30px;
+    z-index: 10;
+  }
+  .expand-icon {
+    color: grey;
+    line-height: 30px;
+    font-size: 16px;
   }
 </style>
