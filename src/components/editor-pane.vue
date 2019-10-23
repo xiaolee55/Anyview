@@ -179,12 +179,12 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
           this.updataOutputData("danger","未设置断点")
           return
         }
-        if(!this.checkIconStatus())
-          return
-        this.changeIconStatus("debug")  //进行中，修改图标样式
         const _this = this   //vue默认严格模式，非严格模式指向window，函数没有直接调用者的话this指向undefined，比如下面的_startDebug函数中的this
         const compileStatus = _this.currentQuestion.compileStatus
         const _startDebug = function(){ //绑定函数作用域
+          if(!this.checkIconStatus())
+            return
+          this.changeIconStatus("debug")  //进行中，修改图标样式
           const questionFullName = this.currentQuestion.content.questionFullName
           const eID = this.currentIndex
           const content= {bp,questionFullName,eID}
@@ -193,8 +193,14 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
             if(e.type == types.START_DEBUG_SUCCESS_TYPE){
               console.log('start',e)
               // analyseToVisual(e)
-              if(e.content.backTrace.length>1)
-                this.setVarAnimation(false)
+              if(e.content.exception){
+                this.setOutput({
+                                style: "danger",
+                                label: "调试异常",
+                                _content: e.content.output
+                })
+                return
+              }
               this.resetIconStatus()  //动作结束，修改图标样式
               this.updataOutputData()   //移除“调试中”的标签
               const _content = e.content.output
@@ -208,17 +214,18 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               _obj.dataStruct = e.content.dataStruct
               _obj.watchPoint = e.content.watchPoint
               _obj.backTrace = e.content.backTrace
+              _obj.output = e.content.output
               this.setDebugData({index,_obj})
             }
           }) 
         }.bind(_this)
 
-        if(!compileStatus){   //如果未编译则先编译再执行
-          this.resetIconStatus()
+        // if(!compileStatus){   //如果未编译则先编译再执行
+          // this.resetIconStatus()
           _this.compile({},_startDebug)
-        }else{
-          _startDebug()
-        }
+        // }else{
+        //   _startDebug()
+        // }
       },
       updataOutputData(style, label, _content) {
         this.setOutput({style, label, _content})
@@ -263,6 +270,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         })
       },
       clickTab(item) {
+        let oldIndex = this.currentIndex
         let newQuestion = this.openQuestions.get(Number(item))
         //更新当前的题目索引和当前题目
         this.setCurrentIndex(item)
@@ -297,7 +305,6 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         }
         //更新tabs数据
         function updataTabs() {
-          console.log(124324)
           if(removeIndex == _this.currentIndex && openQuestions.size!=1) {
             let newQuestion = openQuestions.get(_this.currentIndex)
             let preQuestion = openQuestions.get(_this.currentIndex)
@@ -315,6 +322,10 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
             _this.setCurrentQuestion(null)
             _this.setListOpen(true)
           }
+          const index = removeIndex
+          const content = ""
+          const isRemove = true
+          _this.setOutputData({index,content,isRemove}) //删除输出窗口
           //更新已打开题目数组
           openQuestions.delete(removeIndex)
           _this.setOpenQuestions(openQuestions)

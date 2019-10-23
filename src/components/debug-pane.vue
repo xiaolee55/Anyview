@@ -80,6 +80,14 @@ export default {
       })
     },
     commitDebugData(e) {
+      if(e.content.exception){
+        this.setOutput({
+                        style: "danger",
+                        label: "调试异常",
+                        _content: e.content.output
+        })
+        return
+      }
       const index = this.currentIndex
       const _obj = {}
       _obj.lineNum = e.content.lineNum
@@ -87,6 +95,7 @@ export default {
       _obj.dataStruct = e.content.dataStruct
       _obj.watchPoint = e.content.watchPoint
       _obj.backTrace = e.content.backTrace
+      _obj.output = e.content.output
       this.setDebugData({index,_obj})
       if(e.content.output)
         this.setOutput({
@@ -96,17 +105,19 @@ export default {
                       })
     },
     continueDebug() {
-      // if(!this.status)
-      //   return
-      // this.status =false
+      if(!this.status)
+        return
+      this.status =false
       const content = {eID: this.currentIndex,cmd: "continue\n"}
       fun.getContinueDebugMsg(content).then((e)=>{
+        console.log(e)
         if(types.CONTINUE_DEBUG_SUCCESS_TYPE == e.type) {
-          console.log('comtinue')
-          // this.status = true
+          console.log('continue',e)
+          this.status = true
           if(e.content.output.includes("调试结束")) {
             this.commitStopDebug()
-          }     
+          } 
+          this.commitDebugData(e)    
         }
       })
     },
@@ -175,6 +186,7 @@ export default {
     // left: 40%;
     // transform:translate(-50%,-50%);
     // background-color: white;
+    transition: all 1s;
     z-index: 50;
   }
   .debug-menu /deep/{ 

@@ -1,6 +1,7 @@
 <template>
   <div class="variate-pane" ref="varPane">
     <el-tag type="info" effect="dark" class="variate-title" ref="varTitle">变量与堆栈</el-tag>
+     <span style="opacity:0;display:none">{{renderVar}}</span>
     <div class="variate-container" ref="variateContainer">
       <transition-group name="varr" tag="div" appear
         @before-Enter = "beforeEnter"
@@ -10,23 +11,25 @@
         @leave="leave"
         @after-leave= "afterLeave"
         style="height:100%">
-        <div class="variate-item" v-for="(strs,index) in backTrace" 
-             :key= "formatItem(strs)" 
-             :ref = "(strs[0]).replace(/\s/g,'')" 
-             :id= "(strs[0]).replace(/\s/g,'')">
-            <el-tag type="info" class="variate-fun"  :class="{'active-fun': index==trace}" ref="fun">
-              <i class="el-icon-caret-right" v-if="isExpand!=index" @click="expandVars(strs,index)"></i>
-              <i class="el-icon-caret-bottom" v-if="isExpand==index" @click="collapseVars(strs,index)"></i>
-              <span v-for="(str,i) in strs" :key="str" :class="funClass(i,index,trace)">{{ str }}</span>
+        <div class="variate-item" v-for="(strs,index) in saveVariateArr" 
+             :key= "strs.name" 
+             :ref = "strs.name" 
+             :id= "strs.name">
+            <el-tag type="info" class="variate-fun"  :class="{'active-fun': strs.name==trace}" ref="fun">
+              <i class="el-icon-minus" v-if= "isExpand.includes(strs.name)" @click= "collapseVars(strs.name,strs.tree)"></i>
+              <i class="el-icon-plus" v-else @click= "expandVars(strs.name,strs.tree)"></i>
+              <span v-for="(str,i) in strs.finalBackTrace" :key="str" :class="funClass(strs.name,i,trace)">{{ str }}</span>
             </el-tag>
-            <el-tree :data= "renderVar" 
+            <el-tree :data= "strs.tree" 
                     :props= "defaultProps" 
                     :highlight-current= "true"
-                    v-if= "trace== index"
-                    default-expand-all>
+                    node-key = "sign"
+                    @node-expand= "nodeExpand"
+                    @node-collapse= "nodeCollapse"
+                    :default-expanded-keys= "expandedNodeList">
               <span class="custom-tree-node" slot-scope="{ node }">
-                <span v-for="(item,index) in node.label" :key="item">
-                  <span :class="varClass(index,item)">{{item}}</span>
+                <span v-for= "(item,index) in node.label" :key="item">
+                  <span :class= "varClass(index,item)">{{item}}</span>
                 </span>
               </span>
             </el-tree>
@@ -42,16 +45,18 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
 export default {
    data() {
       return {
-        isExpand: "",
+        isExpand: [],
         trace: "",
         defaultProps: {
           children: 'varChild',
           label: 'varInfo'
         },
-        saveVariateArr: {},
+        saveVariateArr: [],
         itemIdArr: [],
         oldVariate: "",
-        transformArr:[]
+        expandedNodeList: [],
+        transformArr:[],
+        initTransformArr: []
       };
     },
     methods: {
@@ -62,20 +67,26 @@ export default {
       },
       enter(el,done) {
           setTimeout(()=>{  //不加延时则初始高度值会出问题，原因待探索
-            const containerHeight = this.$refs.variateContainer.offsetHeight - 1
+            const containerHeight = this.$refs.variateContainer.offsetHeight - 5
             const funHeight = this.$refs.fun[0].$el.offsetHeight
-            el.offsetWidth;
+            el.offsetWidth;   //强制刷新动画
             let arr = this.itemIdArr
             for (let i = 0; i < arr.length; i++) {
               this.$refs[arr[i]][0].style.transition = "all 1s"
-              if(i!=0){
+              if(i!=0){ //非栈顶函数
+                this.isExpand = this.isExpand.filter(item=>item!=arr[i])  //收下去时把-号变+号
                 this.$refs[arr[i]][0].style.transform = `translateY(${containerHeight-(arr.length-i)*funHeight}px)`
+                this.$refs[arr[i]][0].style.height = `${funHeight}px`
+                this.$refs[arr[i]][0].style.zIndex= i
                 this.transformArr[i] = containerHeight-(arr.length-i)*funHeight
-              }else{
+              }else{  //栈顶函数
                   this.$refs[arr[i]][0].style.transform = `translateY(0)`
-                  this.transformArr[i] = containerHeight-(arr.length-i)*funHeight  //存储栈的transform初始值，已被拉伸框时使用
+                  this.$refs[arr[i]][0].style.height = `${containerHeight-(arr.length-i)*funHeight}px`
+                   this.$refs[arr[i]][0].style.zIndex= i
+                  this.transformArr[i] = containerHeight-(arr.length-i)*funHeight  //存储栈的transform实时值，已被拉伸框时使用
               }
               this.$refs[arr[i]][0].style.opacity = 1
+              this.initTransformArr = this.transformArr  //存储栈的transform实时值，已被拉伸框时使用
             }
             done()
           },200)
@@ -88,11 +99,18 @@ export default {
         el.style.transition = "all 1s"
       },
       leave(el,done) {
+        const containerHeight = this.$refs.variateContainer.offsetHeight - 1
+        const funHeight = this.$refs.fun[0].$el.offsetHeight
+        const arr = this.itemIdArr
         el.style.opacity = 0
-        if(this.$refs[this.itemIdArr[0]][0]){
-          this.$refs[this.itemIdArr[0]][0].style.transition =  "all 0.5s 0.5s"
-          this.$refs[this.itemIdArr[0]][0].style.transform = `translateY(0)`
+        const index =  this.itemIdArr[0]
+        //数据换组不需要动画，因为走到这里时上一组数据的最后一个函数已被删除
+        if(this.$refs[index]&&this.$refs[index][0]){
+          this.$refs[index][0].style.height = `${containerHeight-arr.length*funHeight}px`
+          this.$refs[index][0].style.transition =  "all 0.5s 0.5s"
+          this.$refs[index][0].style.transform = `translateY(0)`
         }
+        this.transformArr.shift()   //有函数退栈时把他得transform值从数组移除，防止影响其他元素
         setTimeout(()=>{
           done()  //这个开启则不会出现离开动画
         },1000)
@@ -100,8 +118,20 @@ export default {
       afterLeave(el) {
         el.transition = ""
       },
+      nodeExpand(data,node,component) {
+        this.expandedNodeList.push(data.sign); // 在节点展开是添加到默认展开数组
+      },
+      nodeCollapse(data) {
+        this.expandedNodeList=this.expandedNodeList.filter(item=>item!=data.sign) // 收起时删除数组里对应选项
+        if(data.varChild){
+          data.varChild.forEach((item,index)=>{
+            this.nodeCollapse(data.varChild[index])
+          })   
+        }
+      },
       fixedFun(changeVal) {   //精度丢失问题
         let arr = this.itemIdArr
+        console.log(changeVal)
         for (let i = 0; i < arr.length; i++) {
           this.$refs[arr[i]][0].style.transition = "all 1s"
           if(i!=0){
@@ -111,23 +141,48 @@ export default {
           }
         }
       },
-      expandVars(name,index) {
-        this.isExpand = index
-        this.$nextTick(()=>{
-          this.$refs[name][0].style.maxHeight = 666+'px'
+      expandVars(name,tree) {
+        const funHeight = this.$refs.fun[0].$el.offsetHeight
+        const varsHeight = tree.length*26  //26是一行变量的高度
+        const arr = this.itemIdArr
+        const index = arr.findIndex((item,i)=>item==name)
+        this.isExpand.push(name)
+        arr.forEach((item,i)=>{
+          if(item!=this.trace){
+            if(i<=index){
+              this.transformArr[i] = this.transformArr[i]-varsHeight
+              this.$refs[item][0].style.transition = "all 1s"
+              this.$refs[item][0].style.transform = `translateY(${this.transformArr[i]}px)`  //被点击元素及其上面的元素都向上移动相对的位置
+            }
+          }
         })
+        this.$refs[name][0].style.height = `${funHeight+varsHeight}px`  //被点击的元素高度变为函数高度+所有变量闭合时的高度
       },
-      collapseVars(name, index) {
-        this.isExpand = -1
-        this.$nextTick(()=>{
-          this.$refs[name][0].style.maxHeight = 35+'px'
+      collapseVars(name,tree) {
+        const funHeight = this.$refs.fun[0].$el.offsetHeight
+        const varsHeight = tree.length*26  //26是一行变量的高度
+        const arr = this.itemIdArr
+        const index = arr.findIndex((item,i)=>item==name)
+        this.isExpand = this.isExpand.filter(item=>item!=name)
+        arr.forEach((item,i)=>{
+          if(item!=this.trace){
+            if(i<=index){
+              this.transformArr[i] = this.transformArr[i]+varsHeight
+              this.$refs[item][0].style.transition = "all 1s"
+              this.$refs[item][0].style.transform = `translateY(${this.transformArr[i]}px)`  //被点击元素及其上面的元素都向上移动相对的位置
+            }
+          }
         })
+        this.$refs[name][0].style.height = `${funHeight}px`  //被点击的元素高度变为函数高度+所有变量闭合时的高度
       },
       varClass(index,item) {
-       return index==0 ? 'var-name': item.charAt(0)==0&&item[1]=="x" ? 'point-val' : ''
+        if(item)
+          return index==0 ? 'var-name': item.charAt(0)==0&&item[1]=="x" ? 'point-val' : ''
+        else
+          return ''
       },
-      funClass(i,index,trace) {
-        return (i%2==0)? '': (index==trace) ? 'active-var' : 'not-active-var'
+      funClass(strs,i,trace) {
+        return (i%2==0)? '': (strs==trace) ? 'active-var' : 'not-active-var'
       },
       formatFun(backTrace) {
         if(!backTrace)
@@ -168,22 +223,26 @@ export default {
         return obj.join().replace(/\s/g,'')
       }
     },
+    watch: {
+      trace(val) {
+        this.isExpand.push(val)
+      }
+    },
     computed: {
-      backTrace() {
-        const backTrace = this.currentDebug.backTrace
-        const variate = this.currentDebug.variate
-        if(!backTrace)
-          return
-        this.trace = 0
-        const finalBackTrace = this.formatFun(backTrace)
-        this.itemIdArr = []
-        finalBackTrace.forEach(item=>{
-          this.itemIdArr.push(item[0].replace(/\s/g,''))
-        })
-        return backTrace ? finalBackTrace: [] 
-      },
       renderVar() {   //格式化变量数据
-        const sign = this.currentDebug.backTrace[0]
+        //判断本次调试的数据是否是一组全新数据
+        const output = this.currentDebug.output
+        const isNewData = output.includes("<br>========RIGHT========<br>")||output.includes("<br>========ERROR========<br>")
+
+        //函数堆栈的原始数据，用formatFun函数格式化成数组再给不同高亮
+        const backTrace = Array.isArray(this.currentDebug.backTrace)?this.currentDebug.backTrace:[this.currentDebug.backTrace]
+        const finalBackTrace = this.formatFun(backTrace)
+        
+        //存放函数名的全局数组，用以在一些地方做标识和判断
+        this.itemIdArr =backTrace  //只有一个函数时后端返回的是一个字符串，因此需要做处理
+        const sign = backTrace[0]
+        this.trace = sign
+        //格式化变量数据为树形数据的算法
         let format = (variate,oldVariate)=> {
           variate = Array.isArray(variate) ? variate : [variate]
           oldVariate = Array.isArray(oldVariate ) ? oldVariate  : [oldVariate ]
@@ -196,22 +255,75 @@ export default {
                oldVariate[index] = {}
                oldVariate[index].innerObj = {}
             }
-            let formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
+            let formatName 
+            if(item.name)
+              formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
             obj.varInfo = [formatName,": ",item.value]
-            obj.sign = sign
+            obj.sign = item.name
             if(item.innerObj) 
               obj.varChild = format(item.innerObj,oldVariate[index].innerObj)
             tempArr.push(obj)
           })
           return tempArr
         }
+        //拿到原始数据并格式化
         let variate = this.currentDebug.variate
         if(this.oldVariate == "")
           this.oldVariate = variate
         let render =  variate ? format(variate,this.oldVariate) : []
         this.oldVariate = variate
-        this.saveVariateArr[sign]=render
-        return this.saveVariateArr[sign];
+
+        //分情况判断不同的函数堆栈切换情况，维护一个包含所有信息的数组saveVariateArr
+        let tempArr = this.saveVariateArr
+        //三种情况，当返回函数栈数量比维护的saveVariateArr长度相等时，只用更新当前活跃函数栈，前者大时要往维护数组中添加一个数据，前者小时要删除对应数据
+        if(tempArr.length==backTrace.length){
+          if(isNewData){   
+            tempArr = []
+            backTrace.forEach((item,index)=>{
+              let _render = []
+              if(item == sign)
+                _render = render
+                tempArr.push({name:item,tree:_render,finalBackTrace:finalBackTrace[index]})
+            })  
+          }
+          tempArr.forEach((item,index)=>{
+            if(item.name==backTrace[0]){
+              tempArr[index].tree = render
+            }
+          })
+          console.log(tempArr.tree)
+        }else if(tempArr.length<backTrace.length){
+          if(isNewData) //如果是新一组调试数据，则把上次余留的函数数据清空
+            tempArr = []
+          backTrace.forEach((item,index)=>{
+            let flag = tempArr.find(obj=>obj.name==item)
+            let _render = []
+            if(item == sign)
+              _render = render
+            if(!flag)
+              tempArr.push({name:item,tree:_render,finalBackTrace:finalBackTrace[index]})
+          })
+        }else{
+          if(isNewData){      //新函数栈的数量比保留的函数栈大且是新一组数据时，清空上次的数组，重新添加
+            tempArr = []
+            backTrace.forEach((item,index)=>{
+              let _render = []
+              if(item == sign)
+                _render = render
+                tempArr.push({name:item,tree:_render,finalBackTrace:finalBackTrace[index]})
+            })  
+          }else{
+            tempArr = tempArr.map(item=>{
+              if(item.name==sign){
+                item.tree = render
+              }
+              return item
+            })
+            tempArr = tempArr.filter(item=>backTrace.includes(item.name))
+          }
+        }
+        this.saveVariateArr = tempArr
+        return [];
       },
       ...mapGetters([
         "currentIndex",
@@ -255,7 +367,8 @@ export default {
   .variate-item {
     position: absolute;
     width: 100%;
-    height: calc(100% - 32px);
+    // max-height: 666px;
+    // height: calc(100% - 32px);
     cursor: pointer;
     margin: 0 -5px 5px 5px;
   }

@@ -24,10 +24,10 @@ const mutations = {
     [types.SET_STUDENT_ANSWER](state,studentAnswer) {
         state.studentAnswer = studentAnswer
     },
-    [types.SET_OUTPUT_DATA](state,{index,content}) {        //控制输出窗口的数据
+    [types.SET_OUTPUT_DATA](state,{index,content,isRemove}) {        //控制输出窗口的数据
         //用解构赋值，函数调用方一定要传值，否则会报index is undefined这类错误
-        if(index==-1){
-            Vue.delete(state.outputData,state.currentIndex)
+        if(isRemove){
+            Vue.delete(state.outputData,index)
             return 
         }
         const arr = state.outputData[index] ? state.outputData[index] : []

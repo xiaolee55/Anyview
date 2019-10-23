@@ -22,8 +22,10 @@ export default {
   },
   methods: {
     clearOutput() {
-      const index = -1
-      this.setOutputData({index})
+      const index = this.currentIndex
+      const content = ""
+      const isRemove = true
+      this.setOutputData({index,content,isRemove})
     },
     updataHeight(e) {
       //这个地方通过修改vue中的data再绑定到style不行，会导致拉伸条不能动，只能通过ref的方式直接操作DOM，原因未知，猜测是拉伸库的源码做了限制

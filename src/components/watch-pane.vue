@@ -121,6 +121,8 @@ export default {
         return
       this.status = false
       const variateName = this.variateInput.replace(/\s*/g,"")   //过滤掉输入字符的空格
+      this.variateInput = ""
+      console.log(variateName)
       if(!variateName)      //空变量直接过滤
        return 
       if(!this.inputOrderArr.find((item)=>variateName==item)){
@@ -158,13 +160,20 @@ export default {
           item = {name:key,value:"未找到",type:""}
         watchPointArr.push(item)
       })
+      let judegeInWatchPoint = (name,arr)=>{  //如果是输入变量则不对其结构做调整
+        if(arr.includes(name))
+          return true
+        return false
+      }
       let format = (variate)=> {
         variate = Array.isArray(variate) ? variate : [variate]
         let tempArr = []
         variate.forEach((item,index)=>{
           let obj = {}
           obj.sign = item.name
-          let formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
+          let formatName = item.name
+          if(!judegeInWatchPoint(item.name,inputOrderArr))
+            formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
           obj.varInfo = [formatName,": ",item.value]
           if(item.innerObj) 
             obj.varChild = format(item.innerObj)

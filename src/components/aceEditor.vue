@@ -28,23 +28,24 @@
       let editor = this.aceEditor
       let _this  = this
       //监听断点事件
-      this.aceEditor.on("guttermousedown", function(e){ 
-          e.stop() 
+      this.aceEditor.on("guttermousedown", function(e){
+        console.log(e)
           const target = e.domEvent.target; 
           const row = e.getDocumentPosition().row 
           if(!target.className.includes("ace_gutter-cell"))
             return
           else if(target.className.includes("iconfont")){
             e.editor.session.clearBreakpoint(row)
+            e.stop()
             return  
           }else{
             if (e.clientX > 45 + target.getBoundingClientRect().left) 
               return; 
             e.editor.session.setBreakpoint(row,"iconfont icon-duandian")
+            e.stop()
           }
             _this.updataBP(e.editor.session.getBreakpoints())
       }) 
-      this.aceEditor.resize();
       //监听输入
       this.aceEditor.on('input', () => {    //将change换成input则原来的bug就没有了，原来题目切换的时候也会出现圆点
         this.beforeContent = this.aceEditor.getValue()
@@ -99,8 +100,8 @@
         if(!bpRows)
           return
         let arr=[]  
+        console.log(bpRows)
           bpRows.forEach((_,index)=>{
-            console.log(index)
             arr.push(index+1)
           })
           this.$emit("setBP",arr)

@@ -39,7 +39,7 @@ export const QUIT_DEBUG_TYPE = 141
 export const QUIT_DEBUG_SUCCESS_TYPE = 151
 
 export const CONTINUE_DEBUG_TYPE = 191
-export const CONTINUE_DEBUG_SUCCESS_TYPE = 191
+export const CONTINUE_DEBUG_SUCCESS_TYPE = 21
 
 export const REPEAT_DEBUG_TYPE = 23
 export const REPEAT_DEBUG_SUCCESS_TYPE = 23
