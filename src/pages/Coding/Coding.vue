@@ -205,6 +205,10 @@ export default {
 </style>
 
 <style lang="scss" scoped>
+  body {
+    overflow: hidden;
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
 .code-pane /deep/ {
   canvas {
       position: absolute;
@@ -222,6 +226,8 @@ export default {
     padding: 0 10px;
     line-height: 30px;
     height: 30px;
+    font-size: 13px;
+    font-family: 'Lato', 'Lucida Grande', 'Lucida Sans Unicode', Tahoma, Sans-Serif;
   }
   .ace_gutter-cell{
     cursor: pointer;

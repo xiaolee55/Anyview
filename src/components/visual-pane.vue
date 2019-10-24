@@ -6,13 +6,14 @@
 </template>
 
 <script>
-import {TreeVisualization} from 'static/boundle'
+import * as tree from 'static/boundleTest'
 import {dataTree} from 'common/js/data'
 import {newDataTree} from 'common/js/data_new'
 export default {
   mounted() {
-    this.main = new TreeVisualization(document.getElementById("container"),1000,600)
-    this.main.init(dataTree)
+    // console.log(tree)
+    // this.main = new TreeVisualization(document.getElementById("container"),1000,600)
+    // this.main.init(dataTree)
   },
   data () {
     return {

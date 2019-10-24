@@ -44,12 +44,12 @@ export default {
         const height=container.scrollHeight
         const top= scrollTop ? scrollTop : container.scrollTop
         const clientHeight = this.$refs.outputContainer.clientHeight
-
         if(top+clientHeight==height){   //使用一个对象来保存每道题的滚动条的位置，防止每次数据改变滚动条就滚动
           container.scrollTop = top
           return
         }
         for(let i=0;i<height-top;i++){   //使用定时器让滚动条慢慢滚到底部,此处循环次数待定
+          container.scrollTop = top  //关闭调试滚动条会从0开始，所以这里应该使用Map记录下来的值
           setTimeout(function(){
             container.scrollTop++
             _this.scrollTopMap[_this.currentIndex] = container.scrollTop 

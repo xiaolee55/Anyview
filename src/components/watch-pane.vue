@@ -27,7 +27,7 @@
           <i class="el-icon-remove-outline var-delete-icon" v-if="node.level==1" @click= "removeVariate(node,data.sign)"></i>
         </span>
       </el-tree> 
-        <el-tag contenteditable="true" 
+        <el-tag contenteditable="true"
               v-if= "showInput"  
               @blur.native= "addVariate"  
               @input.native= "varInput($event)" 
@@ -92,11 +92,11 @@ export default {
     removeVariate(_,varName) {             //点击减号时移除当前变量
       if(!this.status)
         return
-      this.status = false
       this.inputOrderArr=this.inputOrderArr.filter((item=>item!=varName))
       this.expandedNodeList=this.expandedNodeList.filter(item=>item!=varName)
       const content = {addPoints: "",delPoints: varName}
       fun.getWatchPointMsg(content).then(e => {
+        this.status = false
         if(e.type == types.SET_POINT_SUCCESS_TYPE){
           const index = this.currentIndex
           const _obj = {watchPoint: e.content }
@@ -106,6 +106,7 @@ export default {
       })
     },
     varInput(e) {               //输入变量
+      console.log("输入的变量",e)
       this.variateInput = e.target.innerText
     },
     showSearch() {                  //双击空白处或者点击加号出现一个新框
@@ -119,10 +120,8 @@ export default {
     addVariate() {                  //添加一个变量
       if(!this.status)
         return
-      this.status = false
       const variateName = this.variateInput.replace(/\s*/g,"")   //过滤掉输入字符的空格
       this.variateInput = ""
-      console.log(variateName)
       if(!variateName)      //空变量直接过滤
        return 
       if(!this.inputOrderArr.find((item)=>variateName==item)){
@@ -130,6 +129,7 @@ export default {
       }
       const content = {addPoints: variateName,delPoints:""}
       fun.getWatchPointMsg(content).then(e => {
+        this.status = false
         if(e.type == types.SET_POINT_SUCCESS_TYPE){
           this.hideSearch()     //隐藏输入框
           console.log("watch面板数据",e)

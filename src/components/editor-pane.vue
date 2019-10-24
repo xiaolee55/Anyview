@@ -307,12 +307,18 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         function updataTabs() {
           if(removeIndex == _this.currentIndex && openQuestions.size!=1) {
             let newQuestion = openQuestions.get(_this.currentIndex)
-            let preQuestion = openQuestions.get(_this.currentIndex)
-            openQuestions.forEach((item,i) => {
-              if(i == removeIndex )
-                newQuestion = preQuestion
-              preQuestion = item
-            })
+            let arr = Array.from(openQuestions)
+            for (let i = 0; i < arr.length; i++) {    //如果是map中的第一项，则新题目换为map的下一项，否则换为map的上一项
+              if(arr[i][0]==removeIndex){
+                if(i==0){
+                  newQuestion = arr[i+1][1]
+                  break
+                }else{
+                  newQuestion = arr[i-1][1]
+                  break;
+                }
+              }
+            }
             //更新当前题目，和当前题目索引
             _this.setCurrentIndex(newQuestion.id)
             _this.setCurrentQuestion(newQuestion)

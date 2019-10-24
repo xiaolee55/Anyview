@@ -175,6 +175,10 @@ export default {
         })
         this.$refs[name][0].style.height = `${funHeight}px`  //被点击的元素高度变为函数高度+所有变量闭合时的高度
       },
+      changeExpandNodeList(flag,name) {
+        if(flag)
+          this.expandedNodeList = []
+      },
       varClass(index,item) {
         if(item)
           return index==0 ? 'var-name': item.charAt(0)==0&&item[1]=="x" ? 'point-val' : ''
@@ -225,6 +229,7 @@ export default {
     },
     watch: {
       trace(val) {
+        console.log(val)
         this.isExpand.push(val)
       }
     },
@@ -233,7 +238,6 @@ export default {
         //判断本次调试的数据是否是一组全新数据
         const output = this.currentDebug.output
         const isNewData = output.includes("<br>========RIGHT========<br>")||output.includes("<br>========ERROR========<br>")
-
         //函数堆栈的原始数据，用formatFun函数格式化成数组再给不同高亮
         const backTrace = Array.isArray(this.currentDebug.backTrace)?this.currentDebug.backTrace:[this.currentDebug.backTrace]
         const finalBackTrace = this.formatFun(backTrace)
@@ -242,6 +246,9 @@ export default {
         this.itemIdArr =backTrace  //只有一个函数时后端返回的是一个字符串，因此需要做处理
         const sign = backTrace[0]
         this.trace = sign
+
+          //如果是新一组数据，则删除其原来的展开状态
+         this.changeExpandNodeList(isNewData,sign)
         //格式化变量数据为树形数据的算法
         let format = (variate,oldVariate)=> {
           variate = Array.isArray(variate) ? variate : [variate]
@@ -291,7 +298,6 @@ export default {
               tempArr[index].tree = render
             }
           })
-          console.log(tempArr.tree)
         }else if(tempArr.length<backTrace.length){
           if(isNewData) //如果是新一组调试数据，则把上次余留的函数数据清空
             tempArr = []

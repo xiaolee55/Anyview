@@ -29,7 +29,6 @@
       let _this  = this
       //监听断点事件
       this.aceEditor.on("guttermousedown", function(e){
-        console.log(e)
           const target = e.domEvent.target; 
           const row = e.getDocumentPosition().row 
           if(!target.className.includes("ace_gutter-cell"))
@@ -100,7 +99,6 @@
         if(!bpRows)
           return
         let arr=[]  
-        console.log(bpRows)
           bpRows.forEach((_,index)=>{
             arr.push(index+1)
           })
