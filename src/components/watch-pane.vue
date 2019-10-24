@@ -118,18 +118,18 @@ export default {
       this.showInput = false
     },
     addVariate() {                  //添加一个变量
-      if(!this.status)
-        return
       const variateName = this.variateInput.replace(/\s*/g,"")   //过滤掉输入字符的空格
       this.variateInput = ""
-      if(!variateName)      //空变量直接过滤
+      if(!variateName)      //空变量直接过滤，要先做这个判断再做状态判断，否则在空白状态下status置为空则导致接下来程序无法运行
        return 
+      if(!this.status)
+        return
+      this.status = false
       if(!this.inputOrderArr.find((item)=>variateName==item)){
         this.inputOrderArr.push(variateName)
       }
       const content = {addPoints: variateName,delPoints:""}
       fun.getWatchPointMsg(content).then(e => {
-        this.status = false
         if(e.type == types.SET_POINT_SUCCESS_TYPE){
           this.hideSearch()     //隐藏输入框
           console.log("watch面板数据",e)
