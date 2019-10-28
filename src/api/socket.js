@@ -5,7 +5,7 @@ let websocket = null;
 let serverPort = '5000';	//webSocket连接端口
 let close=false
 function initWebSocket(){ //初始化websocket
-    var url = 'ws://101.132.148.120:8889/anyview';
+    var url = 'ws://101.132.120.137:8889/anyview';
     websocket = new WebSocket(url);
     websocket.onclose = function(e){
         close=true

@@ -238,6 +238,7 @@ export default {
         //判断本次调试的数据是否是一组全新数据
         const output = this.currentDebug.output
         const isNewData = output.includes("<br>========RIGHT========<br>")||output.includes("<br>========ERROR========<br>")
+        console.log()
         //函数堆栈的原始数据，用formatFun函数格式化成数组再给不同高亮
         const backTrace = Array.isArray(this.currentDebug.backTrace)?this.currentDebug.backTrace:[this.currentDebug.backTrace]
         const finalBackTrace = this.formatFun(backTrace)
@@ -336,7 +337,6 @@ export default {
         "currentQuestion",
         "currentDebug",
         "openQuestionsArr",
-        "varAnimation"
       ]),
     }
 

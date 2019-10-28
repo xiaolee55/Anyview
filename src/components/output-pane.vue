@@ -2,7 +2,10 @@
   <div class="output-pane" ref="outputPane">
     <el-tag type="info" effect="dark" class="output-pane-title">
       <span>输出窗口</span>
-      <i class="iconfont icon-qingkong output-clear" title="清空输出窗口" @click="clearOutput"></i>
+      <span class="output-menu">
+        <i class="iconfont icon-qingkong output-clear" title="清空输出窗口" @click="clearOutput"></i>
+        <el-checkbox v-model="clearAuto" class="clear-auto">自动清空数据</el-checkbox>
+      </span>
     </el-tag>
     <div class="output-container" ref="outputContainer">
       <span v-for="(item, index) in currentOutput" :key="index" v-html="item" class="output-data">
@@ -27,12 +30,9 @@ export default {
       const isRemove = true
       this.setOutputData({index,content,isRemove})
     },
-    updataHeight(e) {
-      //这个地方通过修改vue中的data再绑定到style不行，会导致拉伸条不能动，只能通过ref的方式直接操作DOM，原因未知，猜测是拉伸库的源码做了限制
-      // this.initHeight=e[1].width*document.documentElement.clientHeight/100+'px'
-    },
     ...mapMutations({
-      setOutputData :"SET_OUTPUT_DATA"
+      setOutputData :"SET_OUTPUT_DATA",
+      setClearOutputAuto: "SET_CLEAR_OUTPUT_AUTO"
     })
   },
   watch: {
@@ -48,6 +48,7 @@ export default {
           container.scrollTop = top
           return
         }
+        console.log(this.scrollTopMap)
         for(let i=0;i<height-top;i++){   //使用定时器让滚动条慢慢滚到底部,此处循环次数待定
           container.scrollTop = top  //关闭调试滚动条会从0开始，所以这里应该使用Map记录下来的值
           setTimeout(function(){
@@ -59,9 +60,18 @@ export default {
     }
   },
   computed: {
+    clearAuto: {
+      get() {
+        return this.clearOutputAuto
+      },
+      set(val) {
+        this.setClearOutputAuto(val)
+      }
+    },
     ...mapGetters([
       "currentOutput",
-      "currentIndex"
+      "currentIndex",
+      "clearOutputAuto"
       ])
   },
 }
@@ -104,11 +114,22 @@ export default {
     margin-bottom: 5px;
     display: block;
   }
-  .output-clear {
+  .output-menu {
     position: absolute;
     right: 20px;
     font-size: 13px;
     line-height: 23px;
     cursor: pointer;
+  }
+  .output-clear:active {
+    font-size: 15px;
+  }
+  .clear-auto /deep/{
+    margin-left: 20px;
+    color: white;
+    .el-checkbox__label{
+      color: white;
+      padding-left: 3px;
+    }
   }
 </style>

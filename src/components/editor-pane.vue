@@ -37,6 +37,7 @@
         </span>
           <ace :content= "item[1].answer"
                 :debugLine= "debugLine"
+                :debugStatus = "debugStatus"
                 @changeContent= "changeContent" 
                 @save= "saveAnswer"
                 @compile= "compile"

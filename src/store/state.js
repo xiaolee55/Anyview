@@ -11,5 +11,6 @@ export default {
     outputData: {},
     debugData: {},
     listOpen: true,
-    animation: true
+    animation: true,
+    clearOutputAuto: false
 }

@@ -34,9 +34,6 @@ export default {
     }
   },
   methods: {
-    test() {
-      console.log("haha")
-    },
     stepOver() {
       if(!this.status)
         return

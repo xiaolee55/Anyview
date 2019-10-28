@@ -98,6 +98,7 @@ export default {
         }else{
           this.loading = true
           fun.getQuestionContent(_question.eid).then((e) => {
+            console.log(e.content.questionContent.standardAnswer)
             console.log("题目信息",e)
             this.loading = false
             const id = _question.eid

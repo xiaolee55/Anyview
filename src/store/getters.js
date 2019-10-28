@@ -51,3 +51,5 @@ export const finishNum = state => {
   }) 
   return num
 }
+
+export const clearOutputAuto = state => state.clearOutputAuto

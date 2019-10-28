@@ -26,10 +26,11 @@ const mutations = {
     },
     [types.SET_OUTPUT_DATA](state,{index,content,isRemove}) {        //控制输出窗口的数据
         //用解构赋值，函数调用方一定要传值，否则会报index is undefined这类错误
-        if(isRemove){
-            Vue.delete(state.outputData,index)
-            return 
+        if(isRemove||state.clearOutputAuto){
+            Vue.delete(state.outputData,index) 
         }
+        if(isRemove)
+            return
         const arr = state.outputData[index] ? state.outputData[index] : []
         content ? arr.push(content) : arr.pop()
         Vue.set(state.outputData,index,arr)
@@ -47,8 +48,8 @@ const mutations = {
        }
         Vue.set(state.debugData,index,stateObj)
     },
-    [types.SET_VARIATE_ANIMATION](state,animation) {
-        state.animation = animation
+    [types.SET_CLEAR_OUTPUT_AUTO](state,val) {
+        state.clearOutputAuto = val
     }
 
 }
