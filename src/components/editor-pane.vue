@@ -3,7 +3,7 @@
              type="card"  
              class="editor-tabs"
              :before-leave="beforeLeave">
-          <div class="fun-menu">
+          <div class="fun-menu" v-if="openQuestionsArr.length">
               <ul class="horizontal-list">
                 <li>
                   <i class="iconfont icon-bianyi" 
@@ -33,7 +33,7 @@
         <span slot="label">
           <i class="iconfont icon-c"></i>
           <span>{{item[1].name}}</span>
-          <i :class="item[1].saveStatus? 'el-icon-close' : 'iconfont icon-yuan' "  :id="`${item[0]}`" @click.stop="removeTab"></i>
+          <i :class="item[1].saveStatus? 'el-icon-close' : 'iconfont icon-yuan' "  :id="`${item[0]}`" @click.stop="removeTab" class="question-title-icon"></i>
         </span>
           <ace :content= "item[1].answer"
                 :debugLine= "debugLine"

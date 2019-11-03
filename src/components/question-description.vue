@@ -1,11 +1,18 @@
 <template>
   <div class="question-content" @scroll="fixButton">
     <div class="question-menu-top" ref="topMenu">
+      <setting></setting>
       <i class="iconfont icon-xuanzekemu" style="cursor:pointer" title="选择题库" @click="goToWork"></i>
       <i class="iconfont icon-gerenxinxi" style="margin-left:20px;cursor:pointer" title="个人中心" @click="goToPerCenter"></i>
       <i class="iconfont icon-liebiao" style="cursor:pointer" title="打开列表" @click="openList"></i>
     </div>
-      <div class="question-desc" ><p>{{questionDescription}}</p></div>
+      <div class="question-desc" >
+        <ace :content="questionDescription" 
+             :max-lines="100" 
+             :theme="'chrome'" 
+             :read-only="true">
+        </ace>
+      </div>
       <div class="question-menu-bottom" ref="bottomMenu">
       <el-button type="primary" round style="margin-right:20px" @click="previousQuestion">上一题</el-button>
       <debug-pane></debug-pane>
@@ -15,7 +22,9 @@
 </template>
 
 <script>
+import ace from 'components/aceEditor'
 import {mapGetters,mapMutations} from 'vuex'
+import Setting from 'components/setting'
 import DebugPane from 'components/debug-pane'
 export default {
   methods: {
@@ -90,7 +99,9 @@ export default {
     })
   },
   components:{
-    DebugPane
+    ace,
+    DebugPane,
+    Setting
   },
   computed: {
     openQuestions() {
@@ -122,16 +133,9 @@ export default {
       transition: all 0.5s ease;
   }
   .question-desc{
-    position: absolute;
-    top: 8%;
-    height: 0;
-    width: 100%;
-    height: 100%;
-  }
-  .question-desc p{
     border: #888888 1px solid; 
-    margin: 10px;
-    padding: 10px;
+    margin: 60px 0 60px 10px;
+    padding: 10px 0 10px 10px;
   }
   .question-menu-top,.question-menu-bottom{
     position: absolute;

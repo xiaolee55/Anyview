@@ -1,11 +1,7 @@
 <template>
   <!-- 此处{{content}}不要换行，否则会给编辑区自动加上换行符 -->
-  <div class="ace-container" ref="ace">{{content}}
-  <div class="debug-highlighted" ref="dbhl"></div>
-  </div>
+  <div class="ace-container" ref="ace">{{content}}</div>
 </template>
-
-
 <script>
   import ace from 'ace-builds'
   import 'ace-builds/webpack-resolver' // 在 webpack 环境中使用必须要导入
@@ -23,7 +19,11 @@
         tabSize: 2,
         enableBasicAutocompletion: true,
 				enableSnippets: true,
-        enableLiveAutocompletion: true
+        enableLiveAutocompletion: true,
+        maxLines: this.maxLines,
+        highlightActiveLine: true,
+        highlightGutterLine: true,
+        readOnly: false
       })
       let editor = this.aceEditor
       let _this  = this
@@ -35,9 +35,9 @@
           if(!target.className.includes("ace_gutter-cell")||target.className.includes("icon-kongxinjiantou")) 
             return
           else if(target.className.includes("icon-duandian")){  //如果是重复点击红色点，则清除该断点
+          console.log(row)
             _this._clearBreakpoint(row)  
             e.stop()
-            return  
           }else{            //添加断点
             if (e.clientX > 45 + target.getBoundingClientRect().left) 
               return;
@@ -112,8 +112,15 @@
       debugStatus: {
         type: Boolean,
         default: false
+      },
+      maxLines: {
+        type: Number,
+        default: 0
+      },
+      readOnly: {
+        type: Boolean,
+        default: false
       }
-      
     },
     methods: {
       _setBreakpoint(row,style) {
@@ -187,7 +194,6 @@
       debug() {
         this.$emit('debug')
       }
-
     },
     watch: {
       content(value) {
@@ -196,12 +202,39 @@
         }
       },
       fontSize(val){
+        console.log("val",val)
         if(val)
           this.aceEditor.setFontSize(val)
       },
       theme(val){
         if(val)
           this.aceEditor.setTheme(`ace/theme/${val}`)        
+      },
+      maxLines:{
+        handler(val){
+          if(val)
+            this.aceEditor.setOptions({maxLines: val})
+        },
+        //prop的值被首次传入时不会触发watch，也就是说默认值default和首次传入的值不同也不会发生变化
+        // immediate: true  这个属性是用于watch首次变化的属性值
+      },
+      readOnly: {
+        handler(val) {
+          setTimeout(()=>{
+            if(val){  //immdiate导致watch在mouted之前就执行，所以不加延时会导致获取不到this.aceEditor实例(watch会在created阶段就执行？)
+              this.aceEditor.setOptions({
+                highlightActiveLine: false,
+                highlightGutterLine: false,
+                readOnly: true,
+                showGutter: false,
+                showPrintMargin: false
+              })
+              this.aceEditor.getSession().setUseWrapMode(true)
+              this.aceEditor.container.style.pointerEvents="none"
+            }
+          },50)
+        },
+        immediate: true
       },
       debugLine(val) {
         this.aceEditor.gotoLine(val-1)
@@ -228,7 +261,8 @@
 </script>
 
 <style>
-.ace-container {
+.ace_editor {
+  height: 100%; 
   width: 100%;
 }
 .debug-line {   /*高亮行*/

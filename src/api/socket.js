@@ -9,7 +9,8 @@ function initWebSocket(){ //初始化websocket
     websocket = new WebSocket(url);
     websocket.onclose = function(e){
         close=true
-        alert("与服务器的连接已断开，请刷新网页重试")
+        const ifReload = window.confirm("与服务器的连接已断开，是否刷新重连?");
+        ifReload? window.location.reload(): ''
         console.log('websocket 断开: ' + e.code + ' ' + e.reason + ' ' + e.wasClean)
     }
     websocket.onopen = function () {

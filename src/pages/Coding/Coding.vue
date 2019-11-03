@@ -9,7 +9,7 @@
       <question-list :list="questionList" :title="courseName" @getContent="_getQuestionContent"></question-list>
     </el-drawer>
     <splitpanes :push-other-panes="true" watch-slots v-if="debugStatus">
-      <splitpanes :splitpanes-size="65" horizontal  watch-slots  @resize="resizeLeft">
+      <splitpanes :splitpanes-size="65" horizontal  watch-slots>
         <el-tabs v-model="tab" type="card" :splitpanes-size="50" style="height:100%" class="visual-desc">
           <el-tab-pane label="题目描述" name="desc">
             <question-description @getContent="_getQuestionContent"></question-description>
@@ -82,13 +82,6 @@ export default {
       }
     },
     methods: {
-      resizeLeft(e) {
-        const val = (e[1].width-this.lastHeight)*document.body.clientHeight/100
-        if(val<100)
-          this.changeVal+=val
-        this.$refs.variatePane.fixedFun(this.changeVal)
-        this.lastHeight = e[1].width
-      },
       _getQuestionContent(_question){
         let index = Number(_question.eid)
         let openQuestions = this.openQuestions
@@ -98,7 +91,6 @@ export default {
         }else{
           this.loading = true
           fun.getQuestionContent(_question.eid).then((e) => {
-            console.log(e.content.questionContent.standardAnswer)
             console.log("题目信息",e)
             this.loading = false
             const id = _question.eid

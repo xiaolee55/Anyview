@@ -48,7 +48,6 @@ export default {
           container.scrollTop = top
           return
         }
-        console.log(this.scrollTopMap)
         for(let i=0;i<height-top;i++){   //使用定时器让滚动条慢慢滚到底部,此处循环次数待定
           container.scrollTop = top  //关闭调试滚动条会从0开始，所以这里应该使用Map记录下来的值
           setTimeout(function(){

@@ -106,7 +106,6 @@ export default {
       })
     },
     varInput(e) {               //输入变量
-      console.log("输入的变量",e)
       this.variateInput = e.target.innerText
     },
     showSearch() {                  //双击空白处或者点击加号出现一个新框
