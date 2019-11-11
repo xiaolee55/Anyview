@@ -33,7 +33,8 @@
         <span slot="label">
           <i class="iconfont icon-c"></i>
           <span>{{item[1].name}}</span>
-          <i :class="item[1].saveStatus? 'el-icon-close' : 'iconfont icon-yuan' "  :id="`${item[0]}`" @click.stop="removeTab" class="question-title-icon"></i>
+          <i class="iconfont icon-yuan question-title-icon" v-if="!currentQuestion.saveStatus&&item[1].id==currentQuestion.id"></i>
+          <i class="el-icon-close question-title-icon"  :id="`${item[0]}`" @click.stop="removeTab"></i>
         </span>
           <ace :content= "item[1].answer"
                 :debugLine= "debugLine"
@@ -43,7 +44,8 @@
                 @compile= "compile"
                 @runGroup= "runGroup"
                 @debug= "startDebug"
-                @setBP= "setBP">
+                @setBP= "setBP"
+                @updateBP= "updateBP">
           </ace>
       </el-tab-pane>
     </el-tabs>
@@ -54,6 +56,7 @@ import ace from 'components/aceEditor'
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
 import {analyseToVisual} from 'common/js/analyseToVisual.js'
+import {formatCompileData} from 'common/js/formatCompileData.js'
 import {mapGetters,mapMutations,mapActions} from 'vuex'
   export default {
     data () {
@@ -91,6 +94,15 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         })
         return flag
       },
+      updateBP(bp,flag){
+        const content = {addPoints:'',delPoints:''}
+        flag=='add'?content.addPoints=bp:content.delPoints=bp
+        fun.updateBreakpointMsg(content).then((e)=>{
+          if(types.UPDATE_BREAKPOINT_SUCCESS_TYPE==e.type){
+            console.log("调试更新断点",e)
+          }
+        })
+      },
       compile(event,_fun=()=>{}) {
         if(this.debugStatus){
           this.promptCloseDebug('请先关闭调试')
@@ -107,19 +119,20 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         const eID = index
         const content = {questionRes,eID}
         
-        this.updataOutputData("info", "编译中", "")
+        this.updateOutputData("info", "编译中", "")
 
         fun.getCompileMsg(content).then((e)=>{
           if(e.type == types.COMPILE_SUCCESS_TYPE){
             this.resetIconStatus()  //动作结束，修改图标样式
-            this.updataOutputData()  //编译返回数据后删除‘编译中’的提示
+            this.updateOutputData()  //编译返回数据后删除‘编译中’的提示
             const _content = format(e.content)
             if(_content) {
-              this.updataOutputData("danger", "编译失败", _content)
+              formatCompileData(_content,res.newAnswer)
+              this.updateOutputData("danger", "编译失败", e.content.replace(/\n/g,"<br>"))
             }else{
-              this.updataOutputData("success", "编译成功", _content)
+              this.updateOutputData("success", "编译成功", _content)
               if(!this.currentQuestion.compileStatus)
-                this.updataStatus("compileStatus", true)
+                this.updateStatus("compileStatus", true)
               _fun()  //埋点，有可能有其他操作要先编译后在执行
             }
           }
@@ -152,14 +165,16 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               const eID = this.currentIndex
               const content = {questionFullName,eID}
 
-              this.updataOutputData("info", "运行中", "")
+              this.updateOutputData("info", "运行中", "")
 
               fun.getRunGroupMsg(content).then((e)=>{
                 if(e.type == types.RUN_GROUP_SUCCESS_TYPE){
+                  console.log('运行',e)
                   this.resetIconStatus()  //动作结束，修改图标样式
                   const _content = e.content.output
-                  this.updataOutputData()  //编译返回数据后删除进行中的提示
-                  this.updataOutputData("success", "运行成功", _content)
+                  this.updateOutputData()  //编译返回数据后删除进行中的提示
+                  this.updateOutputData("success", "运行成功", _content)
+                  this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})
                 }
               })
             }
@@ -177,7 +192,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         }
         const bp = this.currentDebug.bp
         if(!bp){
-          this.updataOutputData("danger","未设置断点")
+          this.updateOutputData("danger","未设置断点")
           return
         }
         const _this = this   //vue默认严格模式，非严格模式指向window，函数没有直接调用者的话this指向undefined，比如下面的_startDebug函数中的this
@@ -189,7 +204,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
           const questionFullName = this.currentQuestion.content.questionFullName
           const eID = this.currentIndex
           const content= {bp,questionFullName,eID}
-          this.updataOutputData("info", "开启调试中", "")
+          this.updateOutputData("info", "开启调试中", "")
           fun.getStartDebugMsg(content).then((e) => {
             if(e.type == types.START_DEBUG_SUCCESS_TYPE){
               console.log('start',e)
@@ -203,10 +218,10 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
                 return
               }
               this.resetIconStatus()  //动作结束，修改图标样式
-              this.updataOutputData()   //移除“调试中”的标签
+              this.updateOutputData()   //移除“调试中”的标签
               const _content = e.content.output
-              this.updataOutputData("success", "开启调试成功", _content)    //更新在输出窗口的消息
-              this.updataStatus("debugStatus", true)                //更新本道题的调试状态
+              this.updateOutputData("success", "开启调试成功", _content)    //更新在输出窗口的消息
+              this.updateStatus("debugStatus", true)                //更新本道题的调试状态
               //更新调试行号
               const index = this.currentIndex
               const _obj = {}
@@ -217,6 +232,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               _obj.backTrace = e.content.backTrace
               _obj.output = e.content.output
               this.setDebugData({index,_obj})
+              this.setErrorTestData(e.content.errorOrder)
             }
           }) 
         }.bind(_this)
@@ -228,7 +244,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         //   _startDebug()
         // }
       },
-      updataOutputData(style, label, _content) {
+      updateOutputData(style, label, _content) {
         this.setOutput({style, label, _content})
       },
       saveAnswer(answer,index=this.currentIndex) {
@@ -242,13 +258,13 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         fun.getSaveAnswerMsg(content).then((e) => {
           this.iconStatus["save"] = 0
           if(e.type = types.SAVE_ANSWER_SUCCESS_TYPE)
-            this.updataStatus("saveStatus", true, answer)
+            this.updateStatus("saveStatus", true, answer)
         })
       },
       changeContent(answer) {  //修改代码
-        this.updataStatus("saveStatus", false, answer)
+        this.updateStatus("saveStatus", false, answer)
       },
-      updataStatus(type, status, content) {
+      updateStatus(type, status, content) {
         this.setStatus({
                         type:type,
                         status:status,
@@ -297,15 +313,15 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
             this.promptMessage(removeQuestion.name).then(() => {
               //发送保存请求
               _this.saveAnswer(removeQuestion.newAnswer,removeIndex)
-              updataTabs()
+              updateTabs()
             }).catch(action => {
-              (action == 'cancel') ? updataTabs(): ''
+              (action == 'cancel') ? updateTabs(): ''
             })
         }else{
-          updataTabs()
+          updateTabs()
         }
         //更新tabs数据
-        function updataTabs() {
+        function updateTabs() {
           if(removeIndex == _this.currentIndex && openQuestions.size!=1) {
             let newQuestion = openQuestions.get(_this.currentIndex)
             let arr = Array.from(openQuestions)
@@ -350,7 +366,8 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         setOpenQuestions: "SET_OPEN_QUESTIONS",
         setOutputData :"SET_OUTPUT_DATA",
         setDebugData: "SET_DEBUG_DATA",
-        setVarAnimation: "SET_VARIATE_ANIMATION"
+        setVarAnimation: "SET_VARIATE_ANIMATION",
+        setErrorTestData: "SET_ERROR_TEST_DATA"
       })
     },
     computed: {

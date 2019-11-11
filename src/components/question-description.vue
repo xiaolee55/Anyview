@@ -15,8 +15,8 @@
       </div>
       <div class="question-menu-bottom" ref="bottomMenu">
       <el-button type="primary" round style="margin-right:20px" @click="previousQuestion">上一题</el-button>
-      <debug-pane></debug-pane>
-        <el-button type="primary" round style="margin-right:20px" @click="nextQuestion">下一题</el-button>
+      <el-button type="primary" round style="margin-right:20px" @click="nextQuestion">下一题</el-button>
+      <debug-pane v-if="debugStatus"></debug-pane>
     </div>
   </div>
 </template>

@@ -31,8 +31,11 @@
     </splitpanes>
 
     <splitpanes  :push-other-panes="true" watch-slots v-if="!debugStatus">
-          <question-description  @openList="showListPane=true" @getContent="_getQuestionContent" style="height:100%"></question-description>
-      <splitpanes  :push-other-panes="true" watch-slots horizontal :splitpanes-size="80">  
+       <splitpanes :splitpanes-size="35" horizontal  watch-slots>  
+          <question-description :splitpanes-size="75" @openList="showListPane=true" @getContent="_getQuestionContent" style="height:100%"></question-description>
+          <wrong-data :splitpanes-size="25" ref="wrongData"></wrong-data>
+       </splitpanes>
+      <splitpanes  watch-slots horizontal :splitpanes-size="65">  
         <editor-pane :splitpanes-size="75" ref="editorPane"></editor-pane>
         <output-pane :splitpanes-size="25" ref="outputPane"></output-pane>
       </splitpanes>
@@ -56,6 +59,7 @@ import VariatePane from 'components/variate-pane'
 import WrongData from 'components/wrong-data'
 
 import * as fun from '@/api/coding'
+import * as types from '@/api/config'
 import {getCache,setSessionCache,getSessionCache} from 'common/js/cache';
 import {Question} from 'common/js/class'
 import {mapGetters,mapMutations} from 'vuex'
@@ -105,8 +109,20 @@ export default {
             const debugStatus = false
             let question = new Question({id, name, number, description, answer, newAnswer,content, saveStatus,compileStatus,debugStatus})
             this.updateCurrentData({index,question,openQuestions})
+            setTimeout(()=>{
+              this._getErrorData(id)
+            }) 
           }) 
         }
+      },
+      _getErrorData(id){
+        const content = {eID:id}
+        fun.getErrorDataMsg(content).then(e=>{
+          if(e.type == types.GET_ERROR_DATA_SUCCESS_TYPE){
+            console.log("开启题目获取的错误数据",e)
+            this.setErrorTestData({data:e.content,id: id})
+          }
+        })
       },
       updateCurrentData({index,question,openQuestions}) {
           //更新当前题目索引
@@ -141,7 +157,8 @@ export default {
         setCourseName: 'SET_COURSE_NAME',
         setCurrentQuestion: 'SET_CURRENT_QUESTION',
         setCurrentIndex: 'SET_CURRENT_INDEX',
-        setOpenQuestions: 'SET_OPEN_QUESTIONS'
+        setOpenQuestions: 'SET_OPEN_QUESTIONS',
+        setErrorTestData: "SET_ERROR_TEST_DATA"
       }) 
     
     },
@@ -198,10 +215,6 @@ export default {
 </style>
 
 <style lang="scss" scoped>
-  body {
-    overflow: hidden;
-    -webkit-font-smoothing: subpixel-antialiased;
-  }
 .code-pane /deep/ {
   canvas {
       position: absolute;

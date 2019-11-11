@@ -50,6 +50,12 @@ const mutations = {
     },
     [types.SET_CLEAR_OUTPUT_AUTO](state,val) {
         state.clearOutputAuto = val
+    },
+    [types.SET_ERROR_TEST_DATA](state,{data,id,action="push"}) {
+        if(action=="push")
+            Vue.set(state.errorTestData,id,data)
+        else
+            Vue.delete(state.errorTestData,id)
     }
 
 }

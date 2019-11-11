@@ -17,11 +17,21 @@
           @node-expand= "nodeExpand"
           @node-collapse= "nodeCollapse"
           :default-expanded-keys= "expandedNodeList">
-        <span class="custom-tree-node" slot-scope="{ node, data}" :class="{'tree-title-class': node.level==1}">
+          <!-- <el-tag contenteditable="true" 
+                  v-if="showdbInput"
+                  @blur.native= "changeVariate(sign)"
+                  @input.native= "varInput($event)" 
+                  style= "width:100%"
+                  >
+          </el-tag>  -->
+        <span class="custom-tree-node" 
+              slot-scope="{ node, data}" 
+              :class="{'tree-title-class': node.level==1}" 
+              @dblclick="showdbInput=true">
           <i class="el-icon-minus expand-icon" v-if= "!node.childNodes.length"></i>
           <i class="el-icon-caret-right expand-icon" v-else-if= "!expandedNodeList.includes(data.sign)"></i>
           <i class="el-icon-caret-bottom expand-icon" v-else></i>
-          <span v-for="(item,index) in node.label" :key="item">
+          <span v-for="(item,index) in node.label" :key= "item">
             <span :class="varClass(index,item,node)">{{item}}</span>
           </span>
           <i class="el-icon-remove-outline var-delete-icon" v-if="node.level==1" @click= "removeVariate(node,data.sign)"></i>
@@ -55,6 +65,7 @@ export default {
     return {
       focus: false,
       editable: false,
+      showdbInput: false,
       variateInput: "",
       showInput: false,
       addIcon: true,
@@ -139,6 +150,21 @@ export default {
         }
       })
     },
+    changeVariate(variate){
+      const input = this.variateInput
+      if(!input){
+        return
+      }
+      this.inputOrderArr = this.inputOrderArr.map(item=>{item == variate?input:item}) //将该变量替换成新输入的值
+      const content = {addPoints: input,delPoints: variate}
+      fun.getWatchPointMsg(content).then(e => {
+        if(e.type == types.SET_POINT_SUCCESS_TYPE){
+          const index = this.currentIndex
+          const _obj = {watchPoint: e.content }
+          this.setDebugData({index,_obj})
+        }
+      })
+    },
     ...mapMutations({
       setCurrentIndex: "SET_CURRENT_INDEX",
       setCurrentQuestion: 'SET_CURRENT_QUESTION',
@@ -196,7 +222,7 @@ export default {
       "currentQuestion",
       "currentDebug",
       "openQuestionsArr"
-    ]),
+    ])
   },
   
   }
@@ -252,6 +278,7 @@ export default {
     padding: 0 10px;
     line-height: 30px;
     color: #409eff;
+    font-size: 17px;
     border: 1px solid #d9ecff;
   }
   .var-delete-icon {

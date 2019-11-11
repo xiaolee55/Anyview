@@ -2,10 +2,11 @@ import { resolve } from "url";
 import { rejects } from "assert";
 
 let websocket = null;
-let serverPort = '5000';	//webSocket连接端口
+const IP = '101.132.120.137'
+let port = '8889';	//webSocket连接端口
 let close=false
 function initWebSocket(){ //初始化websocket
-    var url = 'ws://101.132.120.137:8889/anyview';
+    var url = `ws://${IP}:${port}/anyview`;
     websocket = new WebSocket(url);
     websocket.onclose = function(e){
         close=true

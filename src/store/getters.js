@@ -53,3 +53,7 @@ export const finishNum = state => {
 }
 
 export const clearOutputAuto = state => state.clearOutputAuto
+
+export const errorTestData = state => state.errorTestData
+
+export const currentErrorData = state => state.errorTestData[state.currentIndex]

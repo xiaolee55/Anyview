@@ -35,7 +35,6 @@
           if(!target.className.includes("ace_gutter-cell")||target.className.includes("icon-kongxinjiantou")) 
             return
           else if(target.className.includes("icon-duandian")){  //如果是重复点击红色点，则清除该断点
-          console.log(row)
             _this._clearBreakpoint(row)  
             e.stop()
           }else{            //添加断点
@@ -45,7 +44,7 @@
             e.stop()
           }
           //更新断点数据
-            _this.updataBPData(e.editor.session.getBreakpoints())
+            _this.setBPData(e.editor.session.getBreakpoints())
       }) 
       //监听编辑器的改变,修改断点位置
       this.aceEditor.on("change",(e)=>{
@@ -147,7 +146,7 @@
         newbreakPoints.forEach((item,i)=>{    //设置新断点
           this._setBreakpoint(item,pointStyle[i])
         })
-        this.updataBPData(session.getBreakpoints())   //更新断点数据
+        this.setBPData(session.getBreakpoints())   //更新断点数据
       },
       _setMarkLine(row, style) {
         return this.aceEditor.session.addMarker(new ace.Range(row, 0, row, 2000),style,"fullLine", false);
@@ -172,15 +171,31 @@
             this._setBreakpoint(line,"iconfont icon-kongxinjiantou")
         } 
       },
-      updataBPData(bpRows){
+      setBPData(bpRows){
         this.bpRows = bpRows
         if(!bpRows)
           return
         let arr=[]  
-          bpRows.forEach((_,index)=>{
-            arr.push(index+1)
-          })
-          this.$emit("setBP",arr)
+        bpRows.forEach((_,index)=>{
+          arr.push(index+1)
+        })
+        if(this.debugStatus)
+          this.updateBP(arr)
+        this.oldBpArr = arr
+        this.$emit("setBP",arr)
+      },
+      updateBP(arr) {   //调试过程中增删断点
+        let bps = []
+        let flag = ''
+        if(this.oldBpArr.length>arr.length){
+          bps=this.oldBpArr.filter(item=>!arr.includes(item))
+          flag = 'del'
+        }
+        else{
+          bps=arr.filter(item=>!this.oldBpArr.includes(item))
+          flag = 'add'
+        }
+        this.$emit("updateBP",bps.join(),flag)
       },
       save() {
         this.$emit('save', this.aceEditor.getValue())
@@ -202,7 +217,6 @@
         }
       },
       fontSize(val){
-        console.log("val",val)
         if(val)
           this.aceEditor.setFontSize(val)
       },

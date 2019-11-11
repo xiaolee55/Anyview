@@ -2,7 +2,7 @@
     <div ref="wrongData" class="wrd-pane">
       <el-tag type="warning" effect="dark" class="wrong-data-title"><b>未通过测试数据</b></el-tag>
       <div  class="wrong-data-container">
-        <div  class="wrong-data-item" v-for="(item,index) in wrongData" :key= "index">
+        <div  class="wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
             <p  :class= "banIndex.includes(index)? 'ban-data': ''" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item"></p>
             <span class="wrong-data-icon">
                 <i class="iconfont icon-kaisuo" title="禁用本组数据" v-if= "!banIndex.includes(index)" @click= "banData(index)"></i>
@@ -15,31 +15,50 @@
 </template>
 
 <script>
+import {mapGetters,mapMutations,mapActions} from 'vuex'
+import * as fun from '@/api/coding'
+import * as types from '@/api/config'
+
 export default {
   data () {
       return {
          banIndex : [],
-         wrongData: [`Fibonacci(k, m): <br>Fibonacci(k, m): <br>F(0,6)=ERROR F(1,4)=ERROR1`,
-                    `Fibonacci(k, m): <br>Fibonacci(k, m): <br>F(0,6)=ERROR F(1,4)=ERROR2`,
-                    `Fibonacci(k, m): <br>Fibonacci(k, m): <br>F(0,6)=ERROR F(1,4)=ERROR3`,
-                    `Fibonacci(k, m): <br>Fibonacci(k, m): <br>F(0,6)=ERROR F(1,4)=ERROR4`]   
       }
-  },
-  computed: {
   },
   methods: {
     banData(index) {
-      this.banIndex.push(index)
+        this._updateErrorDataMsg("disable",index,()=>{this.banIndex.push(index)})
     },
     applyData(index) {
-        let arr = this.banIndex
-        this.banIndex = arr.filter(item => item!=index)
+        this._updateErrorDataMsg("enable",index,()=>{this.banIndex = this.banIndex.filter(item=>item!=index)})
     },
-    removeData(_index) {
-        let data = this.wrongData
-        this.wrongData = data.filter((item,index)=> index != _index)
-    }
-  }
+    removeData(index) {
+        this._updateErrorDataMsg("remove",index,(e)=>{this.setErrorTestData({data:'',id:this.currentIndex,action:'remove'})})
+    },
+    _updateErrorDataMsg(action,index,callBack){
+        const content = {
+          action : action,
+          order : index,
+          eID : this.currentIndex
+        }
+      fun.updateErrorDataMsg(content).then((e)=>{
+          if(e.type == types.UPDATE_ERROR_DATA_SUCCESS_TYPE){
+              console.log('错误数据',e)
+            if(e.content.includes("success"))
+                callBack.call(this,e.content)
+            }
+      })
+    },
+    ...mapMutations({
+        setErrorTestData: "SET_ERROR_TEST_DATA"
+    })
+  },
+  computed: {
+    ...mapGetters([
+        "currentIndex",
+        "currentErrorData"
+    ]),
+  },
 }
 </script>
 

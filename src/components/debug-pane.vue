@@ -100,6 +100,7 @@ export default {
                         label: "",
                         _content: e.content.output
                       })
+      this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})
     },
     continueDebug() {
       if(!this.status)
@@ -107,7 +108,6 @@ export default {
       this.status =false
       const content = {eID: this.currentIndex,cmd: "continue\n"}
       fun.getContinueDebugMsg(content).then((e)=>{
-        console.log(e)
         if(types.CONTINUE_DEBUG_SUCCESS_TYPE == e.type) {
           console.log('continue',e)
           this.status = true
@@ -138,7 +138,8 @@ export default {
       setCurrentQuestion: 'SET_CURRENT_QUESTION',
       setCurrentIndex: 'SET_CURRENT_INDEX',
       setOpenQuestions: 'SET_OPEN_QUESTIONS',
-      setDebugData: "SET_DEBUG_DATA"
+      setDebugData: "SET_DEBUG_DATA",
+      setErrorTestData: "SET_ERROR_TEST_DATA"
     }) 
   },
   watch: {

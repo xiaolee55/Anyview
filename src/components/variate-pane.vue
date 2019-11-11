@@ -1,46 +1,95 @@
 <template>
   <div class="variates-pane" ref="varPane">
     <el-tag type="info" effect="dark" class="variates-title" ref="varTitle">变量与堆栈</el-tag>
-    <div class="stacks-container">
-      <div class="stack-top">
-        <el-tree :data= "finalShow.stackTop" 
-          empty-text = ""
-           node-key = "id"
-          @node-expand= "nodeExpand"
-          @node-collapse= "nodeCollapse"
-          :default-expanded-keys= "expandedNodeList"
-          :props= "defaultProps">
-          <span class="custom-tree-node" slot-scope="{ node,data }" :id="node.level==1?'stackName':''">
-            <span v-for= "(item,index) in node.label" :key="item">
-               <el-tooltip class="item" effect="light" :content= "getOldVal(data)" placement="right">
-                <span :class= "stackClass({index,item,node},'top')">{{item}}</span>
-              </el-tooltip>
+      <transition @before-enter="containerBeforeEnter"
+                @enter="containerEnter"
+                @leave="containerLeave">
+      <div class="stacks-container" v-if="showcontainer">
+        <div class="stack-top" >
+          <transition @before-enter="handleBeforeEnter"
+                      @enter="handleEnter"
+                      @leave="handleLeave">
+          <el-tree :data= "finalShow.stackTop"
+                    v-if= "showTop"
+                    empty-text = ""
+                    node-key = "id"
+                    @node-expand= "nodeExpand"
+                    @node-collapse= "nodeCollapse"
+                    :default-expanded-keys= "expandedNodeList"
+                    :render-after-expand= false
+                    :props= "defaultProps">
+            <span class="custom-tree-node" slot-scope="{ node,data }" :id="node.level==1?'stackName':''" v-change="node">
+              <span v-for= "(item,index) in node.label" :key="item">
+                <el-tooltip class="item" effect="light" :content= "getOldVal(data)" placement="right">
+                  <span :class= "stackClass({index,item,node},'top')" :id="data.id">{{item}}</span>
+                </el-tooltip>
+              </span>
             </span>
-          </span>
-        </el-tree>
+          </el-tree>
+        </transition>
+        </div>
+        <div class="not-stack-top">
+          <transition @before-leave="notTopBeforeLeave" @leave="notTopLeave">
+            <el-tree :data= "finalShow.first"
+                      v-if= "showNotTop"
+                      empty-text = "" 
+                      :props= "defaultProps">
+              <span class="custom-tree-node" slot-scope="{ node}" :id="node.level==1?`stackName${node.id}`:''">
+                <span v-for= "(item,index) in node.label" :key="item">
+                  <span :class= "stackClass({index,item,node},'notTop')">{{item}}</span>
+                </span>
+              </span>
+            </el-tree>
+          </transition>
+            <el-tree :data= "finalShow.other"
+                      empty-text = "" 
+                      :props= "defaultProps">
+              <span class="custom-tree-node" slot-scope="{ node}" :id="node.level==1?`stackName${node.id}`:''" >
+                <span v-for= "(item,index) in node.label" :key="item">
+                  <span :class= "stackClass({index,item,node},'notTop')">{{item}}</span>
+                </span>
+              </span>
+            </el-tree>
+        </div>
       </div>
-      <div class="not-stack-top">
-        <el-tree :data= "finalShow.notStackTop"
-          empty-text = "" 
-          :props= "defaultProps">
-          <span class="custom-tree-node" slot-scope="{ node}" :id="node.level==1?`stackName${node.id}`:''">
-            <span v-for= "(item,index) in node.label" :key="item">
-              <span :class= "stackClass({index,item,node},'notTop')">{{item}}{{test}}</span>
-            </span>
-          </span>
-        </el-tree>
-      </div>
-    </div>
+    </transition>
   </div>
 </template>
 
 <script>
 import {mapGetters,mapMutations,mapActions} from 'vuex'
 import log from 'common/js/log.js'
+import  Velocity from 'velocity-animate'
 
 export default {
+  directives: {
+    change: {
+      // 指令的定义
+      update: function (el,binding,vnode) {
+        const node = binding.value
+        const changeObj = vnode.context.changeVarArr.find(element=>element.id==node.data.id)  //查找是否是变化对象
+        const changeId = vnode.context.changeIdArr.find(item=>item==node.data.id)       //查找该DOM是否已经动画过
+        console.log(changeObj)
+        if(changeObj&&!changeId){   //只有是变化对象且没有动画过过才发生动画
+         vnode.context.changeIdArr.push(changeObj.id)
+         vnode.context.setChangeDomAnimation(node)
+        }
+      }
+    }
+  },
   data () {
     return {
+      topEnterClass: '' ,
+      topLeaveClass: '' , 
+      notTopEnterClass: '',
+      notTopLeaveClass: '',
+      showcontainer: true,
+      showTop: false,
+      showNotTop: true,
+      pushStack: 1, 
+      changeDom: '',
+      changeIdArr: [],
+      oldStacks: [],
       changeVarArr: [],
       changeVarMap: {},
       expandedNodeList: [],
@@ -54,6 +103,47 @@ export default {
     }
   },
   methods: {
+    containerBeforeEnter(el){
+      el.style.opacity = 0
+    },
+    containerEnter(el,done){
+      el.velocity({opacity: 1},{duration: 700,complete: done})
+    },
+    containerLeave(el,done){
+      el.velocity({opacity: 0},{duration: 700,complete: done})
+    },
+    handleBeforeEnter(el){
+      el.style.opacity = 0
+    },
+    handleEnter(el, done){
+      Velocity(el, {
+        marginTop: 0,
+        opacity: 1
+      }, {
+        duration: 700,
+        complete: done
+      })
+    },
+    handleLeave(el, done){ //栈顶函数的离开有两种情况，1.函数出栈，则慢慢淡去直至消失，2.新函数入栈，则向下移动至非栈顶区域
+      if(this.pushStack==1){
+        const stackHeight = 26
+        const moveDistance = document.getElementsByClassName("stacks-container")[0].clientHeight - (this.oldStacks.length-1)*stackHeight-30
+        Velocity(el, 'stop');
+        el
+        .velocity({height: 30,overflow:'hidden'}, {duration: 10})
+        .velocity({marginTop: moveDistance}, { duration: 700,complete: done})
+      }else if(this.pushStack==-1){
+        el.velocity({opacity:0}, { duration: 700,complete: done})
+      }
+    },
+    notTopBeforeLeave(el){
+    },
+    notTopLeave(el,done){    //有函数出栈时，非栈顶元素的最上面的函数向上移动成为新栈顶
+      const stackHeight = 26
+      const bottom = document.getElementsByClassName("stacks-container")[0].clientHeight - (this.oldStacks.length-1)*stackHeight-30 
+      Velocity(el, 'stop');
+      el.velocity({marginBottom:bottom}, { duration: 700,complete: done})
+    },
     getOldVal(data) {
       const changeVar = this.changeVarArr.find(item=>item.id == data.id)
       this.cacheOldValue(changeVar)
@@ -92,29 +182,28 @@ export default {
       const id = node.id
       const data = node.data
       this.$nextTick(()=>{
-      let el
-      let backgroundColor 
-      let color
-      if(flag =='top'){   //设置栈顶函数的基本样式
-        el = document.getElementById("stackName")?document.getElementById("stackName").parentNode: null
-        backgroundColor =  "rgb(51,153,102)"
-        color = "white"
-      }else{ //设置非栈顶函数的基本样式
-        el = document.querySelector(`#stackName${id}`)?document.querySelector(`#stackName${id}`).parentNode: null
-        backgroundColor = "#dcdcdc"
-        color = "#909399"
-      }
-      if(level==1&&el){
-        this.setStackNameBaseClass({el,backgroundColor,color})
-      }
-     })
+        let el
+        let backgroundColor 
+        let color
+        if(flag =='top'){   //设置栈顶函数的基本样式
+          el = document.getElementById("stackName")?document.getElementById("stackName").parentNode: null
+          backgroundColor =  "rgb(51,153,102)"
+          color = "white"
+        }else{ //设置非栈顶函数的基本样式
+          el = document.querySelector(`#stackName${id}`)?document.querySelector(`#stackName${id}`).parentNode: null
+          backgroundColor = "#dcdcdc"
+          color = "#909399"
+        }
+        if(level==1&&el){
+          this.setStackNameBaseClass({el,backgroundColor,color})
+        }
+      })
      if(level==1&&index%2!=0) {   //设置函数名中形参变量的高亮
        return  this.setStackNameClass(flag)
      }else if(level!=1){ //设置函数内变量的高亮
-        const ifChange = this.changeVarArr.find(element=>element.id==data.id)
-        // ifChange?this.removeExpandElement(data):''  //从变量展开数组中移除该项，即变量发生变化时应该将其收起来
-        return this.setStackVarsClass({flag,ifChange,index,item})
-      }
+       const ifChange = this.changeVarArr.find(element=>element.id==data.id)
+       return this.setStackVarsClass({flag,ifChange,index,item,node})
+     }
     },
     setStackNameBaseClass({el,backgroundColor,color}) {
       el.style.backgroundColor = backgroundColor
@@ -124,9 +213,10 @@ export default {
     setStackNameClass(flag){
       return flag=='top' ? 'stack-top-var-name' : 'not-stack-top-var-name'
     },
-    setStackVarsClass({flag,ifChange,index,item}) {
+    setStackVarsClass({flag,ifChange,index,item,node}) {
       let varClass
       if(ifChange&&flag=="top"){   //刚发生变化的变量
+        // this.setChangeDomAnimation(node)
         varClass ="change-var"
       }else if(index==0){ //普通变量名
         varClass = 'var-name'
@@ -137,8 +227,26 @@ export default {
       }
       return varClass
     },
+    setChangeDomAnimation(node) {
+      this.changeNum++
+      // if(this.changeDom)   //取消上次变化的DOM的样式
+      //   this.changeDom.velocity({backgroundColor:'#f8f8f8'}, { duration: 700})
+      const changeId = this.setChangeDomId(node)
+      this.changeDom = document.getElementById(changeId).parentNode.parentNode.parentNode
+      this.changeDom.velocity({backgroundColor:'#F56C6C'}, { duration: 500})
+                    .velocity({backgroundColor:'#f8f8f8'}, { duration: 500})
+    },
+    setChangeDomId(node) {   //获取应该变化的行的ID
+      if(node.level>1){   //在结点为非函数名的前提下，如果结点的父节点是展开的且该结点是收缩的，则高亮该结点
+        if(node.expanded==false&&node.parent.expanded==true){
+          return node.data.id
+        }
+        else
+        return this.setChangeDomId(node.parent)
+      }
+    },
     isNextData(output) {
-      if(output.includes("<br>========RIGHT========<br>")||output.includes("<br>========ERROR========<br>"))
+      if(output.includes("<br>========RIGHT========<br>")||output.includes("<br>--------ERROR--------<br>"))
         return true
       return false
     },
@@ -181,8 +289,10 @@ export default {
       newVars.forEach((item,i)=>{
         const newVal = item.varInfo[2]
         const oldVal = oldVars[i].varInfo[2]
-        if(newVal!=oldVal)
+        if(newVal!=oldVal){
+          this.removeExpandElement(item)  //该值发生变化时要将其展开的树收起来
           this.setChangeVar(item.id,newVal,oldVal)
+        }
         else{
           if(item.varChild)
             this.findChangeVar(item.varChild,oldVars[i].varChild)
@@ -219,6 +329,7 @@ export default {
     },
     setNewStacks(stacksName,oldStacks=[],stackTopVariates,isNewGroup){ 
       oldStacks= !isNewGroup ? oldStacks: []
+      this.setOldStacks(oldStacks)  //oldStacks被清空
       const newStacks = []
       const newLen = stacksName.length
       const oldLen = oldStacks.length
@@ -267,7 +378,46 @@ export default {
     setFinalShow(val){
       this.finalShow = val
     },
+    setAnimation(newLen,oldLen,isNewGroup) {
+      return new Promise((resolve,reject)=>{
+        if(isNewGroup){
+          this.showcontainer = false
+          setTimeout(()=>{    
+            this.showcontainer = true
+            resolve()
+          },690)
+        }
+        else{
+          if(oldLen.length==0){
+            this.showTop = true
+            resolve()
+          }
+          else if(this.pushStack!=0)
+              this.showTop = false
+              setTimeout(()=>{    
+                this.showTop = true
+                resolve()
+              },690)
+            if(this.pushStack==-1){
+              this.showNotTop = false
+              setTimeout(()=>{    
+                this.showNotTop = true
+                resolve()
+              },690)
+            }
+        }
+      })
+    },
+    setPushStack(newLen,oldLen){
+      if(newLen>oldLen)
+        this.pushStack=1
+      else if(newLen==oldLen)
+        this.pushStack=0
+      else
+        this.pushStack=-1
+    },
     mainFun(backTrace,variates,output) {    //主入口函数
+      this.changeNum = 0
       const isNewGroup = this.isNextData(output)    //判断是否是新的一组调试数据
       const stackTopVariates = this.formatVariates(variates)  //格式化栈顶函数的变量
       const stacksName = this.formatStacksName(backTrace)     //格式化所有函数的函数名
@@ -275,19 +425,26 @@ export default {
       this.resetChangeVarMap(isNewGroup)    //重置保存变量旧值的对象
       this.resetChangeVarArr()    //清空保存变化变量的数组
       const newStacks = this.setNewStacks(stacksName,this.oldStacks,stackTopVariates,isNewGroup)  //设置新的函数栈
-      this.setOldVariates(variates)   //设置旧栈顶函数变量（未经格式化的）
-      this.setOldStacks(newStacks)    //设置旧函数栈
       const stackTop = this.setStackTop(newStacks,backTrace)  //设置最终的栈顶函数
       const notStackTop = this.setNotStackTop(newStacks,backTrace)    //设置最终的非栈顶函数
-      this.setFinalShow({stackTop,notStackTop})   //设置最终用于展示的值
+      const first = notStackTop.length?[notStackTop[0]]:[]
+      const other = notStackTop.filter((_,index)=>index!=0)
+      this.setPushStack(newStacks.length,this.oldStacks.length)
+      this.setAnimation(newStacks.length,this.oldStacks.length,isNewGroup).then(()=>{
+        this.setOldVariates(variates)   //设置旧栈顶函数变量（未经格式化的）
+        this.setOldStacks(newStacks)    //设置旧函数栈
+        this.setFinalShow({stackTop,first,other})   //设置最终用于展示的值
+      })
+      
     }
   },
   watch: {
-    currentDebug: {
+    'currentDebug.backTrace': {
       immediate: true,    //使用了immediate后handler函数会在created钩子函数之前执行，此时methods还未生成
       deep: true,     //深度监听currentDebug的所有属性
-      handler(currentDebug){  //这里使用箭头函数的话使用this是不能访问到组件实例的,因为箭头函数绑定的是父级作用域的上下文，而匿名函数是指向全局
-        const backTrace = currentDebug.backTrace
+      handler(backTrace){  //这里使用箭头函数的话使用this是不能访问到组件实例的,因为箭头函数绑定的是父级作用域的上下文，而匿名函数是指向全局
+        //这里监听backTrace而不是currentDebug是为了防止watch面板的变量和variate面板相互干扰
+        const currentDebug = this.currentDebug
         const variates =  currentDebug.variate
         const output = currentDebug.output
         setTimeout(()=>{
@@ -298,6 +455,7 @@ export default {
   },
   computed: {
     // finalShow(){//展开或者收缩变量都会触发这个computed ??? 所以改用watch ,computed的触发究竟和那些因素有关？
+    //猜测：每次展开或者收缩会触发computed的原因是这组动作会重新渲染这个computed，所以会重新调用它，而并不是其依赖值发生了改变
     //   const backTrace = this.currentDebug.backTrace
     //   const variates = this.currentDebug.variate
     //   const isNewGroup = this.isNextData(this.currentDebug.output)
@@ -320,12 +478,17 @@ export default {
       overflow: auto;
       color: black;
       font-family: "Cambria Math";
+      position: static;
     }
     .el-tree-node{
+      margin-bottom: 3px;
       background-color: rgb(248,248,248);
     }
     .el-tree-node__children {
       font-size: 15px;
+    }
+    .el-tree__empty-block{
+      display: none;
     }
   } 
   .variates-title {
@@ -343,15 +506,15 @@ export default {
     bottom: 10px;
     width: 100%;
   }
-  .stack-top /deep/ {
-    position: absolute;
-    top: 0;
-    width: 100%;
+  .stack-top {    //防止子元素设置margin-top影响父元素
+    height: 100%;
+    border: 0.1px white solid; 
   }
   .stack-tree-title {
     transition: all 1s ease;
     background-color: rgb(51,153,102);
     color: white;
+    width: 100%;
   }
   .stack-top-var-name {
     color: rgb(255,255,0)!important
@@ -368,7 +531,6 @@ export default {
     color: rgb(127, 127, 127)
   }
   .change-var{
-    transition: color 1s ease;
     color: red;
   }
 </style>

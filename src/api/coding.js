@@ -55,3 +55,18 @@ export function getWatchPointMsg(content){
   sendMsg({type: types.SET_WATCH_POINT_TYPE,content:content})
   return getMsg()
 }
+
+export function getErrorDataMsg(content){
+  sendMsg({type: types.GET_ERROR_DATA_TYPE,content:content})
+  return getMsg()
+}
+
+export function updateBreakpointMsg(content){
+  sendMsg({type: types.UPDATE_BREAKPOINT_TYPE ,content:content})
+  return getMsg()
+}
+
+export function updateErrorDataMsg(content){
+  sendMsg({type: types.UPDATE_ERROR_DATA_TYPE,content:content})
+  return getMsg()
+}
