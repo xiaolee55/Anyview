@@ -232,7 +232,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               _obj.backTrace = e.content.backTrace
               _obj.output = e.content.output
               this.setDebugData({index,_obj})
-              this.setErrorTestData(e.content.errorOrder)
+              this.setErrorTestData({data:e.content.errorOrder,id:index})     //更新错误数据
             }
           }) 
         }.bind(_this)

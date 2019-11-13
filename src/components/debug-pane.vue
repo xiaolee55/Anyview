@@ -100,7 +100,7 @@ export default {
                         label: "",
                         _content: e.content.output
                       })
-      this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})
+      this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})  //更新错误数据
     },
     continueDebug() {
       if(!this.status)
@@ -122,9 +122,10 @@ export default {
       if(!this.status)
         return
       this.status =false
-      const content = new DebugReq(this.currentDebug.bp, this.currentQuestion.content.questionFullName)
+      const content = {eID:this.currentIndex}
       fun.getQuitDebugMsg(content).then((e)=>{
         if(types.QUIT_DEBUG_SUCCESS_TYPE == e.type){
+          console.log('退出调试',e)
           this.status = true
           this.commitStopDebug()
         }

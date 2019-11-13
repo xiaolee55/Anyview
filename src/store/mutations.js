@@ -51,11 +51,18 @@ const mutations = {
     [types.SET_CLEAR_OUTPUT_AUTO](state,val) {
         state.clearOutputAuto = val
     },
-    [types.SET_ERROR_TEST_DATA](state,{data,id,action="push"}) {
-        if(action=="push")
-            Vue.set(state.errorTestData,id,data)
-        else
-            Vue.delete(state.errorTestData,id)
+    [types.SET_ERROR_TEST_DATA](state,{data,id,action="add"}) {   //对象中嵌套了对象则都要用set或者delete
+        let stateObj={}
+        if(action=="add"){  //一个个添加错误数据
+            console.log(data)
+            Object.entries(data).forEach((item)=>{
+                Vue.set(stateObj,item[0],item[1])
+            })
+        }else{  //删除指定的数据
+            stateObj = state.errorTestData[id]
+            Vue.delete(stateObj,data)
+        }
+        Vue.set(state.errorTestData,id,stateObj)
     }
 
 }

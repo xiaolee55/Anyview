@@ -2,7 +2,8 @@ import { resolve } from "url";
 import { rejects } from "assert";
 
 let websocket = null;
-const IP = '101.132.120.137'
+const IP = '101.132.120.137'  
+// 101.132.148.120
 let port = '8889';	//webSocket连接端口
 let close=false
 function initWebSocket(){ //初始化websocket

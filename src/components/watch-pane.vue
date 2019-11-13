@@ -17,17 +17,17 @@
           @node-expand= "nodeExpand"
           @node-collapse= "nodeCollapse"
           :default-expanded-keys= "expandedNodeList">
-          <!-- <el-tag contenteditable="true" 
-                  v-if="showdbInput"
-                  @blur.native= "changeVariate(sign)"
-                  @input.native= "varInput($event)" 
-                  style= "width:100%"
-                  >
-          </el-tag>  -->
         <span class="custom-tree-node" 
               slot-scope="{ node, data}" 
               :class="{'tree-title-class': node.level==1}" 
               @dblclick="showdbInput=true">
+          <el-tag contenteditable="true" 
+                  v-if="showdbInput"
+                  @blur.native= "changeVariate(sign)"
+                  @input.native= "varInput($event)" 
+                  style= "width:100%;background-color:red"
+                  >
+          </el-tag> 
           <i class="el-icon-minus expand-icon" v-if= "!node.childNodes.length"></i>
           <i class="el-icon-caret-right expand-icon" v-else-if= "!expandedNodeList.includes(data.sign)"></i>
           <i class="el-icon-caret-bottom expand-icon" v-else></i>

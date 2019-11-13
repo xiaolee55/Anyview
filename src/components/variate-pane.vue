@@ -69,7 +69,6 @@ export default {
         const node = binding.value
         const changeObj = vnode.context.changeVarArr.find(element=>element.id==node.data.id)  //查找是否是变化对象
         const changeId = vnode.context.changeIdArr.find(item=>item==node.data.id)       //查找该DOM是否已经动画过
-        console.log(changeObj)
         if(changeObj&&!changeId){   //只有是变化对象且没有动画过过才发生动画
          vnode.context.changeIdArr.push(changeObj.id)
          vnode.context.setChangeDomAnimation(node)
@@ -84,7 +83,7 @@ export default {
       notTopEnterClass: '',
       notTopLeaveClass: '',
       showcontainer: true,
-      showTop: false,
+      showTop: true,
       showNotTop: true,
       pushStack: 1, 
       changeDom: '',
@@ -388,7 +387,7 @@ export default {
           },690)
         }
         else{
-          if(oldLen.length==0){
+          if(oldLen==0){
             this.showTop = true
             resolve()
           }
@@ -435,7 +434,6 @@ export default {
         this.setOldStacks(newStacks)    //设置旧函数栈
         this.setFinalShow({stackTop,first,other})   //设置最终用于展示的值
       })
-      
     }
   },
   watch: {

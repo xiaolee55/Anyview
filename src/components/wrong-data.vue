@@ -2,8 +2,8 @@
     <div ref="wrongData" class="wrd-pane">
       <el-tag type="warning" effect="dark" class="wrong-data-title"><b>未通过测试数据</b></el-tag>
       <div  class="wrong-data-container">
-        <div  class="wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
-            <p  :class= "banIndex.includes(index)? 'ban-data': ''" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item"></p>
+        <div  class= "wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
+            <p  :class= "wrongDataClass(item,index,banIndex)" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item.slice(2)"></p>
             <span class="wrong-data-icon">
                 <i class="iconfont icon-kaisuo" title="禁用本组数据" v-if= "!banIndex.includes(index)" @click= "banData(index)"></i>
                 <i class="iconfont icon-guansuo" title="启用本组数据" v-if= "banIndex.includes(index)" @click= "applyData(index)"></i>
@@ -33,7 +33,8 @@ export default {
         this._updateErrorDataMsg("enable",index,()=>{this.banIndex = this.banIndex.filter(item=>item!=index)})
     },
     removeData(index) {
-        this._updateErrorDataMsg("remove",index,(e)=>{this.setErrorTestData({data:'',id:this.currentIndex,action:'remove'})})
+        console.log(index)
+        this._updateErrorDataMsg("remove",index,(e)=>{this.setErrorTestData({data:index,id:this.currentIndex,action:'remove'})})
     },
     _updateErrorDataMsg(action,index,callBack){
         const content = {
@@ -54,6 +55,16 @@ export default {
     })
   },
   computed: {
+    wrongDataClass() {
+        return function(item,index,banIndex) {
+            if(item.charAt(0)==1)
+               return "pass-data"
+            else if(item.charAt(0)==0&&item.charAt(1)==1||banIndex.includes(index))
+               return "ban-data"
+            else 
+               return "not-pass-data"
+        }
+    },
     ...mapGetters([
         "currentIndex",
         "currentErrorData"
@@ -80,10 +91,7 @@ export default {
     .wrong-data-item {
         position: relative;
         cursor: pointer;
-        background-color: #fef0f0;
-        border-color: #fde2e2;
         margin-bottom: 5px;
-        color: #f56c6c;
         .wrong-data-icon {
             position: absolute;
             top: 5px;
@@ -101,9 +109,19 @@ export default {
         color: #409eff;
         background-color: #ecf5ff;
     }
+    .not-pass-data{
+        background-color: #fef0f0;
+        border-color: #fde2e2;
+        color: #f56c6c;
+    }
     .ban-data {
         background-color: #f4f4f5;
         border-color: #e9e9eb;
         color: #909399;
+    }
+    .pass-data {
+        background-color: rgba(103,194,58,.1);
+        border-color: rgba(103,194,58,.2);
+        color: #67c23a;   
     }
 </style>
