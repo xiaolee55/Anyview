@@ -18,8 +18,9 @@ export const questionList = (state) => {
     temp=item
     })        
     list.push(tempArr)
+    console.log(state.questionList)
     return list
-}
+} 
 
 export const courseName = state => state.courseName
 
@@ -52,8 +53,12 @@ export const finishNum = state => {
   return num
 }
 
-export const clearOutputAuto = state => state.clearOutputAuto
+export const clearOutputAuto = state => currentQuestion.debugStatus? false : state.clearOutputAuto
 
 export const errorTestData = state => state.errorTestData
 
 export const currentErrorData = state => state.errorTestData[state.currentIndex]
+
+export const currentTestOrder = state => state.currentTestOrder
+
+export const initTestDataLength = state => state.initTestDataLength

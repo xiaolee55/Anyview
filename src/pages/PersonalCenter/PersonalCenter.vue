@@ -4,7 +4,7 @@
             <el-col :span="12" :offset="4" style="display:flex;justify-content: space-between;align-items:center">
                 <h1 style="color: #409eff;margin:0">Anyview</h1>
                 <span style="font-size:17px;">社区</span>
-                <span style="font-size:17px;" @click="goTo('work')">课程</span>
+                <span style="font-size:17px;" @click= "changeRoute('work')">课程</span>
             </el-col>
             <el-col :span="6"></el-col>
         </el-row>
@@ -14,7 +14,7 @@
                 <div slot="header" class="clearfix">
                     <img src="./images/touxiang.jpg" alt="茶客" style="height:48px;width:48px;">
                     <span>{{user.name}}</span>
-                     <el-button style="float: right; padding: 3px 0" type="text">退出账号</el-button>
+                     <el-button style="float: right; padding: 3px 0" type="text" @click="logout">退出账号</el-button>
                 </div>
                 <p>昵称：{{user.name}}</p>
                 <p>邮箱：{{user.email}}</p>
@@ -64,6 +64,11 @@
 
 <script>
  import { CalendarHeatmap } from 'vue-calendar-heatmap'
+ import {getLogout} from '@/api/work'
+ import {setCache,getCache,removeCache,clearSessionCache} from 'common/js/cache';
+ import * as types from '@/api/config'
+ import {mapMutations} from 'vuex'
+
 export default {
     created(){
     },
@@ -72,22 +77,33 @@ export default {
         }
     },
     methods: {
-        goTo(routerName,routerParms){
-            console.log(routerParms);
-          this.$router.push({
-            name: routerName,
-            params: {name: routerParms}
+      changeRoute(routeName){
+        this.$router.replace(routeName)
+      },
+      logout() {
+        getLogout(this.user).then((e)=>{
+          if(e.type === types.LOGOUT_SUCCESS_TYPE){
+            console.log("退出账号",e)
+            this.changeRoute("login")
+            removeCache("user")
+            clearSessionCache()
+            this.resetState()    //清空vuex
+          }
         })
-      }
+      },
+      ...mapMutations({
+          resetState: 'RESET_STATE'
+      })
     },
     computed: {
-        user(){
-            return JSON.parse(localStorage.getItem('user'))
-        },
-        trends(){
-            return this.$store.state.solveTrends
-        }
+      user() {
+        return JSON.parse(getCache("user"))
+      },
+      trends(){
+        return this.$store.state.solveTrends
+      }
     },
+
     components: {
         CalendarHeatmap
     }

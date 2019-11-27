@@ -3,6 +3,24 @@ import Vue from 'vue'
 import { stat } from 'fs'
 
 const mutations = {
+    [types.RESET_STATE](state) {
+        const initialState= {
+            questionList: [],        //请求下来的所有题目的集合
+            courseName: "",
+            currentQuestion: null,
+            currentIndex: 0,
+            openQuestions: new Map(),
+            studentAnswer: "",
+            outputData: {},
+            debugData: {},
+            listOpen: true,
+            animation: true,
+            clearOutputAuto: false,
+            errorTestData: {},
+            currentTestOrder: -1
+        }
+        Object.assign(state, initialState)
+    },
     [types.SET_QUESTION_LIST](state, questionList) {
         state.questionList = questionList
     },
@@ -53,18 +71,25 @@ const mutations = {
     },
     [types.SET_ERROR_TEST_DATA](state,{data,id,action="add"}) {   //对象中嵌套了对象则都要用set或者delete
         let stateObj={}
+        if(!data)
+          return
         if(action=="add"){  //一个个添加错误数据
-            console.log(data)
             Object.entries(data).forEach((item)=>{
-                Vue.set(stateObj,item[0],item[1])
+                if(item[1].slice(2))
+                    Vue.set(stateObj,item[0],item[1])
             })
         }else{  //删除指定的数据
             stateObj = state.errorTestData[id]
             Vue.delete(stateObj,data)
         }
         Vue.set(state.errorTestData,id,stateObj)
+    },
+    [types.SET_CURRENT_TEST_ORDER](state,val) {
+        state.currentTestOrder = val
+    },
+    [types.SET_INIT_TEST_DATA_LENGTH](state,val) {
+        state.initTestDataLength = val
     }
-
 }
 
 export default mutations

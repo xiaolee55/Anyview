@@ -56,7 +56,7 @@
  import canvas from 'common/js/canvas';
  import workCard from 'components/course-card.vue';
  import {getQuestionList,getLogout} from '@/api/work'
- import {setCache,getCache,removeCache} from 'common/js/cache';
+ import {setCache,getCache,removeCache,clearSessionCache} from 'common/js/cache';
  import * as types from '@/api/config'
  import {mapState,mapMutations,mapGetters} from 'vuex'
 
@@ -77,6 +77,7 @@ export default {
           let content = e.content[0]
           this.totalNum = content.totalNum
           this.setCourseName(content.tableName)
+          console.log("题目列表",content)
           this.setQuestionList(content.catalogs)
         })
       },
@@ -90,7 +91,9 @@ export default {
         getLogout(this.user).then((e)=>{
           if(e.type === types.LOGOUT_SUCCESS_TYPE){
             this.changeRoute("login")
-            removeCache("user")
+            removeCache("user")   //移除localStorage的缓存
+            clearSessionCache()  //清空sessionStorage的缓存
+            this.resetState()    //清空vuex
           }
         })
       },
@@ -98,6 +101,8 @@ export default {
         this.changeRoute("personalCenter")
       },
       goToCoding() {
+        if(!this.questionList.length)
+          return
         this.openQuestionsArr.length?this.setListOpen(false):this.setListOpen(true)
         this.changeRoute("coding")
       },
@@ -108,6 +113,7 @@ export default {
         setListOpen: 'SET_LIST_OPEN',
         setQuestionList: 'SET_QUESTION_LIST',
         setCourseName: 'SET_COURSE_NAME',
+        resetState: 'RESET_STATE'
       }) 
     },
     computed: {

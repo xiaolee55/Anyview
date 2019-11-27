@@ -20,12 +20,15 @@
         <span class="custom-tree-node" 
               slot-scope="{ node, data}" 
               :class="{'tree-title-class': node.level==1}" 
-              @dblclick="showdbInput=true">
+              @dblclick.stop= "existVarInput(data.sign)"
+              style="position:relative">
           <el-tag contenteditable="true" 
-                  v-if="showdbInput"
-                  @blur.native= "changeVariate(sign)"
+                  v-if= "showexistVarInput==data.sign"
+                  @blur.native= "changeVariate(data.sign)"  
                   @input.native= "varInput($event)" 
-                  style= "width:100%;background-color:red"
+                  @keyup.enter.native= "changeVariate(data.sign)"
+                  style="z-index:100;position:absolute;top:0;left:0;width:100%"
+                  ref="existVarInput"
                   >
           </el-tag> 
           <i class="el-icon-minus expand-icon" v-if= "!node.childNodes.length"></i>
@@ -42,6 +45,7 @@
               @blur.native= "addVariate"  
               @input.native= "varInput($event)" 
               style= "width:50%"
+              ref="tagInput"
               @keyup.enter.native="addVariate">
       </el-tag>
     </div>
@@ -65,7 +69,7 @@ export default {
     return {
       focus: false,
       editable: false,
-      showdbInput: false,
+      showexistVarInput: '',
       variateInput: "",
       showInput: false,
       addIcon: true,
@@ -119,9 +123,23 @@ export default {
     varInput(e) {               //输入变量
       this.variateInput = e.target.innerText
     },
+    existVarInput(sign) {
+      setTimeout(()=>{
+         this.$refs.existVarInput.$el.focus()
+      })
+      this.showexistVarInput = sign
+    },
     showSearch() {                  //双击空白处或者点击加号出现一个新框
+      if(this.showexistVarInput)    //覆盖变量的输入框不能与新输入框同时出现
+        return
+      this.autoFocus()
       this.addIcon = false
       this.showInput = true
+    },
+    autoFocus(){
+      setTimeout(()=>{
+        this.$refs.tagInput.$el.focus() //给输入框自动聚焦
+      })
     },
     hideSearch() {                  //添加变量成功或者点击大减号移除输入框
       this.addIcon = true
@@ -151,14 +169,19 @@ export default {
       })
     },
     changeVariate(variate){
-      const input = this.variateInput
+      const input = this.variateInput.replace(/[\r\n]/g,"")
       if(!input){
+        this.showexistVarInput = false
         return
       }
-      this.inputOrderArr = this.inputOrderArr.map(item=>{item == variate?input:item}) //将该变量替换成新输入的值
+      //将该变量替换成新输入的值
+      var index = this.inputOrderArr.findIndex(item=>item==variate) 
+      this.inputOrderArr[index] = input
       const content = {addPoints: input,delPoints: variate}
       fun.getWatchPointMsg(content).then(e => {
         if(e.type == types.SET_POINT_SUCCESS_TYPE){
+          console.log("修改的watch变量",e)
+          this.showexistVarInput=''
           const index = this.currentIndex
           const _obj = {watchPoint: e.content }
           this.setDebugData({index,_obj})

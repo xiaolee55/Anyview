@@ -1,5 +1,5 @@
 export class Question {
-  constructor({id, name, number, description, answer, newAnswer,content, saveStatus,compileStatus,debugStatus }) {
+  constructor({id, name, number, description, answer, newAnswer,content, saveStatus,compileStatus,debugStatus,passTime}) {
     this.id = id
     this.name = name
     this.number = number
@@ -10,6 +10,7 @@ export class Question {
     this.saveStatus = saveStatus
     this.compileStatus = compileStatus
     this.debugStatus = debugStatus
+    this.passTime = passTime
   }
 }
 

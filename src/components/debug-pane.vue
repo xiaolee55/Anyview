@@ -44,7 +44,7 @@ export default {
           // analyseToVisual(e)
           this.status = true
           if(e.content.output.includes("调试结束")) {
-            this.commitStopDebug()
+            this.commitStopDebug(e)
           }
           this.commitDebugData(e)
         }
@@ -61,19 +61,25 @@ export default {
           console.log('into',e)
           this.status = true
           if(e.content.output.includes("调试结束")) {
-            this.commitStopDebug()
+            this.commitStopDebug(e)
           }
           this.commitDebugData(e)
         }
       })
     },
-    commitStopDebug() {
+    commitStopDebug(e) {
       this.setStatus({type:"debugStatus",status:false}).then(()=>{
-        const style = "warning"
-        const label = "调试已关闭"
+        let style = "warning"
+        let label = "调试已关闭"
         const index = this.currentIndex
         this.setOutput({style, label})
+        if(Object.keys(e.content.errorOrder).length===0&&this.initTestDataLength!=0){   //调试结束后如果测试数据全部通过，则提示用户再次运行
+          style = 'success'
+          label = '本次测试数据已全部通过，请再次运行代码'
+          this.setOutput({style, label})
+        }
         this.setDebugData({index})
+        this.setCurrentTestOrder(-1)
       })
     },
     commitDebugData(e) {
@@ -100,6 +106,7 @@ export default {
                         label: "",
                         _content: e.content.output
                       })
+      this.setCurrentTestOrder(e.content.order+1)
       this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})  //更新错误数据
     },
     continueDebug() {
@@ -112,7 +119,7 @@ export default {
           console.log('continue',e)
           this.status = true
           if(e.content.output.includes("调试结束")) {
-            this.commitStopDebug()
+            this.commitStopDebug(e)
           } 
           this.commitDebugData(e)    
         }
@@ -127,7 +134,7 @@ export default {
         if(types.QUIT_DEBUG_SUCCESS_TYPE == e.type){
           console.log('退出调试',e)
           this.status = true
-          this.commitStopDebug()
+          this.commitStopDebug(e)
         }
       })
     },
@@ -140,7 +147,8 @@ export default {
       setCurrentIndex: 'SET_CURRENT_INDEX',
       setOpenQuestions: 'SET_OPEN_QUESTIONS',
       setDebugData: "SET_DEBUG_DATA",
-      setErrorTestData: "SET_ERROR_TEST_DATA"
+      setErrorTestData: "SET_ERROR_TEST_DATA",
+      setCurrentTestOrder: "SET_CURRENT_TEST_ORDER"
     }) 
   },
   watch: {
@@ -172,7 +180,8 @@ export default {
       "currentIndex",
       "currentQuestion",
       "currentDebug",
-      "openQuestionsArr"
+      "openQuestionsArr",
+      "initTestDataLength"
     ]),
   },
 }

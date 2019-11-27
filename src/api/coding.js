@@ -70,3 +70,8 @@ export function updateErrorDataMsg(content){
   sendMsg({type: types.UPDATE_ERROR_DATA_TYPE,content:content})
   return getMsg()
 }
+
+export function getPassAnswer(content){
+  sendMsg({type: types.GET_PASS_ANSWER_TYPE,content:content})
+  return getMsg()
+}

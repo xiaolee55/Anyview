@@ -86,7 +86,13 @@ export default {
       }
     },
     methods: {
+      resize(e){
+        console.log(e)
+      },
       _getQuestionContent(_question){
+        if(this.backData==false)
+          return 
+        this.backData=false
         let index = Number(_question.eid)
         let openQuestions = this.openQuestions
         let question = openQuestions.get(index)
@@ -95,19 +101,21 @@ export default {
         }else{
           this.loading = true
           fun.getQuestionContent(_question.eid).then((e) => {
+            this.backData=true
             console.log("题目信息",e)
             this.loading = false
             const id = _question.eid
             const name = _question.name
             const number = _question.number
-            const  description = e.content.questionContent.questionDescription
-            const answer =  e.content.questionContent.studentAnswer
-            const newAnswer = e.content.questionContent.studentAnswer
+            const  description = e.content.doc
+            const answer =  e.content.stuCode
+            const newAnswer = e.content.stuCode
             const content = e.content
             const saveStatus = true
             const compileStatus = false
             const debugStatus = false
-            let question = new Question({id, name, number, description, answer, newAnswer,content, saveStatus,compileStatus,debugStatus})
+            const passTime = -1
+            let question = new Question({id, name, number, description, answer, newAnswer,content, saveStatus,compileStatus,debugStatus,passTime})
             this.updateCurrentData({index,question,openQuestions})
             setTimeout(()=>{
               this._getErrorData(id)
@@ -183,7 +191,7 @@ export default {
           "courseName",
           "questionDescription",
           "currentQuestion",
-          "openQuestionsArr"
+          "openQuestionsArr",
         ]),
       },
       components: {

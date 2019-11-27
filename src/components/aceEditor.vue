@@ -21,6 +21,7 @@
 				enableSnippets: true,
         enableLiveAutocompletion: true,
         maxLines: this.maxLines,
+        autoScrollEditorIntoView: true,
         highlightActiveLine: true,
         highlightGutterLine: true,
         readOnly: false
@@ -187,6 +188,7 @@
       updateBP(arr) {   //调试过程中增删断点
         let bps = []
         let flag = ''
+        console.log(arr)
         if(this.oldBpArr.length>arr.length){
           bps=this.oldBpArr.filter(item=>!arr.includes(item))
           flag = 'del'
@@ -275,7 +277,7 @@
 </script>
 
 <style>
-.ace_editor {
+.ace-container {
   height: 100%; 
   width: 100%;
 }

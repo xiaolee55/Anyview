@@ -14,4 +14,6 @@ export default {
     animation: true,
     clearOutputAuto: false,
     errorTestData: {},
+    currentTestOrder: 0,
+    initTestDataLength: 0
 }

@@ -76,6 +76,11 @@ export default {
     }
   },
   mounted () {
+    this.$message({
+          message: '此版本为内测版本，许多功能并不完善，请合理使用。',
+          center: true,
+          type: 'warning'
+        })
       canvas(20,"#409EFF")   //执行canvas动画
       this._getSchoolist()
     },

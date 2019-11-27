@@ -16,7 +16,7 @@ export default {
             type: 'success',
             duration: 1500
           });
-        }else if(from.name=="work"&&to.name=="login"){
+        }else if(from.name&&to.name=="login"){
             this.$message({
               showClose: true,
               message: '已退出当前账号',

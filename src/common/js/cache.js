@@ -21,3 +21,7 @@ export function setSessionCache(name,data) {
 export function getSessionCache(name) {
   return window.sessionStorage.getItem(name)
 }
+
+export function clearSessionCache() {
+  return window.sessionStorage.clear()
+}

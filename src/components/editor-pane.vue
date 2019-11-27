@@ -23,6 +23,11 @@
                   <i class="iconfont icon-baocun" title="保存(Ctrl+S)" @click="saveAnswer(currentQuestion.newAnswer)"
                      :class="{'ing':iconStatus.save==1,'not-ing': iconStatus.save==2}"></i>
                 </li>
+                <li>
+                  <i class="iconfont icon-tongguodaima" title="获取已通过的代码" @click="getPassAnswer"
+                     v-if="true"
+                     :class="{'ing':iconStatus.passCode==1,'not-ing': iconStatus.passCode==2}"></i>
+                </li>
               </ul>          
           </div>
       <el-tab-pane v-for="item in openQuestionsArr" 
@@ -65,7 +70,8 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
           compile: 0,
           runGroup: 0,
           debug: 0,
-          save: 0
+          save: 0,
+          passCode: 0
         }
       }
     },
@@ -103,6 +109,12 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
           }
         })
       },
+      getPassAnswer() {
+        const content = {eID:this.currentIndex}
+        fun.getPassAnswer(content).then(e=>{
+          console.log(e)
+        })
+      },
       compile(event,_fun=()=>{}) {
         if(this.debugStatus){
           this.promptCloseDebug('请先关闭调试')
@@ -113,11 +125,12 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         this.changeIconStatus("compile")  //进行中，修改图标样式
         const res = this.currentQuestion
         const index = this.currentIndex
-        res.content.questionContent.studentAnswer = res.newAnswer
+        // res.content.questionContent.studentAnswer = res.newAnswer
 
         const questionRes = res.content
         const eID = index
-        const content = {questionRes,eID}
+        const stuCode = res.newAnswer
+        const content = {questionRes,eID,stuCode}
         
         this.updateOutputData("info", "编译中", "")
 
@@ -127,7 +140,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
             this.updateOutputData()  //编译返回数据后删除‘编译中’的提示
             const _content = format(e.content)
             if(_content) {
-              formatCompileData(_content,res.newAnswer)
+              // formatCompileData(_content,res.newAnswer)
               this.updateOutputData("danger", "编译失败", e.content.replace(/\n/g,"<br>"))
             }else{
               this.updateOutputData("success", "编译成功", _content)
@@ -156,34 +169,34 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
           this.promptCloseDebug('请先关闭调试')
           return
         }
+        const _runGroup = () => {
         if(!this.checkIconStatus())
           return
         this.changeIconStatus("runGroup")  //进行中，修改图标样式
         const compileStatus = this.currentQuestion.compileStatus
-        const _runGroup = () => {
-              const questionFullName = this.currentQuestion.content.questionFullName
-              const eID = this.currentIndex
-              const content = {questionFullName,eID}
+            const questionFullName = this.currentQuestion.content.questionFullName
+            const eID = this.currentIndex
+            const content = {questionFullName,eID}
 
-              this.updateOutputData("info", "运行中", "")
+            this.updateOutputData("info", "运行中", "")
 
-              fun.getRunGroupMsg(content).then((e)=>{
-                if(e.type == types.RUN_GROUP_SUCCESS_TYPE){
-                  console.log('运行',e)
-                  this.resetIconStatus()  //动作结束，修改图标样式
-                  const _content = e.content.output
-                  this.updateOutputData()  //编译返回数据后删除进行中的提示
-                  this.updateOutputData("success", "运行成功", _content)
-                  this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})
-                }
-              })
-            }
-        if(!compileStatus){
-          this.resetIconStatus()
-          this.compile({},_runGroup)
-        }else{
-          _runGroup()
-        }
+            fun.getRunGroupMsg(content).then((e)=>{
+              if(e.type == types.RUN_GROUP_SUCCESS_TYPE){
+                console.log('运行',e)
+                this.resetIconStatus()  //动作结束，修改图标样式
+                const _content = e.content.output
+                this.updateOutputData()  //编译返回数据后删除进行中的提示
+                this.updateOutputData("success", "运行成功", _content)
+                this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})
+              }
+            })
+          }
+        // if(!compileStatus){
+          // this.resetIconStatus() 
+          this.compile({},_runGroup)   //每次运行前都编译一次
+        // }else{
+          // _runGroup()
+        // }
       },
       startDebug() {
         if(this.debugStatus){
@@ -232,7 +245,11 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               _obj.backTrace = e.content.backTrace
               _obj.output = e.content.output
               this.setDebugData({index,_obj})
+              this.setCurrentTestOrder(e.content.order+1)
               this.setErrorTestData({data:e.content.errorOrder,id:index})     //更新错误数据
+              setTimeout(()=>{
+                this.setInitTestDataLength(Object.keys(this.currentErrorData).length) //获取刚进入调试时的错误数据组的长度
+              },0)
             }
           }) 
         }.bind(_this)
@@ -367,7 +384,9 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         setOutputData :"SET_OUTPUT_DATA",
         setDebugData: "SET_DEBUG_DATA",
         setVarAnimation: "SET_VARIATE_ANIMATION",
-        setErrorTestData: "SET_ERROR_TEST_DATA"
+        setErrorTestData: "SET_ERROR_TEST_DATA",
+        setCurrentTestOrder: "SET_CURRENT_TEST_ORDER",
+        setInitTestDataLength: "SET_INIT_TEST_DATA_LENGTH"
       })
     },
     computed: {
@@ -394,7 +413,8 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         "currentQuestion",
         "outputData",
         "debugData",
-        "currentDebug"
+        "currentDebug",
+        "currentErrorData"
       ])
     },
     components: {

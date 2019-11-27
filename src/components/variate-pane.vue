@@ -1,6 +1,9 @@
 <template>
   <div class="variates-pane" ref="varPane">
-    <el-tag type="info" effect="dark" class="variates-title" ref="varTitle">变量与堆栈</el-tag>
+       <el-tag type="info" effect="dark" class="variates-title" ref="varTitle">
+         <span>变量与堆栈</span>
+         <i class="el-icon-setting stack-setting" title="设置堆栈数据的显示"></i>
+        </el-tag>
       <transition @before-enter="containerBeforeEnter"
                 @enter="containerEnter"
                 @leave="containerLeave">
@@ -227,21 +230,21 @@ export default {
       return varClass
     },
     setChangeDomAnimation(node) {
-      this.changeNum++
-      // if(this.changeDom)   //取消上次变化的DOM的样式
-      //   this.changeDom.velocity({backgroundColor:'#f8f8f8'}, { duration: 700})
-      const changeId = this.setChangeDomId(node)
-      this.changeDom = document.getElementById(changeId).parentNode.parentNode.parentNode
-      this.changeDom.velocity({backgroundColor:'#F56C6C'}, { duration: 500})
-                    .velocity({backgroundColor:'#f8f8f8'}, { duration: 500})
+      this.$nextTick(()=>{
+        const changeId = this.setChangeDomId(node)
+        this.changeDom = document.getElementById(changeId).parentNode.parentNode.parentNode
+        this.changeDom.velocity({backgroundColor:'#F56C6C'}, { duration: 500})
+                      .velocity({backgroundColor:'#f8f8f8'}, { duration: 500})
+      })
+
     },
     setChangeDomId(node) {   //获取应该变化的行的ID
-      if(node.level>1){   //在结点为非函数名的前提下，如果结点的父节点是展开的且该结点是收缩的，则高亮该结点
-        if(node.expanded==false&&node.parent.expanded==true){
+      if(node.level>1){   //在结点为非函数名的前提下，如果结点的父节点是展开的且该结点是收缩的或者他本身就是变化的结点，则高亮该结点
+        if((node.expanded==false||this.changeIdArr.includes(node.data.id))&&node.parent.expanded==true){
           return node.data.id
         }
         else
-        return this.setChangeDomId(node.parent)
+          return this.setChangeDomId(node.parent)
       }
     },
     isNextData(output) {
@@ -258,9 +261,10 @@ export default {
         if(item.name)
           formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
         obj.varInfo = [formatName,": ",item.value]
-        obj.sign = item.name
-        obj.id = item.name+this.num    //名字加遍历的序号就能产生一个唯一ID，用于在保存变化变量或者被展开变量的标识
-        this.setNum(1)
+        obj.sign = item.name     
+        obj.id = item.name
+        //this.num    //名字加遍历的序号就能产生一个唯一ID，用于在保存变化变量或者被展开变量的标识(已废弃这种想法，在增加或减少一个变量时会出错)
+        // this.setNum(1)
         if(item.innerObj) 
           obj.varChild = this.formatVariates(item.innerObj)
         tempArr.push(obj)
@@ -282,21 +286,28 @@ export default {
       })
       return stacksName
     },
-    findChangeVar(newVars,oldVars) {
+    findChangeVar(newVars,oldVars) {    //寻找发生变化的变量
       newVars = Array.isArray(newVars) ? newVars : [newVars]
       oldVars = Array.isArray(oldVars) ? oldVars : [oldVars]
-      newVars.forEach((item,i)=>{
-        const newVal = item.varInfo[2]
-        const oldVal = oldVars[i].varInfo[2]
-        if(newVal!=oldVal){
-          this.removeExpandElement(item)  //该值发生变化时要将其展开的树收起来
-          this.setChangeVar(item.id,newVal,oldVal)
-        }
-        else{
-          if(item.varChild)
-            this.findChangeVar(item.varChild,oldVars[i].varChild)
-        }
+      newVars.forEach(item=>{
+        this.compareVal(item,oldVars)
       })
+    },
+    compareVal(newItem,oldVars){     //根据新变量的ID和对应旧变量对比
+      for(let item of oldVars){
+        if(item.id==newItem.id){
+          const newVal = newItem.varInfo[2]
+          const oldVal = item.varInfo[2]
+          if(newVal!=oldVal){
+            this.setChangeVar(item.id,newVal,oldVal)  //将发生变化的变量加入数组为动画做准备
+            this.removeExpandElement(item)  //该值发生变化时要将其展开的树收起来
+          }else{
+            if(newItem.varChild)
+              this.findChangeVar(newItem.varChild,item.varChild)
+          }
+          break;    //只要找到对应的变量，不管值有无发生变化，都应终止继续查询（如果有子元素会查询子元素）
+        }
+      }
     },
     setChangeVar(id,newVal,oldVal){
       if(!this.changeVarArr.includes(id))
@@ -306,13 +317,14 @@ export default {
       this.changeVarArr = this.changeVarArr.filter(item=>item.id!=id)
     },
     clearChangeVar() {
-      this.changeVarArr = []
+      this.changeVarArr = []   //这个变量是标志每点击一次调试的变化变量的ID
+      this.changeIdArr = []     //这个标识该变量是否已进行动画过，因为会有多次对比
     },
     setStackTop(stacks,backTrace) {
       const stackTop = {}
       stackTop.varInfo = stacks[0].name
       stackTop.sign = backTrace[0]
-      stackTop.id = backTrace[0]+'00'
+      stackTop.id = backTrace[0]
       stackTop.varChild = stacks[0].variates
       this.createExpandElement(stackTop.id)
       return [stackTop]
@@ -416,7 +428,7 @@ export default {
         this.pushStack=-1
     },
     mainFun(backTrace,variates,output) {    //主入口函数
-      this.changeNum = 0
+      this.clearChangeVar()   //清空上次发生变化的变量的缓存，防止影响下次变化
       const isNewGroup = this.isNextData(output)    //判断是否是新的一组调试数据
       const stackTopVariates = this.formatVariates(variates)  //格式化栈顶函数的变量
       const stacksName = this.formatStacksName(backTrace)     //格式化所有函数的函数名
@@ -492,6 +504,14 @@ export default {
   .variates-title {
     width:100%;
     text-align:center;
+    position: relative;
+  }
+  .stack-setting {
+    position: absolute;
+    right: 10px;
+    font-size: 15px;
+    line-height: 30px;
+    cursor: pointer;
   }
   .stacks-container {
     position: relative;

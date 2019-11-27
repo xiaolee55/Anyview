@@ -8,7 +8,10 @@
       </span>
     </el-tag>
     <div class="output-container" ref="outputContainer">
-      <span v-for="(item, index) in currentOutput" :key="index" v-html="item" class="output-data">
+      <span v-for="(item, index) in currentOutput" 
+            :key="index" 
+            v-html="item" 
+            class="output-data" >
       </span>
     </div>
   </div>
@@ -104,7 +107,7 @@ export default {
     }
   }
   .output-container{
-    height: 90%;
+    height: calc(100% - 32px);
     margin-top: 5px;
     overflow: auto;
   }
