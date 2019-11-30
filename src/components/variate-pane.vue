@@ -9,9 +9,9 @@
                 @leave="containerLeave">
       <div class="stacks-container" v-if="showcontainer">
         <div class="stack-top" >
-          <transition @before-enter="handleBeforeEnter"
-                      @enter="handleEnter"
-                      @leave="handleLeave">
+          <transition @before-enter="stackBeforeEnter"
+                      @enter="stackEnter"
+                      @leave="stackLeave">
           <el-tree :data= "finalShow.stackTop"
                     v-if= "showTop"
                     empty-text = ""
@@ -97,7 +97,6 @@ export default {
       expandedNodeList: [],
       cacheVarArr: [],
       finalShow: {},
-      num: 0,
       defaultProps: {
         children: 'varChild',
         label: 'varInfo'
@@ -105,19 +104,19 @@ export default {
     }
   },
   methods: {
-    containerBeforeEnter(el){
+    containerBeforeEnter(el){   //堆栈整体出现前
       el.style.opacity = 0
     },
-    containerEnter(el,done){
+    containerEnter(el,done){  //堆栈整体出现动画执行
       el.velocity({opacity: 1},{duration: 700,complete: done})
     },
-    containerLeave(el,done){
+    containerLeave(el,done){    //堆栈整体离开时的动画
       el.velocity({opacity: 0},{duration: 700,complete: done})
     },
-    handleBeforeEnter(el){
+    stackBeforeEnter(el){    //栈顶函数出现前
       el.style.opacity = 0
     },
-    handleEnter(el, done){
+    stackEnter(el, done){ //栈顶函数出现时的动画
       Velocity(el, {
         marginTop: 0,
         opacity: 1
@@ -126,7 +125,7 @@ export default {
         complete: done
       })
     },
-    handleLeave(el, done){ //栈顶函数的离开有两种情况，1.函数出栈，则慢慢淡去直至消失，2.新函数入栈，则向下移动至非栈顶区域
+    stackLeave(el, done){ //栈顶函数的离开有两种情况，1.函数出栈，则慢慢淡去直至消失，2.新函数入栈，则向下移动至非栈顶区域
       if(this.pushStack==1){
         const stackHeight = 26
         const moveDistance = document.getElementsByClassName("stacks-container")[0].clientHeight - (this.oldStacks.length-1)*stackHeight-30
@@ -138,7 +137,7 @@ export default {
         el.velocity({opacity:0}, { duration: 700,complete: done})
       }
     },
-    notTopBeforeLeave(el){
+    notTopBeforeLeave(el){   //非栈顶函数入栈前
     },
     notTopLeave(el,done){    //有函数出栈时，非栈顶元素的最上面的函数向上移动成为新栈顶
       const stackHeight = 26
@@ -146,29 +145,29 @@ export default {
       Velocity(el, 'stop');
       el.velocity({marginBottom:bottom}, { duration: 700,complete: done})
     },
-    getOldVal(data) {
+    getOldVal(data) {       //返回该变量变化之前的值
       const changeVar = this.changeVarArr.find(item=>item.id == data.id)
       this.cacheOldValue(changeVar)
       const val = this.changeVarMap[data.id]
       let oldVal = val ? val : "未变化"
       return `上一次的值：${oldVal}`
     },
-    cacheOldValue(_var) {
+    cacheOldValue(_var) {    //缓存变量本次的值，以供变量发生变化后查看上次的值
       if(!_var)
         return
       const arr = this.cacheVarArr
       this.changeVarMap[_var.id] = _var.oldVal
     },
-    nodeExpand(data,node,component) {     
+    nodeExpand(data) {       //点击结点的展开图标
       this.createExpandElement(data.id); // 在节点展开是添加到默认展开数组
     },
-    nodeCollapse(data) {
+    nodeCollapse(data) {           //点击结点的收缩图标
       this.removeExpandElement(data)
     },
-    createExpandElement(element) {
+    createExpandElement(element) {        //将传入结点加入默认展开结点的数组
       this.expandedNodeList.push(element);
     },
-    removeExpandElement(element) {
+    removeExpandElement(element) {          //将传入结点从展开结点的数组移除
       this.expandedNodeList=this.expandedNodeList.filter(item=>item!=element.id) // 收起时删除数组里对应选项
       if(element.varChild){
         element.varChild.forEach((item,index)=>{
@@ -176,7 +175,7 @@ export default {
         })   
       }
     },
-    clearExpandList(id){    //清空展开的变量标志
+    clearExpandList(id){    //清空展开结点的数组
       id?this.expandedNodeList = []: ''
     },
     stackClass({index,item,node},flag) {      //设置函数栈的样式
@@ -207,15 +206,15 @@ export default {
        return this.setStackVarsClass({flag,ifChange,index,item,node})
      }
     },
-    setStackNameBaseClass({el,backgroundColor,color}) {
+    setStackNameBaseClass({el,backgroundColor,color}) {  //设置函数名的基础样式
       el.style.backgroundColor = backgroundColor
       el.style.color = color
       el.style.fontSize = "17px"
     },
-    setStackNameClass(flag){
+    setStackNameClass(flag){    //设置函数名的不同样式
       return flag=='top' ? 'stack-top-var-name' : 'not-stack-top-var-name'
     },
-    setStackVarsClass({flag,ifChange,index,item,node}) {
+    setStackVarsClass({flag,ifChange,index,item,node}) {   //设置函数栈中变量的样式
       let varClass
       if(ifChange&&flag=="top"){   //刚发生变化的变量
         // this.setChangeDomAnimation(node)
@@ -229,16 +228,15 @@ export default {
       }
       return varClass
     },
-    setChangeDomAnimation(node) {
+    setChangeDomAnimation(node) {        //设置变化结点的动画
       this.$nextTick(()=>{
         const changeId = this.setChangeDomId(node)
         this.changeDom = document.getElementById(changeId).parentNode.parentNode.parentNode
         this.changeDom.velocity({backgroundColor:'#F56C6C'}, { duration: 500})
                       .velocity({backgroundColor:'#f8f8f8'}, { duration: 500})
       })
-
     },
-    setChangeDomId(node) {   //获取应该变化的行的ID
+    setChangeDomId(node) {   //获取应该变化的结点的ID
       if(node.level>1){   //在结点为非函数名的前提下，如果结点的父节点是展开的且该结点是收缩的或者他本身就是变化的结点，则高亮该结点
         if((node.expanded==false||this.changeIdArr.includes(node.data.id))&&node.parent.expanded==true){
           return node.data.id
@@ -247,12 +245,12 @@ export default {
           return this.setChangeDomId(node.parent)
       }
     },
-    isNextData(output) {
+    isNextData(output) {     //判断本次调试是否是一组新的数据
       if(output.includes("<br>========RIGHT========<br>")||output.includes("<br>--------ERROR--------<br>"))
         return true
       return false
     },
-    formatVariates(variates) {
+    formatVariates(variates) {        //格式化变量名，将字符串变为数组用以高亮
       variates = Array.isArray(variates) ? variates : [variates]
       let tempArr = []
       variates.forEach((item,index)=>{
@@ -263,15 +261,13 @@ export default {
         obj.varInfo = [formatName,": ",item.value]
         obj.sign = item.name     
         obj.id = item.name
-        //this.num    //名字加遍历的序号就能产生一个唯一ID，用于在保存变化变量或者被展开变量的标识(已废弃这种想法，在增加或减少一个变量时会出错)
-        // this.setNum(1)
         if(item.innerObj) 
           obj.varChild = this.formatVariates(item.innerObj)
         tempArr.push(obj)
       })
       return tempArr
     },
-    formatStacksName(backTraces) {
+    formatStacksName(backTraces) {   //格式化函数名，用以高亮
       const stacksName = []
       const variatesName = []
       backTraces.forEach((item,i)=>{
@@ -309,18 +305,17 @@ export default {
         }
       }
     },
-    setChangeVar(id,newVal,oldVal){
+    setChangeVar(id,newVal,oldVal){   //收集在本次调试中发生了变化的变量
       if(!this.changeVarArr.includes(id))
         this.changeVarArr.push({id,newVal,oldVal})
+      this.setChangeVarsArr({id,newVal,oldVal})  //提交mutation
     },
-    removeChangeVarArr(id){
-      this.changeVarArr = this.changeVarArr.filter(item=>item.id!=id)
-    },
-    clearChangeVar() {
+    clearChangeVar() {      //清空收集变化变量的数组
       this.changeVarArr = []   //这个变量是标志每点击一次调试的变化变量的ID
+      this.setChangeVarsArr()   //提交mutation，清空vuex中对应的值
       this.changeIdArr = []     //这个标识该变量是否已进行动画过，因为会有多次对比
     },
-    setStackTop(stacks,backTrace) {
+    setStackTop(stacks,backTrace) {   //设置栈顶
       const stackTop = {}
       stackTop.varInfo = stacks[0].name
       stackTop.sign = backTrace[0]
@@ -329,7 +324,7 @@ export default {
       this.createExpandElement(stackTop.id)
       return [stackTop]
     },
-    setNotStackTop(stacks,fullNames) {
+    setNotStackTop(stacks,fullNames) {  //设置非栈顶
       return stacks.filter((item,index)=>index!=0).map((item,i)=>{
         const stack = {}
         stack.varInfo = item.name
@@ -338,7 +333,7 @@ export default {
         return stack
       })
     },
-    setNewStacks(stacksName,oldStacks=[],stackTopVariates,isNewGroup){ 
+    setNewStacks(stacksName,oldStacks=[],stackTopVariates,isNewGroup){   //设置全新的函数栈
       oldStacks= !isNewGroup ? oldStacks: []
       this.setOldStacks(oldStacks)  //oldStacks被清空
       const newStacks = []
@@ -368,28 +363,19 @@ export default {
       this.clearExpandList(clearSign)
       return newStacks
     },
-    setOldStacks(newStacks){
+    setOldStacks(newStacks){    //设置旧函数栈
       this.oldStacks = newStacks
     },
-    setOldVariates(variates){
+    setOldVariates(variates){   //设置旧变量
       this.oldVariates = variates
     },
-    setNum(num) {
-      this.num = this.num+num
-    },
-    resetNum() {
-      this.num = 0
-    },
-    resetChangeVarMap(flag){
+    resetChangeVarMap(flag){  //重置保存变化变量的集合
       flag?this.changeVarMap = {}:''
     },
-    resetChangeVarArr() {
-      this.changeVarArr=[]
-    },
-    setFinalShow(val){
+    setFinalShow(val){   //设置最终用以展示的堆栈数据
       this.finalShow = val
     },
-    setAnimation(newLen,oldLen,isNewGroup) {
+    setAnimation(newLen,oldLen,isNewGroup) {   //控制全部动画的总开关
       return new Promise((resolve,reject)=>{
         if(isNewGroup){
           this.showcontainer = false
@@ -419,7 +405,7 @@ export default {
         }
       })
     },
-    setPushStack(newLen,oldLen){
+    setPushStack(newLen,oldLen){      //判断本次调试的行为是函数入栈，函数出栈或者是没有出入栈
       if(newLen>oldLen)
         this.pushStack=1
       else if(newLen==oldLen)
@@ -432,9 +418,7 @@ export default {
       const isNewGroup = this.isNextData(output)    //判断是否是新的一组调试数据
       const stackTopVariates = this.formatVariates(variates)  //格式化栈顶函数的变量
       const stacksName = this.formatStacksName(backTrace)     //格式化所有函数的函数名
-      this.resetNum()     //重置设置id所用的序号
       this.resetChangeVarMap(isNewGroup)    //重置保存变量旧值的对象
-      this.resetChangeVarArr()    //清空保存变化变量的数组
       const newStacks = this.setNewStacks(stacksName,this.oldStacks,stackTopVariates,isNewGroup)  //设置新的函数栈
       const stackTop = this.setStackTop(newStacks,backTrace)  //设置最终的栈顶函数
       const notStackTop = this.setNotStackTop(newStacks,backTrace)    //设置最终的非栈顶函数
@@ -446,7 +430,10 @@ export default {
         this.setOldStacks(newStacks)    //设置旧函数栈
         this.setFinalShow({stackTop,first,other})   //设置最终用于展示的值
       })
-    }
+    },
+    ...mapMutations({
+      setChangeVarsArr :"SET_CHANGE_VARS_ARR",
+    })  
   },
   watch: {
     'currentDebug.backTrace': {

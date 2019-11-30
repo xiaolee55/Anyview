@@ -15,5 +15,6 @@ export default {
     clearOutputAuto: false,
     errorTestData: {},
     currentTestOrder: 0,
-    initTestDataLength: 0
+    initTestDataLength: 0,
+    changeVarsArr: []
 }

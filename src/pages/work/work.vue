@@ -73,6 +73,7 @@ export default {
     },
     methods: {
       _getQuestionList() {
+        console.log(this.user)
         getQuestionList(this.user.id).then((e)=>{
           let content = e.content[0]
           this.totalNum = content.totalNum
@@ -101,7 +102,7 @@ export default {
         this.changeRoute("personalCenter")
       },
       goToCoding() {
-        if(!this.questionList.length)
+        if(!this.questionList[0].length)
           return
         this.openQuestionsArr.length?this.setListOpen(false):this.setListOpen(true)
         this.changeRoute("coding")

@@ -16,6 +16,7 @@
           node-key = "sign"
           @node-expand= "nodeExpand"
           @node-collapse= "nodeCollapse"
+          :render-after-expand= false
           :default-expanded-keys= "expandedNodeList">
         <span class="custom-tree-node" 
               slot-scope="{ node, data}" 
@@ -75,8 +76,6 @@ export default {
       addIcon: true,
       changeKey: [],
       inputOrderArr: [],
-      oldVariatesMap: {},
-      oldVariate: "",
       status: true,
       expandedNodeList: [],
       defaultProps: {
@@ -86,7 +85,20 @@ export default {
     }
   },
   methods: {
-    nodeExpand(data,node,component) {
+    getOldVal(data) {       //返回该变量变化之前的值
+      const changeVar = this.changeVarArr.find(item=>item.id == data.id)
+      this.cacheOldValue(changeVar)
+      const val = this.changeVarMap[data.id]
+      let oldVal = val ? val : "未变化"
+      return `上一次的值：${oldVal}`
+    },
+    cacheOldValue(_var) {    //缓存变量本次的值，以供变量发生变化后查看上次的值
+      if(!_var)
+        return
+      const arr = this.cacheVarArr
+      this.changeVarMap[_var.id] = _var.oldVal
+    },
+    nodeExpand(data) {
       this.expandedNodeList.push(data.sign); // 在节点展开是添加到默认展开数组
     },
     nodeCollapse(data) {
@@ -96,6 +108,41 @@ export default {
           this.nodeCollapse(data.varChild[index])
         })   
       }
+    },
+    createExpandElement(element) {        //将传入结点加入默认展开结点的数组
+      this.expandedNodeList.push(element);
+    },
+    removeExpandElement(element) {          //将传入结点从展开结点的数组移除
+      this.expandedNodeList=this.expandedNodeList.filter(item=>item!=element.id) // 收起时删除数组里对应选项
+      if(element.varChild){
+        element.varChild.forEach((item,index)=>{
+          this.removeExpandElement(element.varChild[index])
+        })   
+      }
+    },
+    clearExpandList(id){    //清空展开结点的数组
+      id?this.expandedNodeList = []: ''
+    },
+    setChangeDomAnimation(node) {        //设置变化结点的动画
+      this.$nextTick(()=>{
+        const changeId = this.setChangeDomId(node)
+        this.changeDom = document.getElementById(changeId).parentNode.parentNode.parentNode
+        this.changeDom.velocity({backgroundColor:'#F56C6C'}, { duration: 500})
+                      .velocity({backgroundColor:'#f8f8f8'}, { duration: 500})
+      })
+    },
+    setChangeDomId(node) {   //获取应该变化的结点的ID
+      if(node.level>1){   //在结点为非函数名的前提下，如果结点的父节点是展开的且该结点是收缩的或者他本身就是变化的结点，则高亮该结点
+        if((node.expanded==false||this.changeIdArr.includes(node.data.id))&&node.parent.expanded==true){
+          return node.data.id
+        }
+        else
+          return this.setChangeDomId(node.parent)
+      }
+    },
+    clearChangeVar() {      //清空收集变化变量的数组
+      this.changeVarArr = []   //这个变量是标志每点击一次调试的变化变量的ID
+      this.changeIdArr = []     //这个标识该变量是否已进行动画过，因为会有多次对比
     },
     varClass(index,item,node) {
       return index==0 ? 'var-name': item.charAt(0)==0&&item[1]=="x" ? 'point-val' : ''
@@ -196,6 +243,19 @@ export default {
       setDebugData: "SET_DEBUG_DATA"
     })
   },
+  // watch: {
+  //   'currentDebug.backTrace': {
+  //     deep: true,     //深度监听currentDebug的所有属性
+  //     handler(backTrace){  //这里使用箭头函数的话使用this是不能访问到组件实例的,因为箭头函数绑定的是父级作用域的上下文，而匿名函数是指向全局
+  //       //这里监听backTrace而不是currentDebug是为了防止watch面板的变量和variate面板相互干扰
+  //       const currentDebug = this.currentDebug
+  //       const variates =  currentDebug.variate
+  //       setTimeout(()=>{
+  //         // this.findChangeVar(this.finalTree,this.oldVariates)
+  //       },0)
+  //     }
+  //   }
+  // },
   computed: {
     finalTree() {
       let watchPointMap = this.currentDebug.watchPoint
@@ -219,6 +279,7 @@ export default {
         variate.forEach((item,index)=>{
           let obj = {}
           obj.sign = item.name
+          obj.id = item.name
           let formatName = item.name
           if(!judegeInWatchPoint(item.name,inputOrderArr))
             formatName = item.name.slice(item.name.lastIndexOf("->")==-1?0:item.name.lastIndexOf("->")).replace(/\)|-|>/g,"")
@@ -244,7 +305,8 @@ export default {
       "currentIndex",
       "currentQuestion",
       "currentDebug",
-      "openQuestionsArr"
+      "openQuestionsArr",
+      "changeVarsArr"
     ])
   },
   

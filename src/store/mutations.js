@@ -89,6 +89,9 @@ const mutations = {
     },
     [types.SET_INIT_TEST_DATA_LENGTH](state,val) {
         state.initTestDataLength = val
+    },
+    [types.SET_CHANGE_VARS_ARR](state,val) {
+        val?state.changeVarsArr.push(val):state.changeVarsArr=[]
     }
 }
 

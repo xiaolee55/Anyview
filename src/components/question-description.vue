@@ -16,7 +16,7 @@
       <div class="question-menu-bottom" ref="bottomMenu">
       <el-button type="primary" round style="margin-right:20px" @click="previousQuestion">上一题</el-button>
       <el-button type="primary" round style="margin-right:20px" @click="nextQuestion">下一题</el-button>
-      <debug-pane v-if="debugStatus"></debug-pane>
+      <slot></slot>
     </div>
   </div>
 </template>
@@ -25,7 +25,6 @@
 import ace from 'components/aceEditor'
 import {mapGetters,mapMutations} from 'vuex'
 import Setting from 'components/setting'
-import DebugPane from 'components/debug-pane'
 export default {
   methods: {
     goToWork() {
@@ -100,7 +99,6 @@ export default {
   },
   components:{
     ace,
-    DebugPane,
     Setting
   },
   computed: {

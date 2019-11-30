@@ -18,7 +18,6 @@ export const questionList = (state) => {
     temp=item
     })        
     list.push(tempArr)
-    console.log(state.questionList)
     return list
 } 
 
@@ -62,3 +61,5 @@ export const currentErrorData = state => state.errorTestData[state.currentIndex]
 export const currentTestOrder = state => state.currentTestOrder
 
 export const initTestDataLength = state => state.initTestDataLength
+
+export const changeVarsArr = state => state.changeVarsArr

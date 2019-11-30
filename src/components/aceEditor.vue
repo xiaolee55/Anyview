@@ -28,6 +28,14 @@
       })
       let editor = this.aceEditor
       let _this  = this
+      //禁止第一行被改动
+      this.aceEditor.commands.on("exec", function(e) { 
+        var rowCol = e.editor.selection.getCursor()
+        if ((rowCol.row == 0)) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+      });
       //监听断点事件
       this.aceEditor.on("guttermousedown", function(e){
           const target = e.domEvent.target; 
@@ -277,8 +285,7 @@
 </script>
 
 <style>
-.ace-container {
-  height: 100%; 
+.ace-container { 
   width: 100%;
 }
 .debug-line {   /*高亮行*/

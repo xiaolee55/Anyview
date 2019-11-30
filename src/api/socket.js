@@ -26,12 +26,8 @@ function initWebSocket(){ //初始化websocket
 
 //发送消息
 function sendMsg(data){
-    // if(backData==false)
-    //     return
-    // console.log(data)
     if (websocket.readyState === websocket.OPEN) {
         //若是ws开启状态
-        // backData=false   //如果发送了消息但是还没有返回，则不能再发送其他消息
         console.log("send",data)
         websocket.send(JSON.stringify(data),data)
     }else {

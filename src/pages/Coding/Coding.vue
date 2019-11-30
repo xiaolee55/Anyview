@@ -9,42 +9,74 @@
       <question-list :list="questionList" :title="courseName" @getContent="_getQuestionContent"></question-list>
     </el-drawer>
     <splitpanes :push-other-panes="true" watch-slots v-if="debugStatus">
-      <splitpanes :splitpanes-size="65" horizontal  watch-slots>
-        <el-tabs v-model="tab" type="card" :splitpanes-size="50" style="height:100%" class="visual-desc">
-          <el-tab-pane label="题目描述" name="desc">
-            <question-description @getContent="_getQuestionContent"></question-description>
-          </el-tab-pane>
-          <el-tab-pane label="可视化" name="visual">
-            <visual-pane></visual-pane>
-          </el-tab-pane>
-        </el-tabs>
-        <splitpanes :splitpanes-size="40"  watch-slots>
-          <variate-pane :splitpanes-size="50" ref="variatePane"></variate-pane>
-          <watch-pane :splitpanes-size="50" ref="watchPane"></watch-pane>
+      <pane size=65>
+        <splitpanes horizontal  watch-slots>
+          <pane size=50>
+            <el-tabs v-model="tab" type="card" style="height:100%" class="visual-desc">
+              <el-tab-pane label="题目描述" name="desc">
+                <question-description @getContent="_getQuestionContent">
+                  <debug-pane></debug-pane>
+                </question-description>
+              </el-tab-pane>
+              <el-tab-pane label="可视化" name="visual">
+                <visual-pane></visual-pane>
+              </el-tab-pane>
+            </el-tabs>
+          </pane>
+          <pane size=40>
+            <splitpanes  watch-slots>
+              <pane size=50>
+                <variate-pane></variate-pane>
+              </pane>
+              <pane size=50>
+               <watch-pane></watch-pane>
+              </pane>
+            </splitpanes>
+          </pane>
+          <pane size=10>
+           <wrong-data></wrong-data>
+          </pane>
         </splitpanes>
-        <wrong-data :splitpanes-size="10" ref="wrongData"></wrong-data>
-      </splitpanes>
-      <splitpanes :splitpanes-size="35" horizontal  watch-slots >
-        <editor-pane :splitpanes-size="75" ref="editorPane"></editor-pane>
-        <output-pane :splitpanes-size="25" ref="outputPane"></output-pane>
-      </splitpanes>
+      </pane>
+      <pane size=35>
+        <splitpanes horizontal  watch-slots >
+          <pane size=75>
+            <editor-pane></editor-pane>
+          </pane>
+          <pane size=25>
+            <output-pane></output-pane>
+          </pane>
+        </splitpanes>
+      </pane>
     </splitpanes>
 
-    <splitpanes  :push-other-panes="true" watch-slots v-if="!debugStatus">
-       <splitpanes :splitpanes-size="35" horizontal  watch-slots>  
-          <question-description :splitpanes-size="75" @openList="showListPane=true" @getContent="_getQuestionContent" style="height:100%"></question-description>
-          <wrong-data :splitpanes-size="25" ref="wrongData"></wrong-data>
+    <splitpanes  :push-other-panes="true" watch-slots v-else>
+      <pane size=35>
+        <splitpanes horizontal  watch-slots>
+          <pane size=75>  
+            <question-description @openList="showListPane=true" @getContent="_getQuestionContent" style="height:100%"></question-description>
+          </pane>
+          <pane size=25>
+            <wrong-data></wrong-data>  
+          </pane>
        </splitpanes>
-      <splitpanes  watch-slots horizontal :splitpanes-size="65">  
-        <editor-pane :splitpanes-size="75" ref="editorPane"></editor-pane>
-        <output-pane :splitpanes-size="25" ref="outputPane"></output-pane>
-      </splitpanes>
+      </pane>
+      <pane size=65>
+        <splitpanes  watch-slots horizontal>  
+          <pane size=75>
+            <editor-pane></editor-pane>
+          </pane>
+          <pane size=25>
+            <output-pane></output-pane>
+          </pane>
+        </splitpanes>
+      </pane>
     </splitpanes>
   </div>
 </template>
 
 <script>
-import Splitpanes from 'splitpanes'
+import {Splitpanes,Pane} from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
 import ace from 'components/aceEditor'
 
@@ -53,10 +85,10 @@ import QuestionDescription from 'components/question-description'
 import EditorPane from 'components/editor-pane'
 import OutputPane from 'components/output-pane'
 import VisualPane from 'components/visual-pane'
-import DebugPane from 'components/debug-pane'
 import WatchPane from 'components/watch-pane'
 import VariatePane from 'components/variate-pane'
 import WrongData from 'components/wrong-data'
+import DebugPane from 'components/debug-pane'
 
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
@@ -175,7 +207,7 @@ export default {
           return new Map(this.openQuestionsArr)
         },
         debugStatus() {
-          return this.currentQuestion.debugStatus
+            return this.currentQuestion.debugStatus
         },
         listStatus: {
           get() {
@@ -196,7 +228,9 @@ export default {
       },
       components: {
         Splitpanes,
+        Pane,
         ace,
+        DebugPane,
         QuestionList,
         QuestionDescription,
         EditorPane,
