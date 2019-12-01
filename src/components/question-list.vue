@@ -13,15 +13,15 @@
         class="question-name"
         @click="getContent(question)">
           <span>
-          <i class='iconfont icon-yitongguo' v-if="question.firstPastTime"></i>
+          <i class='iconfont icon-yitongguo' v-if="questionStatus[question.eid].passStatus"></i>
           <i class='iconfont icon-weikaishi' v-else></i>
             {{question.name}}
           </span>
           <span class="quest-situation">
-            <i class='iconfont icon-bianyi' title="编译成功次数">{{question.cmpRightCount}}</i>
-            <i class='iconfont icon-bianyishibai' title="编译失败次数">{{question.cmpErrorCount}}</i>
-            <i class='iconfont icon-chengzuyunxing' title="运行成功次数">{{question.runResult}}</i>
-            <i class='iconfont icon-yunxingshibai' title="运行失败次数">{{question.runErrCount}}</i>
+            <i class='iconfont icon-bianyi' title="编译成功次数">{{questionStatus[question.eid].cmpRightCount}}</i>
+            <i class='iconfont icon-bianyishibai' title="编译失败次数">{{questionStatus[question.eid].cmpErrorCount}}</i>
+            <i class='iconfont icon-chengzuyunxing' title="运行成功次数">{{questionStatus[question.eid].runResult}}</i>
+            <i class='iconfont icon-yunxingshibai' title="运行失败次数">{{questionStatus[question.eid].runErrCount}}</i>
           </span>
         </div>
       </el-collapse-item>
@@ -30,7 +30,7 @@
 </template>
 
 <script>
-
+import {mapGetters,mapMutations,mapActions} from 'vuex'
 export default {
   props: {
     title: {
@@ -45,10 +45,30 @@ export default {
   methods: {
     getContent(question) {
       this.$emit("getContent",question)
+    },  
+    ...mapMutations({
+      setQuestionStatus:  "SET_QUESTION_STATUS"
+    }) 
+  },
+  watch: {
+    list: {
+      immediate: true,
+      handler(val) {
+        val.flat(1).forEach(item=>{
+          this.setQuestionStatus({id:item.eid,
+                                  cmpRightCount:item.cmpRightCount,
+                                  cmpErrorCount:item.cmpErrorCount,
+                                  runErrorCount:item.runErrorCount,
+                                  runRightCount:item.runResult,
+                                  passStatus: item.firstPastTime})
+        })
+      }
     }
   },
   computed: {
-    
+    ...mapGetters([
+      'questionStatus'
+    ]),   
   }
 }
 </script>

@@ -123,7 +123,7 @@ export default {
         this.setOutput({style, label})
         if(Object.keys(e.content.errorOrder).length===0&&this.initTestDataLength!=0){   //调试结束后如果测试数据全部通过，则提示用户再次运行
           style = 'success'
-          label = '本次测试数据已全部通过，请再次运行代码'
+          label = '本次测试数据已通过，但仍需新生成数据进行测试，请再次运行程序'
           this.setOutput({style, label})
         }
         this.setDebugData({index})

@@ -198,7 +198,8 @@ export default {
         setCurrentQuestion: 'SET_CURRENT_QUESTION',
         setCurrentIndex: 'SET_CURRENT_INDEX',
         setOpenQuestions: 'SET_OPEN_QUESTIONS',
-        setErrorTestData: "SET_ERROR_TEST_DATA"
+        setErrorTestData: "SET_ERROR_TEST_DATA",
+        setQuestionStatus:  "SET_QUESTION_STATUS"
       }) 
     
     },

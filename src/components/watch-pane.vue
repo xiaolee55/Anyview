@@ -13,7 +13,7 @@
           v-if="finalTree.length"
           :props="defaultProps"
           empty-text = ""
-          node-key = "sign"
+          node-key = "id"
           @node-expand= "nodeExpand"
           @node-collapse= "nodeCollapse"
           :render-after-expand= false
@@ -21,24 +21,27 @@
         <span class="custom-tree-node" 
               slot-scope="{ node, data}" 
               :class="{'tree-title-class': node.level==1}" 
-              @dblclick.stop= "existVarInput(data.sign)"
-              style="position:relative">
+              @dblclick.stop= "existVarInput(data.id)"
+              style="position:relative"
+              :style="setChangeNode(node)">
           <el-tag contenteditable="true" 
-                  v-if= "showexistVarInput==data.sign"
-                  @blur.native= "changeVariate(data.sign)"  
+                  v-if= "showexistVarInput==data.id"
+                  @blur.native= "changeVariate(data.id)"  
                   @input.native= "varInput($event)" 
-                  @keyup.enter.native= "changeVariate(data.sign)"
+                  @keyup.enter.native= "changeVariate(data.id)"
                   style="z-index:100;position:absolute;top:0;left:0;width:100%"
                   ref="existVarInput"
                   >
           </el-tag> 
           <i class="el-icon-minus expand-icon" v-if= "!node.childNodes.length"></i>
-          <i class="el-icon-caret-right expand-icon" v-else-if= "!expandedNodeList.includes(data.sign)"></i>
+          <i class="el-icon-caret-right expand-icon" v-else-if= "!expandedNodeList.includes(data.id)"></i>
           <i class="el-icon-caret-bottom expand-icon" v-else></i>
           <span v-for="(item,index) in node.label" :key= "item">
-            <span :class="varClass(index,item,node)">{{item}}</span>
+            <el-tooltip class="item" effect="light" :content= "getOldVal(data)" placement="right">
+              <span :class= "varClass(index,item,node)" :id="`wa${data.id}`">{{item}}</span>
+            </el-tooltip>
           </span>
-          <i class="el-icon-remove-outline var-delete-icon" v-if="node.level==1" @click= "removeVariate(node,data.sign)"></i>
+          <i class="el-icon-remove-outline var-delete-icon" v-if="node.level==1" @click= "removeVariate(node,data.id)"></i>
         </span>
       </el-tree> 
         <el-tag contenteditable="true"
@@ -68,6 +71,7 @@ export default {
   },
   data () {
     return {
+      changeIdArr: [],
       focus: false,
       editable: false,
       showexistVarInput: '',
@@ -85,29 +89,15 @@ export default {
     }
   },
   methods: {
-    getOldVal(data) {       //返回该变量变化之前的值
-      const changeVar = this.changeVarArr.find(item=>item.id == data.id)
-      this.cacheOldValue(changeVar)
-      const val = this.changeVarMap[data.id]
-      let oldVal = val ? val : "未变化"
-      return `上一次的值：${oldVal}`
-    },
-    cacheOldValue(_var) {    //缓存变量本次的值，以供变量发生变化后查看上次的值
-      if(!_var)
-        return
-      const arr = this.cacheVarArr
-      this.changeVarMap[_var.id] = _var.oldVal
+    getOldVal(data){
+      const node = this.changeVarsArr.find(item=>item.id==data.id)
+      return node ? `上一次的值：${node.oldVal}`:'未变化'
     },
     nodeExpand(data) {
-      this.expandedNodeList.push(data.sign); // 在节点展开是添加到默认展开数组
+      this.createExpandElement(data.id); // 在节点展开是添加到默认展开数组
     },
     nodeCollapse(data) {
-      this.expandedNodeList=this.expandedNodeList.filter(item=>item!=data.sign) // 收起时删除数组里对应选项
-      if(data.varChild){
-        data.varChild.forEach((item,index)=>{
-          this.nodeCollapse(data.varChild[index])
-        })   
-      }
+      this.removeExpandElement(data)
     },
     createExpandElement(element) {        //将传入结点加入默认展开结点的数组
       this.expandedNodeList.push(element);
@@ -123,28 +113,38 @@ export default {
     clearExpandList(id){    //清空展开结点的数组
       id?this.expandedNodeList = []: ''
     },
-    setChangeDomAnimation(node) {        //设置变化结点的动画
+    setChangeNode(node) {
+      setTimeout(()=>{
+        if(this.changeVarsArr.length==0||this.changeIdArr.find(item=>item==node.data.id))
+          return
+        this.changeIdArr.push(node.data.id)
+        this.setChangeDomAnimation(node)
+      })
+
+      return ''
+    },
+    setChangeDomAnimation(node) {        //设置变化结点的动画    
       this.$nextTick(()=>{
-        const changeId = this.setChangeDomId(node)
-        this.changeDom = document.getElementById(changeId).parentNode.parentNode.parentNode
+        let changeId = null
+        if(this.changeVarsArr.find(item=>item.id==node.data.id))
+          changeId = this.setChangeDomId(node)    //获取应该变化的结点
+        if(!changeId) return
+        node.level!=1?this.removeExpandElement(node.parent.data): ''   //变化结点收起来
+        this.changeDom = document.getElementById('wa'+changeId).parentNode.parentNode
         this.changeDom.velocity({backgroundColor:'#F56C6C'}, { duration: 500})
-                      .velocity({backgroundColor:'#f8f8f8'}, { duration: 500})
+                      .velocity({backgroundColor:'#ecf5ff'}, { duration: 500})
       })
     },
     setChangeDomId(node) {   //获取应该变化的结点的ID
-      if(node.level>1){   //在结点为非函数名的前提下，如果结点的父节点是展开的且该结点是收缩的或者他本身就是变化的结点，则高亮该结点
-        if((node.expanded==false||this.changeIdArr.includes(node.data.id))&&node.parent.expanded==true){
-          return node.data.id
-        }
-        else
-          return this.setChangeDomId(node.parent)
-      }
-    },
-    clearChangeVar() {      //清空收集变化变量的数组
-      this.changeVarArr = []   //这个变量是标志每点击一次调试的变化变量的ID
-      this.changeIdArr = []     //这个标识该变量是否已进行动画过，因为会有多次对比
+      if(node.level==1)     //如果变化结点的父结点为空，则该结点产生动画
+        return node.data.id
+      if(node.parent.expanded&&!node.expanded)   //如果该结点的父节点为展开状态且该结点为收缩状态，则产生动画
+        return node.data.id
+      return this.setChangeDomId(node.parent)     //不满足以上两个条件则继续将该结点的父节点递归
     },
     varClass(index,item,node) {
+      const ifChange = this.changeVarsArr.find(element=>element.id==node.data.id)
+      if(ifChange) return 'change-var'
       return index==0 ? 'var-name': item.charAt(0)==0&&item[1]=="x" ? 'point-val' : ''
     },
     changeContenteditable(e) {    //双击当前变量修改为可输入
@@ -170,11 +170,11 @@ export default {
     varInput(e) {               //输入变量
       this.variateInput = e.target.innerText
     },
-    existVarInput(sign) {
+    existVarInput(id) {
       setTimeout(()=>{
          this.$refs.existVarInput.$el.focus()
       })
-      this.showexistVarInput = sign
+      this.showexistVarInput = id
     },
     showSearch() {                  //双击空白处或者点击加号出现一个新框
       if(this.showexistVarInput)    //覆盖变量的输入框不能与新输入框同时出现
@@ -243,19 +243,13 @@ export default {
       setDebugData: "SET_DEBUG_DATA"
     })
   },
-  // watch: {
-  //   'currentDebug.backTrace': {
-  //     deep: true,     //深度监听currentDebug的所有属性
-  //     handler(backTrace){  //这里使用箭头函数的话使用this是不能访问到组件实例的,因为箭头函数绑定的是父级作用域的上下文，而匿名函数是指向全局
-  //       //这里监听backTrace而不是currentDebug是为了防止watch面板的变量和variate面板相互干扰
-  //       const currentDebug = this.currentDebug
-  //       const variates =  currentDebug.variate
-  //       setTimeout(()=>{
-  //         // this.findChangeVar(this.finalTree,this.oldVariates)
-  //       },0)
-  //     }
-  //   }
-  // },
+  watch: {
+    'currentDebug.backTrace': {
+      handler(backTrace){  
+        this.changeIdArr = []
+      }
+    }
+  },
   computed: {
     finalTree() {
       let watchPointMap = this.currentDebug.watchPoint
@@ -292,9 +286,9 @@ export default {
       }
       let disOrderArr = format(watchPointArr)   //格式化变量
       inputOrderArr.forEach((key)=>{    //按用户输入顺序排序变量
-        const tree = disOrderArr.find(item=>item.sign==key)
+        const tree = disOrderArr.find(item=>item.id==key)
         if(tree)
-          finalArr.push(disOrderArr.find(item=>item.sign==key))
+          finalArr.push(disOrderArr.find(item=>item.id==key))
       })
       return finalArr
     },
@@ -353,6 +347,9 @@ export default {
   }
   .point-val {
     color: rgb(127, 127, 127)
+  }
+  .change-var{
+    color: red;
   }
   .tree-title-class {
     position: relative;

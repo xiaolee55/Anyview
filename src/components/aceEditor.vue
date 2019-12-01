@@ -221,9 +221,13 @@
       }
     },
     watch: {
-      content(value) {
-        if (this.beforeContent !== value) {   //还未开始输入代码时这里会执行，即刚打开题目时执行
-          this.aceEditor.setValue(value,1)
+      content: {
+        handler: function(value) {
+          setTimeout(()=>{
+            if (this.beforeContent !== value) { 
+              this.aceEditor.setValue(value,1)
+            }
+          },50)
         }
       },
       fontSize(val){

@@ -23,9 +23,8 @@
                   <i class="iconfont icon-baocun" title="保存(Ctrl+S)" @click="saveAnswer(currentQuestion.newAnswer)"
                      :class="{'ing':iconStatus.save==1,'not-ing': iconStatus.save==2}"></i>
                 </li>
-                <li>
+                <li v-if= "showGetPassCodeIcon">
                   <i class="iconfont icon-tongguodaima" title="获取已通过的代码" @click="getPassAnswer"
-                     v-if="true"
                      :class="{'ing':iconStatus.passCode==1,'not-ing': iconStatus.passCode==2}"></i>
                 </li>
               </ul>          
@@ -44,7 +43,8 @@
           <ace :content= "item[1].answer"
                 :debugLine= "debugLine"
                 :debugStatus = "debugStatus"
-                @changeContent= "changeContent" 
+                :ref="`ace${item[1].id}`"
+                @changeContent= "changeContent"
                 @save= "saveAnswer"
                 @compile= "compile"
                 @runGroup= "runGroup"
@@ -66,6 +66,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
   export default {
     data () {
       return {
+        updateCode:[],
         iconStatus: {
           compile: 0,
           runGroup: 0,
@@ -112,7 +113,15 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
       getPassAnswer() {
         const content = {eID:this.currentIndex}
         fun.getPassAnswer(content).then(e=>{
-          console.log(e)
+          this.$confirm('此操作将覆盖您现在的代码, 是否继续?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            this.$refs[`ace${this.currentQuestion.id}`][0].aceEditor.setValue(e.content,1)
+            console.log('获取已通过代码',e)
+          }).catch(() => {     
+          });
         })
       },
       compile(event,_fun=()=>{}) {
@@ -136,6 +145,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
 
         fun.getCompileMsg(content).then((e)=>{
           if(e.type == types.COMPILE_SUCCESS_TYPE){
+            console.log("编译",e.content)
             this.resetIconStatus()  //动作结束，修改图标样式
             this.updateOutputData()  //编译返回数据后删除‘编译中’的提示
             const _content = format(e.content)
@@ -188,6 +198,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
                 this.updateOutputData()  //编译返回数据后删除进行中的提示
                 this.updateOutputData("success", "运行成功", _content)
                 this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})
+                this.commitQuestionStatus(e.content)
               }
             })
           }
@@ -197,6 +208,12 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         // }else{
           // _runGroup()
         // }
+      },
+      commitQuestionStatus(content) {
+        this.setQuestionStatus({id:this.currentIndex,
+                                runErrorCount:content.runErrCount,
+                                runRightCount:content.runRightCount,
+                                passStatus: content.passed})        
       },
       startDebug() {
         if(this.debugStatus){
@@ -279,6 +296,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         })
       },
       changeContent(answer) {  //修改代码
+        // this.updateCoding = false
         this.updateStatus("saveStatus", false, answer)
       },
       updateStatus(type, status, content) {
@@ -386,10 +404,14 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         setVarAnimation: "SET_VARIATE_ANIMATION",
         setErrorTestData: "SET_ERROR_TEST_DATA",
         setCurrentTestOrder: "SET_CURRENT_TEST_ORDER",
-        setInitTestDataLength: "SET_INIT_TEST_DATA_LENGTH"
+        setInitTestDataLength: "SET_INIT_TEST_DATA_LENGTH",
+        setQuestionStatus:  "SET_QUESTION_STATUS"
       })
     },
     computed: {
+      showGetPassCodeIcon() {  //如果代码没有通过则不显示获取通过代码的图标
+          return this.questionStatus[this.currentIndex].passStatus
+      },
       nowIndex: {
         get (){
           return `${this.currentIndex}`
@@ -414,7 +436,8 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         "outputData",
         "debugData",
         "currentDebug",
-        "currentErrorData"
+        "currentErrorData",
+        'questionStatus'
       ])
     },
     components: {

@@ -1,3 +1,4 @@
+import { stat } from "fs"
 export const questionList = (state) => {
   
   if(Array.isArray(state.questionList[0]))
@@ -20,6 +21,8 @@ export const questionList = (state) => {
     list.push(tempArr)
     return list
 } 
+
+export const questionStatus = (state) => state.questionStatus
 
 export const courseName = state => state.courseName
 

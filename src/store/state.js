@@ -16,5 +16,6 @@ export default {
     errorTestData: {},
     currentTestOrder: 0,
     initTestDataLength: 0,
-    changeVarsArr: []
+    changeVarsArr: [],
+    questionStatus: {},
 }

@@ -92,6 +92,13 @@ const mutations = {
     },
     [types.SET_CHANGE_VARS_ARR](state,val) {
         val?state.changeVarsArr.push(val):state.changeVarsArr=[]
+    },
+    [types.SET_QUESTION_STATUS](state,obj) {
+        const stateObj = state.questionStatus[obj.id] ?state.questionStatus[obj.id]: {}
+        Object.keys(obj).forEach(index=>{
+            Vue.set(stateObj,index,obj[index])
+        })
+        Vue.set(state.questionStatus,obj.id,stateObj)
     }
 }
 
