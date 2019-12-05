@@ -34,8 +34,10 @@ export default {
       this.goTo("personalCenter")
     },
     goTo(routeName) {
-      if(this.debugStatus)
+      if(this.debugStatus){
         this.promptCloseDebug('请先关闭调试')
+        return
+      }
       this.$router.replace(routeName)
     },
     openList() {

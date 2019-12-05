@@ -292,6 +292,9 @@
 .ace-container { 
   width: 100%;
 }
+.ace_gutter-cell{
+ cursor: pointer;
+}
 .debug-line {   /*高亮行*/
   background:  rgb(252,215,207);
   position: absolute;

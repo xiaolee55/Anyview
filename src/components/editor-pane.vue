@@ -77,6 +77,9 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
       }
     },
     methods: {
+      resizeEditor(){
+        this.$refs[`ace${this.currentIndex}`][0].aceEditor.resize()
+      },
       setBP(bp) {
         const index = this.currentIndex
         const _obj = {"bp" : bp.join(",")}
@@ -199,6 +202,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
                 this.updateOutputData("success", "运行成功", _content)
                 this.setErrorTestData({data:e.content.errorOrder,id:this.currentIndex})
                 this.commitQuestionStatus(e.content)
+                e.content.passed?this.setOutput({style: "success",label: "本道题目已经通过！"}): ''
               }
             })
           }

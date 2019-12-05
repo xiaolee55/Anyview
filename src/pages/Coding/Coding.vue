@@ -39,9 +39,9 @@
         </splitpanes>
       </pane>
       <pane size=35>
-        <splitpanes horizontal  watch-slots >
-          <pane size=75>
-            <editor-pane></editor-pane>
+        <splitpanes horizontal  watch-slots @resized="resizeEditor">
+          <pane size=75 min-size="3">
+            <editor-pane ref="edPane"></editor-pane>
           </pane>
           <pane size=25>
             <output-pane></output-pane>
@@ -62,9 +62,9 @@
        </splitpanes>
       </pane>
       <pane size=65>
-        <splitpanes  watch-slots horizontal>  
-          <pane size=75>
-            <editor-pane></editor-pane>
+        <splitpanes  watch-slots horizontal @resized="resizeEditor">  
+          <pane size=75 min-size="3">
+            <editor-pane ref="edPane"></editor-pane>
           </pane>
           <pane size=25>
             <output-pane></output-pane>
@@ -78,7 +78,6 @@
 <script>
 import {Splitpanes,Pane} from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
-import ace from 'components/aceEditor'
 
 import QuestionList from 'components/question-list'
 import QuestionDescription from 'components/question-description'
@@ -118,8 +117,8 @@ export default {
       }
     },
     methods: {
-      resize(e){
-        console.log(e)
+      resizeEditor(){   //调整编辑器的尺寸
+        this.$refs.edPane.resizeEditor()
       },
       _getQuestionContent(_question){
         let index = Number(_question.eid)
@@ -230,7 +229,6 @@ export default {
       components: {
         Splitpanes,
         Pane,
-        ace,
         DebugPane,
         QuestionList,
         QuestionDescription,
@@ -277,9 +275,6 @@ export default {
     height: 30px;
     font-size: 13px;
     font-family: 'Lato', 'Lucida Grande', 'Lucida Sans Unicode', Tahoma, Sans-Serif;
-  }
-  .ace_gutter-cell{
-    cursor: pointer;
   }
   /* #pane-desc{
     display: flex;
