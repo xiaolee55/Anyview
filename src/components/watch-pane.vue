@@ -1,12 +1,13 @@
 <template>
   <div class="watch-pane">
     <div>
-      <el-tag type="info" effect="dark" class="watch-title">
-        <b>变量监视</b>
-        <i class="el-icon-plus var-add" @click="showSearch" v-if="addIcon" title="增加变量"></i>
-        <i class="el-icon-minus var-add" @click="hideSearch" v-if="!addIcon" title="删除变量"></i>
-        <i class="el-icon-question" title="单击“+”号或双击空白处可跟踪想观察的变量或表达式"></i>
-    </el-tag>
+      <pane-header title="变量监视" bgColor="info">
+        <span>
+          <i class="el-icon-question" title="单击“+”号或双击空白处可跟踪想观察的变量或表达式"></i>
+          <i class="el-icon-plus " @click="showSearch" v-if="addIcon" title="增加变量"></i>
+          <i class="el-icon-minus" @click="hideSearch" v-else title="删除变量"></i>
+        </span>
+    </pane-header>
     </div>
     <div @dblclick="showSearch" class="var-container">
       <el-tree :data= "finalTree"
@@ -60,6 +61,7 @@
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
 import {mapGetters,mapMutations,mapActions} from 'vuex'
+import paneHeader from 'components/pane-header'
 
 export default {
   directives: {
@@ -303,8 +305,10 @@ export default {
       "changeVarsArr"
     ])
   },
-  
+  components: {
+    paneHeader
   }
+}
 </script>
 
 <style lang="scss" scoped>

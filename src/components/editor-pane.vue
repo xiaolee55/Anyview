@@ -212,8 +212,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
       commitQuestionStatus(content) {
         this.setQuestionStatus({id:this.currentIndex,
                                 runErrorCount:content.runErrCount,
-                                runRightCount:content.runRightCount,
-                                passStatus: content.passed})        
+                                runRightCount:content.runRightCount})        
       },
       startDebug() {
         if(this.debugStatus){

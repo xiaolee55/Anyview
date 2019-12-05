@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <el-scrollbar>
       <el-header class="work-header">
         <el-row type="flex" justify="space-around">
         <el-col :span="6" style="position:relative">
@@ -50,7 +50,7 @@
         <span>可视化创新与系统工具研究工作室</span>
         <span><a href="">Anyview团队</a></span>
       </el-footer>
-    </div>
+    </el-scrollbar>
 </template>
 <script>
  import canvas from 'common/js/canvas';

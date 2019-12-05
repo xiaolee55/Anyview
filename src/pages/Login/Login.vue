@@ -5,7 +5,7 @@
           <canvas  id="canvas"></canvas>
       </el-header>
       <el-main class="login-content">
-        <div >
+        <div>
         <el-form label-width="100px" :model="user" status-icon :rules="rules" ref="user">
           <el-form-item label="账号"  prop="username">
             <el-input type="username" placeholder="请输入账号" v-model="user.username"></el-input>
@@ -89,6 +89,7 @@ export default {
         console.log(c)
       },
       _getSchoolist(){
+        if(this.schoolList.length!=0) return
         getSchoolMsg('获取学校列表').then((e)=>{
           if(e.type === types.SCHOOL_SUCCESS_TYPE){
             this.schoolList=e.content
@@ -151,12 +152,10 @@ export default {
     width: 100%;
     height: 100%;
   }
-  .login-content{
-    height: 66%;
+  .login-content /deep/{
     width: 500px;
     margin: 0px auto;
-  }
-  .login-content /deep/{
+    overflow: visible!important;
     .el-form{
       margin: 50px 80px 0 0;
     }

@@ -1,16 +1,29 @@
 <template>
     <div ref="wrongData" class="wrd-pane">
-      <el-tag type="warning" effect="dark" class="wrong-data-title"><b>未通过测试数据</b></el-tag>
+      <pane-header title="未通过测试错误数据"  bgColor="warning">
+          <i class="el-icon-question abr"></i>
+      </pane-header>
       <div  class="wrong-data-container">
         <div  class= "wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
-            <p  :class= "wrongDataClass(item,index)" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item.slice(2)"></p>
+            <p  :class="wrongDataClass(item,index)" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item.slice(2)"></p>
             <span class="wrong-data-icon">
-                <el-tag type="" effect="dark" v-if= "index==currentTestOrder">测试中</el-tag>
-                <el-tag type="success" effect="dark" v-if= "item.charAt(0)==1">测试通过</el-tag>
-                <el-tag type="info" effect="dark" v-if= "banIndex.includes(index)">禁用</el-tag>
-                <i class="iconfont icon-kaisuo" title="禁用本组数据" v-if= "lockData(item,index)" @click= "banData(index)"></i>
-                <i class="iconfont icon-guansuo" title="启用本组数据" v-else @click= "applyData(index)"></i>
-                <i class="el-icon-close" title="移除本组数据" @click= "removeData(index)"></i>
+                <span  v-if="isCurrentOrder(index)">
+                    <el-tag type="" effect="dark">测试中</el-tag>
+                    <i class="el-icon-stopwatch" style="color:#409eff" title="本组数据测试中"></i>
+                </span>
+                <span v-else-if="isPassData(index)">
+                    <el-tag type="success" effect="dark">测试通过</el-tag>
+                    <i class="el-icon-success" style="color:#67c23a" title="本组数据已通过"></i>
+                </span>
+                <span v-else-if="isBanData(index)">
+                    <el-tag type="info" effect="dark" >禁用</el-tag>
+                    <i class="iconfont icon-guansuo" title="启用本组数据"  @click="applyData(index)"></i>
+                </span>
+                <span v-else>
+                    <el-tag type="warning" effect="dark" >未测试</el-tag>
+                    <i class="iconfont icon-kaisuo" title="禁用本组数据" @click="banData(index)"></i>
+                </span>
+                <i class="el-icon-close" title="移除本组数据" @click="removeData(index)"></i>
             </span>
         </div>
       </div>
@@ -21,6 +34,7 @@
 import {mapGetters,mapMutations,mapActions} from 'vuex'
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
+import paneHeader from 'components/pane-header'
 
 export default {
   data () {
@@ -48,6 +62,15 @@ export default {
             this.setBanIndex(index,'remove')
             this.setErrorTestData({data:index,id:this.currentIndex,action:'remove'})
         })
+    },
+    isPassData(index) {
+        return this.currentErrorData[index][0] == 1
+    },
+    isCurrentOrder(index){
+        return index==this.currentTestOrder
+    },
+    isBanData(index){
+        return this.banIndex.includes(index)
     },
     _updateErrorDataMsg(action,index,callBack){
         const content = {
@@ -82,9 +105,7 @@ export default {
   computed: {
     lockData(item,index) {              //看数据是否已锁，依赖于this.banIndex，每当这个改变时都会发生改变
         return function (item,index) {
-            if(this.banIndex.includes(index))
-               return false
-            return true
+           return !(this.banIndex.includes(index))
         }
     },  
     wrongDataClass() {
@@ -108,18 +129,15 @@ export default {
         "currentTestOrder"
     ]),
   },
+  components: {
+    paneHeader
+  }
 }
 </script>
 
 <style lang="scss" scoped>
     .wrd-pane {
         height: 100%;
-    }
-    .wrong-data-title {
-        width: 100%;
-        text-align: center;
-        height: 20px;
-        line-height: 15px;
     }
     .wrong-data-container {
         height: calc(100% - 20px);
@@ -148,21 +166,19 @@ export default {
         background-color: #ecf5ff;
     }
     .not-pass-data{  
-        border-color: #d9ecff;
-        background-color: #ecf5ff;
-        color: #409eff;
+        border:  1px solid#e6a23c;;
     }
     .ban-data {
-        background-color: #f4f4f5;
-        border-color: #e9e9eb;
+        border: 1px solid #909399;
         color: #909399;
     }
     .pass-data {
-        background-color: rgba(103,194,58,.1);
-        border-color: rgba(103,194,58,.2);
+        border:  1px solid#67c23a;
         color: #67c23a;   
     }
     .current-data {
+        border:  1px solid#409eff;
         font-weight: bolder;
+        color: #409eff;
     }
 </style>

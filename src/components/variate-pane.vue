@@ -1,9 +1,8 @@
 <template>
   <div class="variates-pane" ref="varPane">
-       <el-tag type="info" effect="dark" class="variates-title" ref="varTitle">
-         <span>变量与堆栈</span>
-         <i class="el-icon-setting stack-setting" title="设置堆栈数据的显示"></i>
-        </el-tag>
+       <pane-header bgColor="info" title="变量与堆栈">
+         <i class="el-icon-setting" title="设置堆栈数据的显示"></i>
+        </pane-header>
       <transition @before-enter="containerBeforeEnter"
                 @enter="containerEnter"
                 @leave="containerLeave">
@@ -63,6 +62,7 @@
 import {mapGetters,mapMutations,mapActions} from 'vuex'
 import log from 'common/js/log.js'
 import  Velocity from 'velocity-animate'
+import paneHeader from 'components/pane-header'
 
 export default {
   directives: {
@@ -461,6 +461,9 @@ export default {
     ...mapGetters([
       "currentDebug",
     ]),
+  },
+  components: {
+    paneHeader
   }
 }
 </script>
@@ -488,18 +491,6 @@ export default {
       display: none;
     }
   } 
-  .variates-title {
-    width:100%;
-    text-align:center;
-    position: relative;
-  }
-  .stack-setting {
-    position: absolute;
-    right: 10px;
-    font-size: 15px;
-    line-height: 30px;
-    cursor: pointer;
-  }
   .stacks-container {
     position: relative;
     height: calc(100% - 32px);

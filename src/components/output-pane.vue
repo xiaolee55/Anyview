@@ -1,12 +1,11 @@
 <template>
   <div class="output-pane" ref="outputPane">
-    <el-tag type="info" effect="dark" class="output-pane-title">
-      <span>输出窗口</span>
-      <span class="output-menu">
-        <i class="iconfont icon-qingkong output-clear" title="清空输出窗口" @click="clearOutput"></i>
+    <pane-header bgColor="" title="输出窗口">
+      <span>
+        <i class="iconfont icon-qingkong" title="清空输出窗口" @click="clearOutput"></i>
         <el-checkbox v-model="clearAuto" class="clear-auto">自动清空数据</el-checkbox>
       </span>
-    </el-tag>
+    </pane-header>
     <div class="output-container" ref="outputContainer">
       <span v-for="(item, index) in currentOutput" 
             :key="index" 
@@ -19,6 +18,7 @@
 
 <script>
 import {mapGetters,mapMutations} from 'vuex'
+import paneHeader from 'components/pane-header'
 
 export default {
   data () {
@@ -76,6 +76,9 @@ export default {
       "clearOutputAuto"
       ])
   },
+  components: {
+    paneHeader
+  }
 }
 </script>
 
@@ -86,12 +89,12 @@ export default {
     height: 23px!important;
     line-height: 23px!important;
   }
+  .tag-data {
+    height: 18px;
+    line-height: 16px;
+  }
   .output-pane /deep/{
     height: 100%;
-    .el-tag{
-      height: 18px;
-      line-height: 16px;
-    }
     .show-time {
       float: right;
       font-size: 12px;

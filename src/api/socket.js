@@ -16,27 +16,36 @@ function initWebSocket(){ //初始化websocket
         ifReload? window.location.reload(): ''
         console.log('websocket 断开: ' + e.code + ' ' + e.reason + ' ' + e.wasClean)
     }
-    websocket.onopen = function () {
-	    console.log("连接成功");
-	}
 	websocket.onerror = function () {
 		console.log("WebSocket连接发生错误");
     }
 }
 
 //发送消息
-function sendMsg(data){
-    if (websocket.readyState === websocket.OPEN) {
-        //若是ws开启状态
-        console.log("send",data)
+async function sendMsg(data){
+    if(websocket.readyState===1){    //如果状态码为1，则表明websocket是开启状态，直接发送数据
         websocket.send(JSON.stringify(data),data)
-    }else {
-        // 若未开启 ，则等待1s后重新调用
-        if(!close)
-        setTimeout(()=>{
-            sendMsg(data)
-        }, 1000);
+        return
     }
+    await new Promise((resolve,reject)=>{  //没有连接成功就阻塞下面的发送语句
+        websocket.onopen = function () {
+            console.log("连接成功");
+            resolve()
+        }
+    })
+    websocket.send(JSON.stringify(data),data)
+    // console.log(websocket.readyState)
+    // if (websocket.readyState === websocket.OPEN) {
+    //     //若是ws开启状态
+    //     console.log("send",data)
+    //     websocket.send(JSON.stringify(data),data)}
+    // }else {
+    //     // 若未开启 ，则等待1s后重新调用
+    //     if(!close)
+    //     setTimeout(()=>{
+    //         sendMsg(data)
+    //     }, 1000);
+    // }
 }
 
 //接收消息

@@ -67,6 +67,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         ? 'index.html'
         : config.build.index,
       template: 'index.html',
+      favicon: path.resolve('src/assets/image/logo.png'), // 引入图片地址
       inject: true,
       minify: {
         removeComments: true,

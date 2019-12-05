@@ -122,15 +122,15 @@ export default {
         console.log(e)
       },
       _getQuestionContent(_question){
-        if(this.backData==false)
-          return 
-        this.backData=false
         let index = Number(_question.eid)
         let openQuestions = this.openQuestions
         let question = openQuestions.get(index)
         if(question){
           this.updateCurrentData({index,question})
         }else{
+          if(this.backData==false)
+            return 
+          this.backData=false
           this.loading = true
           fun.getQuestionContent(_question.eid).then((e) => {
             this.backData=true

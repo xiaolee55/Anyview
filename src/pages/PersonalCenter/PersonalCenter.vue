@@ -111,23 +111,14 @@ export default {
 }
 </script>
 
-<style lang="">
-html{
-    background-color:#f9f9f9;
-    margin: 0;
-}
-body{
-    background-color:#f9f9f9;
-    margin: 0;
-}
+<style>
+   @import "../../assets/css/base.css";
+</style>
+
+<style lang="scss" scoped>
 .el-row{
     margin-top: 20px;
 }
-a{font-size: 13px; text-decoration: none;}
-a:link {color: rgb(69, 90, 100);}		/* 未访问的链接 */
-a:visited {color: rgb(69, 90, 100);}	/* 已访问的链接 */
-a:hover {color: rgb(69, 90, 100);text-decoration:underline;}	/* 鼠标移动到链接上 */
-a:active {color: rgb(69, 90, 100)}	/* 选定的链接 */
 .per-question-name{
     cursor: pointer;
     font-size: 13px;

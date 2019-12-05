@@ -28,7 +28,7 @@ const actions = {
     // 可能是单独的提示，比如编译成功，两者都没则是想要删除过渡标签
     const content = (label||_content)
                     ? `<span>
-                          <span data-v-47761e58="" class="el-tag el-tag--${style} el-tag--dark">${label}</span>
+                          <span data-v-47761e58="" class="el-tag el-tag--${style} el-tag--dark tag-data">${label}</span>
                           <span class="show-time">${date}</span>
                         </span>
                         <br>
