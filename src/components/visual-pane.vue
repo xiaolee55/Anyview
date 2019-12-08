@@ -1,8 +1,9 @@
 <template>
   <div>
     <button @click="next">下一步</button>
-    <div id="container" style="width:1000px;height:600px">
-    </div>
+    <limited-list/>
+    <!-- <div id="container" style="width:1000px;height:600px">
+    </div> -->
   </div>
 </template>
 
@@ -13,8 +14,8 @@ import {newDataTree} from 'common/js/data_new'
 import LimitedList from 'components/limited-list.vue'
 export default {
   mounted() {
-    this.main = new TreeVisualization(document.getElementById("container"),1000,600)
-    this.main.init(dataTree)
+    // this.main = new TreeVisualization(document.getElementById("container"),1000,600)
+    // this.main.init(dataTree)
   },
   data () {
     return {

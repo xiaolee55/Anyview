@@ -71,7 +71,6 @@ class currentCirle extends Circle {
 }
 //更新页面用requestAnimationFrame替代setTimeout
 window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-
 let canvas 
 let ctx 
 let w 
@@ -98,6 +97,8 @@ let draw = function () {
 }
  
 let init = function (num,_color) {
+    canvas = document.getElementById('canvas');
+    if(!canvas) return
     color=_color
     window.onmousemove = function (e) {
         e = e || window.event;
@@ -109,7 +110,6 @@ let init = function (num,_color) {
         current_circle.y = null;
      
     };
-     canvas = document.getElementById('canvas');
      ctx = canvas.getContext('2d');
      w = canvas.width = canvas.offsetWidth;
      h = canvas.height = canvas.offsetHeight;

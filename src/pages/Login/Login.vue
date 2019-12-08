@@ -48,6 +48,7 @@
  import {getSchoolMsg,getLoginMsg} from '@/api/login'
  import * as types from '@/api/config'
 
+window.onresize = ()=>{canvas(20,"#409EFF")}
 export default {
   data () {
     return {

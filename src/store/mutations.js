@@ -96,9 +96,13 @@ const mutations = {
     [types.SET_QUESTION_STATUS](state,obj) {
         const stateObj = state.questionStatus[obj.id] ?state.questionStatus[obj.id]: {}
         Object.keys(obj).forEach(index=>{
-            Vue.set(stateObj,index,obj[index])
+            if(typeof obj[index] != "undefined")
+                Vue.set(stateObj,index,obj[index])
         })
         Vue.set(state.questionStatus,obj.id,stateObj)
+    },
+    [types.SET_QUESTION_DETAIL_OPEN](state,val){
+        state.questionDetailOpen = val
     }
 }
 

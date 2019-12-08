@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import ace from 'components/aceEditor'
+import ace from 'components/ace-editor'
 import {mapGetters,mapMutations} from 'vuex'
 import Setting from 'components/setting'
 export default {

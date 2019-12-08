@@ -10,10 +10,13 @@ import * as socket from './api/socket'
 import ace from 'ace-builds'
 import './assets/iconfont/iconfont.css'
 import store from './store'
+import VueAwesomeSwiper from 'vue-awesome-swiper'
+import 'swiper/dist/css/swiper.css'
 
 Vue.prototype.socket = socket
 Vue.use(ace)
 Vue.use(ElementUI)
+Vue.use(VueAwesomeSwiper)
 Vue.config.productionTip = false
 
 // 页面刷新时，重新赋值有没登录

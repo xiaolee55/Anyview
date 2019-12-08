@@ -52,12 +52,15 @@
                 @setBP= "setBP"
                 @updateBP= "updateBP">
           </ace>
+          <div class="lb-bar">
+            <slot/>
+          </div>
       </el-tab-pane>
     </el-tabs>
 </template>
 
 <script>
-import ace from 'components/aceEditor'
+import ace from 'components/ace-editor'
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
 import {analyseToVisual} from 'common/js/analyseToVisual.js'
@@ -152,6 +155,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
             this.resetIconStatus()  //动作结束，修改图标样式
             this.updateOutputData()  //编译返回数据后删除‘编译中’的提示
             const _content = format(e.content)
+            this.commitQuestionStatus(e.content)
             if(_content) {
               // formatCompileData(_content,res.newAnswer)
               this.updateOutputData("danger", "编译失败", e.content.replace(/\n/g,"<br>"))
@@ -215,8 +219,11 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
       },
       commitQuestionStatus(content) {
         this.setQuestionStatus({id:this.currentIndex,
+                                cmpErrorCount: content.cmpErrorCount,
+                                cmpRightCount: content.cmpRightCount,
                                 runErrorCount:content.runErrCount,
-                                runRightCount:content.runRightCount})        
+                                runRightCount:content.runRightCount,
+                                passStatus: content.passed})        
       },
       startDebug() {
         if(this.debugStatus){
@@ -413,7 +420,12 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
     },
     computed: {
       showGetPassCodeIcon() {  //如果代码没有通过则不显示获取通过代码的图标
-          return this.questionStatus[this.currentIndex].passStatus
+      //要想computed生效，则返回值必须是computed函数直接返回
+        return function(){
+          setTimeout(()=>{
+            return this.questionStatus[this.currentIndex].passStatus
+          })
+        } 
       },
       nowIndex: {
         get (){
@@ -463,6 +475,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
     width: 100%;
     height: 100%;
     overflow-y: scroll;
+    position: relative;
   }
   .editor-tabs /deep/{
     // 修改element默认样式
@@ -516,5 +529,10 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
   .not-ing:before {
     color: grey;
   }
-
+  .lb-bar{
+    position:absolute;
+    bottom:0;
+    left:0;
+    z-index:12
+  }
 </style>

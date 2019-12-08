@@ -48,7 +48,7 @@
             e.stop()
           }else{            //添加断点
             if (e.clientX > 45 + target.getBoundingClientRect().left) 
-              return;
+              return
             _this._setBreakpoint(row,"iconfont icon-duandian")
             e.stop()
           }
@@ -185,8 +185,9 @@
         if(!bpRows)
           return
         let arr=[]  
-        bpRows.forEach((_,index)=>{
-          arr.push(index+1)
+        bpRows.forEach((_class,index)=>{
+          if(_class.includes('duandian'))
+            arr.push(index+1)
         })
         if(this.debugStatus)
           this.updateBP(arr)
@@ -194,9 +195,9 @@
         this.$emit("setBP",arr)
       },
       updateBP(arr) {   //调试过程中增删断点
+        if(arr.length==this.oldBpArr.length) return 
         let bps = []
         let flag = ''
-        console.log(arr)
         if(this.oldBpArr.length>arr.length){
           bps=this.oldBpArr.filter(item=>!arr.includes(item))
           flag = 'del'

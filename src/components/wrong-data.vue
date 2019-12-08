@@ -4,7 +4,8 @@
           <i class="el-icon-question abr"></i>
       </pane-header>
       <div  class="wrong-data-container">
-        <div  class= "wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
+        <swiper :options="swiperOption" style="height: 100%">
+        <swiper-slide  class= "wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
             <p  :class="wrongDataClass(item,index)" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item.slice(2)"></p>
             <span class="wrong-data-icon">
                 <span  v-if="isCurrentOrder(index)">
@@ -25,7 +26,9 @@
                 </span>
                 <i class="el-icon-close" title="移除本组数据" @click="removeData(index)"></i>
             </span>
-        </div>
+        </swiper-slide>
+        <div class="swiper-pagination" slot="pagination"></div>
+        </swiper>
       </div>
     </div>
 </template>
@@ -40,6 +43,16 @@ export default {
   data () {
       return {
          banIndex : [],
+        swiperOption: {
+          direction: 'vertical',
+          mousewheel: true,
+        //   autoHeight: true, //enable auto height
+          spaceBetween: 10,
+          pagination: {
+            el: '.swiper-pagination',
+            clickable: true
+          }
+        }
       }
   },
   methods: {
@@ -161,10 +174,10 @@ export default {
             margin: 0;
         }
     }
-    .wrong-data-item:hover {
-        color: #409eff;
-        background-color: #ecf5ff;
-    }
+    // .wrong-data-item:hover {
+    //     color: #409eff;
+    //     background-color: #ecf5ff;
+    // }
     .not-pass-data{  
         border:  1px solid#e6a23c;;
     }

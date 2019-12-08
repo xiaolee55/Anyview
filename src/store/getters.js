@@ -66,3 +66,5 @@ export const currentTestOrder = state => state.currentTestOrder
 export const initTestDataLength = state => state.initTestDataLength
 
 export const changeVarsArr = state => state.changeVarsArr
+
+export const questionDetailOpen = state => !state.openQuestions.size

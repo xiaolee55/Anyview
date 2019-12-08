@@ -18,4 +18,5 @@ export default {
     initTestDataLength: 0,
     changeVarsArr: [],
     questionStatus: {},
+    questionDetailOpen: false
 }

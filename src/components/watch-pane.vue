@@ -26,6 +26,7 @@
               style="position:relative"
               :style="setChangeNode(node)">
           <el-tag contenteditable="true" 
+                  effect="plain"
                   v-if= "showexistVarInput==data.id"
                   @blur.native= "changeVariate(data.id)"  
                   @input.native= "varInput($event)" 
@@ -33,6 +34,7 @@
                   style="z-index:100;position:absolute;top:0;left:0;width:100%"
                   ref="existVarInput"
                   >
+            <span>{{data.id}}</span>
           </el-tag> 
           <i class="el-icon-minus expand-icon" v-if= "!node.childNodes.length"></i>
           <i class="el-icon-caret-right expand-icon" v-else-if= "!expandedNodeList.includes(data.id)"></i>
@@ -47,6 +49,7 @@
       </el-tree> 
         <el-tag contenteditable="true"
               v-if= "showInput"  
+               effect="plain"
               @blur.native= "addVariate"  
               @input.native= "varInput($event)" 
               style= "width:50%"
@@ -172,9 +175,16 @@ export default {
     varInput(e) {               //输入变量
       this.variateInput = e.target.innerText
     },
+    keepLastIndex(obj) {
+      obj.focus(); //解决ff不获取焦点无法定位问题
+      var range = window.getSelection();//创建range
+      range.selectAllChildren(obj);//range 选择obj下所有子内容
+      range.collapseToEnd();//光标移至最后
+    },
     existVarInput(id) {
       setTimeout(()=>{
          this.$refs.existVarInput.$el.focus()
+         this.keepLastIndex(this.$refs.existVarInput.$el)
       })
       this.showexistVarInput = id
     },
@@ -317,7 +327,6 @@ export default {
     font-family: "Courier New";
     .el-tree-node{
       font-size: 15px;
-      margin-bottom: 10px;
       background-color: rgb(248,248,248);
     }
     .el-tree-node__expand-icon {

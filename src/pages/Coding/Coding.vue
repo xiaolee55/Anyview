@@ -2,76 +2,85 @@
   <div class="code-pane" v-loading="loading"
                          element-loading-text="题目加载中"
                          element-loading-background="rgba(0, 0, 0, 0)">
-    <el-drawer :visible.sync="listStatus" 
-                direction="rtl"
-                size="20%" 
-                :show-close="false">
-      <question-list :list="questionList" :title="courseName" @getContent="_getQuestionContent"></question-list>
-    </el-drawer>
-    <splitpanes :push-other-panes="true" watch-slots v-if="debugStatus">
-      <pane size=65>
-        <splitpanes horizontal  watch-slots>
-          <pane size=50>
-            <el-tabs v-model="tab" type="card" style="height:100%" class="visual-desc">
-              <el-tab-pane label="题目描述" name="desc">
-                <question-description @getContent="_getQuestionContent">
-                  <debug-pane></debug-pane>
-                </question-description>
-              </el-tab-pane>
-              <el-tab-pane label="可视化" name="visual">
-                <visual-pane></visual-pane>
-              </el-tab-pane>
-            </el-tabs>
-          </pane>
-          <pane size=40>
-            <splitpanes  watch-slots>
-              <pane size=50>
-                <variate-pane></variate-pane>
-              </pane>
-              <pane size=50>
-               <watch-pane></watch-pane>
-              </pane>
-            </splitpanes>
-          </pane>
-          <pane size=10>
-           <wrong-data></wrong-data>
-          </pane>
-        </splitpanes>
-      </pane>
-      <pane size=35>
-        <splitpanes horizontal  watch-slots @resized="resizeEditor">
-          <pane size=75 min-size="3">
-            <editor-pane ref="edPane"></editor-pane>
-          </pane>
-          <pane size=25>
-            <output-pane></output-pane>
-          </pane>
-        </splitpanes>
-      </pane>
-    </splitpanes>
+    <qi-list v-if="questionDetailOpen" 
+             :list='questionList'
+             @getContent="_getQuestionContent"></qi-list>
+    <template v-else>
+      <transition name="el-fade-in-linear">
+        <debug-pane  v-if="debugStatus" class="init-debP-place"/>
+      </transition>
+      <el-drawer :visible.sync="listStatus" 
+                  direction="rtl"
+                  size="20%" 
+                  :show-close="false">
+        <question-list :list="questionList" 
+                       :title="courseName" 
+                       @getContent="_getQuestionContent"
+                       :questionStatus="questionStatus"></question-list>
+      </el-drawer>
+      <splitpanes :push-other-panes="true" watch-slots v-if="debugStatus">
+        <pane size=65>
+          <splitpanes horizontal  watch-slots>
+            <pane size=50>
+              <el-tabs v-model="tab" type="card" style="height:100%" class="visual-desc">
+                <el-tab-pane label="题目描述" name="desc">
+                  <question-description @getContent="_getQuestionContent"/>
+                </el-tab-pane>
+                <el-tab-pane label="可视化" name="visual">
+                  <visual-pane/>
+                </el-tab-pane>
+              </el-tabs>
+            </pane>
+            <pane size=40>
+              <splitpanes  watch-slots>
+                <pane size=50>
+                  <variate-pane/>
+                </pane>
+                <pane size=50>
+                <watch-pane/>
+                </pane>
+              </splitpanes>
+            </pane>
+            <pane size=10>
+            <wrong-data/>
+            </pane>
+          </splitpanes>
+        </pane>
+        <pane size=35>
+          <splitpanes horizontal  watch-slots @resized="resizeEditor">
+            <pane size=75 min-size="3">
+              <editor-pane ref="edPane"/>
+            </pane>
+            <pane size=25>
+              <output-pane/>
+            </pane>
+          </splitpanes>
+        </pane>
+      </splitpanes>
 
-    <splitpanes  :push-other-panes="true" watch-slots v-else>
-      <pane size=35>
-        <splitpanes horizontal  watch-slots>
-          <pane size=75>  
-            <question-description @openList="showListPane=true" @getContent="_getQuestionContent" style="height:100%"></question-description>
-          </pane>
-          <pane size=25>
-            <wrong-data></wrong-data>  
-          </pane>
-       </splitpanes>
-      </pane>
-      <pane size=65>
-        <splitpanes  watch-slots horizontal @resized="resizeEditor">  
-          <pane size=75 min-size="3">
-            <editor-pane ref="edPane"></editor-pane>
-          </pane>
-          <pane size=25>
-            <output-pane></output-pane>
-          </pane>
+      <splitpanes  :push-other-panes="true" watch-slots v-else>
+        <pane size=35>
+          <splitpanes horizontal  watch-slots>
+            <pane size=75>  
+              <question-description @openList="showListPane=true" @getContent="_getQuestionContent" style="height:100%"></question-description>
+            </pane>
+            <pane size=25>
+              <wrong-data/>
+            </pane>
         </splitpanes>
-      </pane>
-    </splitpanes>
+        </pane>
+        <pane size=65>
+          <splitpanes  watch-slots horizontal @resized="resizeEditor">  
+            <pane size=75 min-size="3">
+              <editor-pane ref="edPane"></editor-pane>
+            </pane>
+            <pane size=25>
+              <output-pane/>
+            </pane>
+          </splitpanes>
+        </pane>
+      </splitpanes>
+    </template>
   </div>
 </template>
 
@@ -88,6 +97,7 @@ import WatchPane from 'components/watch-pane'
 import VariatePane from 'components/variate-pane'
 import WrongData from 'components/wrong-data'
 import DebugPane from 'components/debug-pane'
+import QiList from 'components/qi-list'
 
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
@@ -113,7 +123,9 @@ export default {
         tab: "desc",
         loading: false,
         lastHeight: "",
-        changeVal: 0
+        changeVal: 0,
+        pageStatus: true,
+        qs: {}
       }
     },
     methods: {
@@ -131,6 +143,7 @@ export default {
             return 
           this.backData=false
           this.loading = true
+          this.pageStatus = false
           fun.getQuestionContent(_question.eid).then((e) => {
             this.backData=true
             console.log("题目信息",e)
@@ -198,9 +211,9 @@ export default {
         setCurrentIndex: 'SET_CURRENT_INDEX',
         setOpenQuestions: 'SET_OPEN_QUESTIONS',
         setErrorTestData: "SET_ERROR_TEST_DATA",
-        setQuestionStatus:  "SET_QUESTION_STATUS"
-      }) 
-    
+        setQuestionStatus:  "SET_QUESTION_STATUS",
+        setQuestionDetailOpen: 'SET_QUESTION_DETAIL_OPEN'
+      })
     },
     computed:{
         openQuestions() {
@@ -219,13 +232,32 @@ export default {
         },
         ...mapGetters([
           "listOpen",
+          "questionDetailOpen",
           "questionList",
           "courseName",
           "questionDescription",
           "currentQuestion",
           "openQuestionsArr",
+          'questionStatus'
         ]),
-      },
+    },
+    watch: {
+      questionList: {
+        immediate: true,
+        handler:function(val){
+          if(!val) return
+          let self=this
+          val.flat(1).forEach(item=>{
+            self.setQuestionStatus({id:item.eid,
+                            cmpRightCount:item.cmpRightCount||0,
+                            cmpErrorCount:item.cmpErrorCount||0,
+                            runErrorCount:item.runErrCount||0,
+                            runRightCount:item.runResult||0,
+                            passStatus: item.firstPastTime||0})
+          })
+        }
+      }
+    },
       components: {
         Splitpanes,
         Pane,
@@ -238,7 +270,8 @@ export default {
         OutputPane,
         WatchPane,
         VariatePane,
-        WrongData
+        WrongData,
+        QiList
    }
 }
 </script>
@@ -287,6 +320,10 @@ export default {
     flex: 1;
     display: flex;
   }
+}
+.init-debP-place{
+  left: 65%;
+  bottom: 25%;
 }
 
 </style>

@@ -18,13 +18,12 @@ import * as fun from '@/api/coding'
 import * as types from '@/api/config'
 import {analyseToVisual} from 'common/js/analyseToVisual.js'
 import {DebugReq} from 'common/js/class'
-
 export default {
   created () {
   },
   mounted() {
     let that = this
-    setTimeout(()=>{
+    this._timer=setTimeout(()=>{
       //获取元素
       var dv = that.$refs.dp;
       var dpt = this.$refs.dpt
@@ -38,7 +37,6 @@ export default {
           //获取x坐标和y坐标
           x = e.clientX;
           y = e.clientY;
-
           //获取左部和顶部的偏移量
           l = dv.offsetLeft;
           t = dv.offsetTop;
@@ -69,6 +67,9 @@ export default {
           dv.style.cursor = 'default';
       }
     })    
+  },
+  beforeDestroy(){
+    clearTimeout(this._timer)
   },
   props: {
     renderVariate: {
