@@ -323,7 +323,7 @@ export default {
 }
 .init-debP-place{
   left: 65%;
-  bottom: 25%;
+  bottom: calc(25% - 30px);
 }
 
 </style>

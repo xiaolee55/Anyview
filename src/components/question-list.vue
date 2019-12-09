@@ -1,6 +1,14 @@
 <template>
   <div class="question-list">
-    <h3 class="list-title">{{title}}</h3>
+    <div class="list-title">
+      <h3 >{{title}}</h3>
+      <span><el-switch
+              v-model="showDetail"
+              title="显示题号详细信息"
+              active-color="#13ce66"
+              inactive-color="#ff4949">
+            </el-switch></span>
+    </div>
     <el-collapse>
       <el-collapse-item
       :title="chap[0] ? chap[0].chapName: ''"
@@ -15,7 +23,7 @@
           <span>
           <i class='iconfont icon-yitongguo' v-if="questionStatus[question.eid].passStatus||question.firstPastTime"></i>
           <i class='iconfont icon-weikaishi' v-else></i>
-            {{question.name}}
+            {{showDetail?question.pName:question.name}}
           </span>
           <span class="quest-situation">
             <i class='iconfont icon-bianyi' title="编译成功次数">{{questionStatus[question.eid].cmpRightCount}}</i>
@@ -31,6 +39,11 @@
 
 <script>
 export default {
+  data() {
+    return {
+      showDetail: true
+    }
+  },
   props: {
     title: {
       type: String,
@@ -61,6 +74,8 @@ export default {
     }
   }
   .list-title{
+    // display: flex;
+    // justify-content: space-around;
     color: #606266
   }
   .question-name{

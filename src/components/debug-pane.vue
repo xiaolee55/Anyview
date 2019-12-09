@@ -1,13 +1,13 @@
 <template>
   <div ref="dp" style="position:absolute;z-index:10">
     <el-card class="debug-menu" v-if="debugStatus">
-      <span class="debug-title"><i class="iconfont icon-_tiaoshi" title="调试栏" style="cursor:move" ref="dpt"></i></span>
-      <ul style="display:inline-block">
-        <li><i class="iconfont icon-xiayibu clickIcon" title="下一步(进入函数)(F11)" @click= "stepInto"></i></li>
-        <li><i class="iconfont icon-xiayihang clickIcon" title="下一步(不进入函数)(F10)" @click= "stepOver"></i></li>
-        <li><i class="iconfont icon-jixutiaoshi clickIcon" title="继续调试(F9)" @click= "continueDebug"></i></li>
-        <li><i class="iconfont icon-tingzhitiaoshi clickIcon" title="停止调试(shift+F9)" @click= "quitDebug"></i></li>
-      </ul>
+      <tr class="btn-bar">
+        <th class="debug-title"><i class="iconfont icon-_tiaoshi" title="调试栏" style="cursor:move" ref="dpt"></i></th>
+        <td><i class="iconfont icon-xiayibu clickIcon" title="下一步(进入函数)(F11)" @click= "stepInto"></i></td>
+        <td><i class="iconfont icon-xiayihang clickIcon" title="下一步(不进入函数)(F10)" @click= "stepOver"></i></td>
+        <td><i class="iconfont icon-jixutiaoshi clickIcon" title="继续调试(F9)" @click= "continueDebug"></i></td>
+        <td  style="margin-right:5px"><i class="iconfont icon-tingzhitiaoshi clickIcon" title="停止调试(shift+F9)" @click= "quitDebug"></i></td>
+      </tr>
     </el-card>
   </div>
 </template>
@@ -243,18 +243,28 @@ export default {
   }
   .debug-menu /deep/{ 
     .el-card__body{
-      padding: 12px 20px;
+      padding: 5px;
     }
   }
-  li:active{
-    font-size: 19px;
-    margin: -1.8px;
+  .btn-bar{
+    display: flex;
+    justify-content: space-between;
+    line-height: 20px;
+    padding: 5px;
+    padding-left: 10px;
+  }
+  .btn-bar>td{
+    margin-right: 16px;
+    line-height: 20px;
+    padding-right: 4px;   
+  }
+  .btn-bar>td:active{
+    padding-right: 3px;  //防止字体变大影响其他按钮也抖动
+    font-size: 17px;
   }
   .debug-title {
-    display: inline-block;
-    height: 100%;
-    padding: 0 5px 0 0;
-    margin: -14px 10px -14px -5px;
-    border-right: 3px dotted #909399;
+    border-right: 3px dotted #3e3f41;
+    padding-right: 5px;
+    margin-right: 20px;
   }
 </style>

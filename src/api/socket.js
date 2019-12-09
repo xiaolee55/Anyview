@@ -3,7 +3,7 @@ import { rejects } from "assert";
 
 let websocket = null;
 const IP = '139.159.186.173'  
-// 101.132.148.120
+// 101.132.148.120. 139.159.186.173 101.132.120.137
 let port = '8889';	//webSocket连接端口
 let close=false
 let backData = true

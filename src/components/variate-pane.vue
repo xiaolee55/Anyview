@@ -22,7 +22,7 @@
                     :props= "defaultProps">
             <span class="custom-tree-node" slot-scope="{ node,data }" :id="node.level==1?'stackName':''" v-change="node">
               <span v-for= "(item,index) in node.label" :key="item">
-                <el-tooltip class="item" effect="light" :content= "getOldVal(data)" placement="right">
+                <el-tooltip class="item" effect="light" :content= "getOldVal(data)" placement="right" close-delay="0">
                   <span :class= "stackClass({index,item,node},'top')" :id="data.id">{{item}}</span>
                 </el-tooltip>
               </span>
@@ -446,7 +446,7 @@ export default {
         const output = currentDebug.output
         setTimeout(()=>{
           this.mainFun(backTrace,variates,output)   //调用主函数
-        },0)
+        },500)    //调试布局完成后再加载数据，防止卡顿现象的出现
       }
     }
   },
