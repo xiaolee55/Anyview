@@ -23,6 +23,7 @@ function initWebSocket(){ //初始化websocket
 
 //发送消息
 async function sendMsg(data){
+    console.log('当前websocket的状态码为',websocket.readyState);
     if(websocket.readyState===1){    //如果状态码为1，则表明websocket是开启状态，直接发送数据
         console.log('send',data)
         websocket.send(JSON.stringify(data),data)

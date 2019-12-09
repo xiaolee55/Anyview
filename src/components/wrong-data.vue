@@ -8,7 +8,11 @@
         <swiper-slide  class= "wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
             <p  :class="wrongDataClass(item,index)" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item.slice(2)"></p>
             <span class="wrong-data-icon">
-                <span  v-if="isCurrentOrder(index)">
+                <span  v-if="isNotPassData(index)">
+                    <el-tag type="danger" effect="dark">测试未通过</el-tag>
+                    <i class="el-icon-error" style="color:#F56C6C" title="本组数据测试未通过"></i>
+                </span>
+                <span  v-else-if="isCurrentData(index)">
                     <el-tag type="" effect="dark">测试中</el-tag>
                     <i class="el-icon-stopwatch" style="color:#409eff" title="本组数据测试中"></i>
                 </span>
@@ -76,10 +80,13 @@ export default {
             this.setErrorTestData({data:index,id:this.currentIndex,action:'remove'})
         })
     },
+    isNotPassData(index) {
+        return this.currentErrorData[index][0] == 2
+    },
     isPassData(index) {
         return this.currentErrorData[index][0] == 1
     },
-    isCurrentOrder(index){
+    isCurrentData(index){
         return index==this.currentTestOrder
     },
     isBanData(index){
@@ -123,17 +130,16 @@ export default {
     },  
     wrongDataClass() {
         return function(item,index) {
-            let extraClass=''
-            if(index==this.currentTestOrder)
-                extraClass = 'current-data'
-            
-            if(item.charAt(0)==1)
-               return `pass-data ${extraClass}`
-            else if(this.banIndex.includes(index)){
-               return `ban-data ${extraClass}`
-            }
-            else 
-               return `not-pass-data ${extraClass}`
+            if(this.isNotPassData(index))
+                return 'not-pass-data'
+            else if(this.isPassData(index))
+                return 'pass-data'
+            else if(this.isBanData(index))
+                return 'ban-data'
+            else if(this.isCurrentData(index))
+                return 'current-data'
+            else
+                return 'not-test-data'
         }
     },
     ...mapGetters([
@@ -178,8 +184,11 @@ export default {
     //     color: #409eff;
     //     background-color: #ecf5ff;
     // }
-    .not-pass-data{  
-        border:  1px solid#e6a23c;;
+    .not-test-data{  
+        border: 1px solid#e6a23c;;
+    }
+    .not-pass-data{
+       border: 1px solid #F56C6C
     }
     .ban-data {
         border: 1px solid #909399;

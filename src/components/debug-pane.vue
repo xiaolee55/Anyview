@@ -47,6 +47,7 @@ export default {
       }
       //鼠标移动
       window.onmousemove = function(e) {
+        e.preventDefault()
           if (isDown == false) {
               return;
           }
@@ -255,7 +256,7 @@ export default {
   }
   .btn-bar>td{
     margin-right: 16px;
-    line-height: 20px;
+    line-height: 23px;
     padding-right: 4px;   
   }
   .btn-bar>td:active{
