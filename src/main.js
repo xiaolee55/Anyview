@@ -12,11 +12,14 @@ import './assets/iconfont/iconfont.css'
 import store from './store'
 import VueAwesomeSwiper from 'vue-awesome-swiper'
 import 'swiper/dist/css/swiper.css'
+import axios from 'axios'
+import VueAxios from 'vue-axios'
 
 Vue.prototype.socket = socket
 Vue.use(ace)
 Vue.use(ElementUI)
 Vue.use(VueAwesomeSwiper)
+Vue.use(VueAxios,axios);
 Vue.config.productionTip = false
 
 // 页面刷新时，重新赋值有没登录

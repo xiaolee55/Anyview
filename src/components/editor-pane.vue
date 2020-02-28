@@ -150,17 +150,17 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         this.updateOutputData("info", "编译中", "")
 
         fun.getCompileMsg(content).then((e)=>{
+          console.log(e)
           if(e.type == types.COMPILE_SUCCESS_TYPE){
             console.log("编译",e.content)
             this.resetIconStatus()  //动作结束，修改图标样式
             this.updateOutputData()  //编译返回数据后删除‘编译中’的提示
-            const _content = format(e.content)
             this.commitQuestionStatus(e.content)
-            if(_content) {
+            if(e.content.result.includes("失败")) {
               // formatCompileData(_content,res.newAnswer)
-              this.updateOutputData("danger", "编译失败", e.content.replace(/\n/g,"<br>"))
+              this.updateOutputData("danger", "编译失败", e.content.result.replace(/\n/g,"<br>"))
             }else{
-              this.updateOutputData("success", "编译成功", _content)
+              this.updateOutputData("success", "编译成功")
               if(!this.currentQuestion.compileStatus)
                 this.updateStatus("compileStatus", true)
               _fun()  //埋点，有可能有其他操作要先编译后在执行
@@ -255,7 +255,6 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
                                 label: "调试异常",
                                 _content: e.content.output
                 })
-                return
               }
               this.resetIconStatus()  //动作结束，修改图标样式
               this.updateOutputData()   //移除“调试中”的标签
@@ -266,7 +265,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               const index = this.currentIndex
               const _obj = {}
               _obj.lineNum = e.content.lineNum
-              _obj.variate = e.content.variate
+              _obj.variate = e.content.variables.map(item=>item.variate)
               _obj.dataStruct = e.content.dataStruct
               _obj.watchPoint = e.content.watchPoint
               _obj.backTrace = e.content.backTrace

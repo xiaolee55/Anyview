@@ -6,6 +6,11 @@
 
 <script>
 export default {
+     provide () {     
+        return {        
+          app: this      
+        }    
+     }, 
      watch: {
       // 检测哪个路由过来
       '$route' (to, from){

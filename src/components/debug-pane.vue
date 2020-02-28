@@ -158,6 +158,7 @@ export default {
           console.log('退出调试',e)
           this.status = true
           this.commitStopDebug(e)
+          this.commitDebugData(e)
         }
       })
     },

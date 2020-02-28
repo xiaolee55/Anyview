@@ -24,9 +24,10 @@
         autoScrollEditorIntoView: true,
         highlightActiveLine: true,
         highlightGutterLine: true,
-        readOnly: false
+        readOnly: false,
       })
       let editor = this.aceEditor
+      editor.setOption("wrap", "free")
       let _this  = this
       //禁止第一行被改动
       this.aceEditor.commands.on("exec", function(e) { 

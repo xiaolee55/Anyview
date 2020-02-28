@@ -34,7 +34,7 @@
             <pane size=40>
               <splitpanes  watch-slots>
                 <pane size=50>
-                  <variate-pane/>
+                  <stack-variate-pane/>
                 </pane>
                 <pane size=50>
                 <watch-pane/>
@@ -98,6 +98,7 @@ import VariatePane from 'components/variate-pane'
 import WrongData from 'components/wrong-data'
 import DebugPane from 'components/debug-pane'
 import QiList from 'components/qi-list'
+import StackVariatePane from 'components/stack-variate-pane'
 
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
@@ -132,7 +133,19 @@ export default {
       resizeEditor(){   //调整编辑器的尺寸
         this.$refs.edPane.resizeEditor()
       },
+      timeoutRminder() {
+        clearTimeout(this._timer)
+        this._timer=setTimeout(()=>{
+          if(this.loading){
+            this.loading=false
+            this.backData=true
+            this.$message.error('加载超时，请刷新页面重试')
+          }
+          clearTimeout(this._timer)
+        },5000)
+      },
       _getQuestionContent(_question){
+        this.timeoutRminder()
         let index = Number(_question.eid)
         let openQuestions = this.openQuestions
         let question = openQuestions.get(index)
@@ -271,7 +284,8 @@ export default {
         WatchPane,
         VariatePane,
         WrongData,
-        QiList
+        QiList,
+        StackVariatePane
    }
 }
 </script>

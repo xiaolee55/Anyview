@@ -3,9 +3,8 @@
       <pane-header title="未通过测试错误数据"  bgColor="warning">
           <i class="el-icon-question abr"></i>
       </pane-header>
-      <div  class="wrong-data-container">
-        <swiper :options="swiperOption" style="height: 100%">
-        <swiper-slide  class= "wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
+      <div  class="wrong-data-container" >
+        <div  class= "wrong-data-item" v-for="(item,index) in currentErrorData" :key= "index">
             <p  :class="wrongDataClass(item,index)" class="wrong-data-show"  @dblclick= "banData(index)" v-html= "item.slice(2)"></p>
             <span class="wrong-data-icon">
                 <span  v-if="isNotPassData(index)">
@@ -30,9 +29,7 @@
                 </span>
                 <i class="el-icon-close" title="移除本组数据" @click="removeData(index)"></i>
             </span>
-        </swiper-slide>
-        <div class="swiper-pagination" slot="pagination"></div>
-        </swiper>
+        </div>
       </div>
     </div>
 </template>
@@ -49,8 +46,8 @@ export default {
          banIndex : [],
         swiperOption: {
           direction: 'vertical',
+          slidesPerView: 'auto',
           mousewheel: true,
-        //   autoHeight: true, //enable auto height
           spaceBetween: 10,
           pagination: {
             el: '.swiper-pagination',

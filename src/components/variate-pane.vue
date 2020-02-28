@@ -11,24 +11,24 @@
           <transition @before-enter="stackBeforeEnter"
                       @enter="stackEnter"
                       @leave="stackLeave">
-          <el-tree :data= "finalShow.stackTop"
-                    v-if= "showTop"
-                    empty-text = ""
-                    node-key = "id"
-                    @node-expand= "nodeExpand"
-                    @node-collapse= "nodeCollapse"
-                    :default-expanded-keys= "expandedNodeList"
-                    :render-after-expand= false
-                    :props= "defaultProps">
-            <span class="custom-tree-node" slot-scope="{ node,data }" :id="node.level==1?'stackName':''" v-change="node">
-              <span v-for= "(item,index) in node.label" :key="item">
-                <el-tooltip class="item" effect="light" :content= "getOldVal(data)" placement="right" close-delay="0">
-                  <span :class= "stackClass({index,item,node},'top')" :id="data.id">{{item}}</span>
-                </el-tooltip>
+            <el-tree :data= "finalShow.stackTop"
+                      v-if= "showTop"
+                      empty-text = ""
+                      node-key = "id"
+                      @node-expand= "nodeExpand"
+                      @node-collapse= "nodeCollapse"
+                      :default-expanded-keys= "expandedNodeList"
+                      :render-after-expand= false
+                      :props= "defaultProps">
+              <span class="custom-tree-node" slot-scope="{ node,data }" :id="node.level==1?'stackName':''" v-change="node">
+                <span v-for= "(item,index) in node.label" :key="item">
+                  <el-tooltip class="item" effect="light" :content= "getOldVal(data)" placement="right" close-delay="0">
+                    <span :class= "stackClass({index,item,node},'top')" :id="data.id">{{item}}</span>
+                  </el-tooltip>
+                </span>
               </span>
-            </span>
-          </el-tree>
-        </transition>
+            </el-tree>
+          </transition>
         </div>
         <div class="not-stack-top">
           <transition @before-leave="notTopBeforeLeave" @leave="notTopLeave">
@@ -251,6 +251,7 @@ export default {
       return false
     },
     formatVariates(variates) {        //格式化变量名，将字符串变为数组用以高亮
+      if(!variates) return
       variates = Array.isArray(variates) ? variates : [variates]
       let tempArr = []
       variates.forEach((item,index)=>{
@@ -268,6 +269,7 @@ export default {
       return tempArr
     },
     formatStacksName(backTraces) {   //格式化函数名，用以高亮
+      if(!Array.isArray(backTraces)) return
       const stacksName = []
       const variatesName = []
       backTraces.forEach((item,i)=>{
@@ -441,9 +443,9 @@ export default {
       deep: true,     //深度监听currentDebug的所有属性
       handler(backTrace){  //这里使用箭头函数的话使用this是不能访问到组件实例的,因为箭头函数绑定的是父级作用域的上下文，而匿名函数是指向全局
         //这里监听backTrace而不是currentDebug是为了防止watch面板的变量和variate面板相互干扰
-        const currentDebug = this.currentDebug
-        const variates =  currentDebug.variate
-        const output = currentDebug.output
+        const currentDebug = this.currentDebug  //当前题目的调试类
+        const variates =  currentDebug.variate  //当前函数栈的局部变量
+        const output = currentDebug.output      //输出数据，主要是用来判断数据是否为一组全新的调试数据
         setTimeout(()=>{
           this.mainFun(backTrace,variates,output)   //调用主函数
         },500)    //调试布局完成后再加载数据，防止卡顿现象的出现

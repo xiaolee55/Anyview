@@ -50,6 +50,7 @@
 
 window.onresize = ()=>{canvas(20,"#409EFF")}
 export default {
+  inject: ['app'],
   data () {
     return {
       rules: {
@@ -77,6 +78,7 @@ export default {
     }
   },
   mounted () {
+    console.log('app',this.app);
     this.$message({
           message: '此版本为内测版本，许多功能并不完善，请合理使用。',
           center: true,
@@ -91,6 +93,11 @@ export default {
       },
       _getSchoolist(){
         if(this.schoolList.length!=0) return
+        // this.axios.get('http://139.159.186.173:9527/studentlogin/getSchool').then(res=>{
+        //   console.log(res)
+        //   if(res.status==200)
+        //     this.schoolList=res.data.content
+        // })
         getSchoolMsg('获取学校列表').then((e)=>{
           if(e.type === types.SCHOOL_SUCCESS_TYPE){
             this.schoolList=e.content

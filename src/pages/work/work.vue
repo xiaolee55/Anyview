@@ -62,6 +62,7 @@
 
 export default {
     mounted () {
+      console.log(this.$route)
       canvas(5,"#409EFF")   //执行canvas动画
       this._getQuestionList()
     },
