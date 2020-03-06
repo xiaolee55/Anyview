@@ -1,0 +1,29 @@
+
+.code-pane /deep/ {
+  li {
+    display: inline-block;
+  }
+  .el-tabs__header{
+    margin-bottom: 0px!important;
+    border-bottom: 1px solid transparent!important;
+  }
+  .el-tabs__item {
+    padding: 0 10px;
+    line-height: 30px;
+    height: 30px;
+    font-size: 13px;
+    font-family: 'Lato', 'Lucida Grande', 'Lucida Sans Unicode', Tahoma, Sans-Serif;
+  }
+  .el-tabs {
+    display: flex;
+    flex-direction: column;
+  }
+  .el-tabs__content,.el-tab-pane{
+    flex: 1;
+    display: flex;
+  }
+}
+.init-debP-place{
+  left: 65%;
+  bottom: calc(25% - 30px);
+}

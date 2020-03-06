@@ -1,0 +1,54 @@
+  /* 问题内容板块开始 */
+  .question-content{
+    position: relative;
+    flex: 1;
+    transition: all 0.5s ease;
+}
+.question-desc{
+  overflow: auto;
+  height: calc(100% - 140px);
+  border: #888888 1px solid; 
+  margin: 60px 0 60px 10px;
+  padding: 10px 0 10px 10px;
+}
+.question-menu-top,.question-menu-bottom{
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 5%;
+  background-color: white;
+  transition: background-color 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 5;
+}
+.question-menu-top{
+  top: 0;
+  padding-top: 10px;
+}
+.question-menu-bottom{
+  bottom: 0;
+  padding-bottom: 10px;
+}
+.setting-menu{
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  z-index: 2011;
+  margin: 5px 0.8px;
+  border: 1px solid #EBEEF5;
+  background-color: #FFF;
+  color: #303133;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+}
+.setting-menu li{
+  padding: 7px 30px;
+  cursor: pointer;
+}
+.setting-menu li:hover{
+    background-color: #f5f7fa;
+    color: #409eff;
+}
+/* 问题内容板块结束 */

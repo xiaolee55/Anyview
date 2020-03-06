@@ -87,7 +87,7 @@ export default {
       }
     },
     promptCloseDebug(message) {
-        this.$alert(message, {
+        this.$confirm(message, {
         confirmButtonText: '确定',
         center: true
       });

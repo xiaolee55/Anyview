@@ -1,8 +1,7 @@
 <template>
   <el-container>
       <el-header height="10" class="login-header">
-          <img src="./Anyview.svg">
-          <canvas  id="canvas"></canvas>
+          <img src="./images/Anyview.svg">
       </el-header>
       <el-main class="login-content">
         <div>
@@ -43,12 +42,10 @@
 </template>
 
 <script>
- import canvas from 'common/js/canvas';
  import {setCache,getCache} from 'common/js/cache';
  import {getSchoolMsg,getLoginMsg} from '@/api/login'
  import * as types from '@/api/config'
 
-window.onresize = ()=>{canvas(20,"#409EFF")}
 export default {
   inject: ['app'],
   data () {
@@ -84,7 +81,6 @@ export default {
           center: true,
           type: 'warning'
         })
-      canvas(20,"#409EFF")   //执行canvas动画
       this._getSchoolist()
     },
   methods: {
@@ -144,37 +140,9 @@ export default {
 </script>
 
 <style>
-   @import "../../assets/css/base.css";
+  @import '../assets/css/base.css';
 </style>
 
 <style lang="scss" scoped>
-  .login-header{
-     height: 30%;
-     position: relative;
-    text-align: center;
-  }
-  #canvas{
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-  .login-content /deep/{
-    width: 500px;
-    margin: 0px auto;
-    overflow: visible!important;
-    .el-form{
-      margin: 50px 80px 0 0;
-    }
-    .el-select{
-      display: block;
-    }
-    .el-button{
-      width: 100%;
-    }
-    .el-checkbox{
-      float: right;
-    }
-  }
+  @import '../assets/css/login.scss';
 </style>

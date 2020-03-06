@@ -174,10 +174,10 @@ export default {
       const index = this.currentIndex
       const _obj = {}
       _obj.lineNum = e.content.lineNum
-      _obj.variate = e.content.variate
+      _obj.variate = e.content.variables
       _obj.dataStruct = e.content.dataStruct
       _obj.watchPoint = e.content.watchPoint
-      _obj.backTrace = e.content.backTrace
+      _obj.backTrace = e.content.backtrace
       _obj.output = e.content.output
       this.setDebugData({index,_obj})
       if(e.content.output)

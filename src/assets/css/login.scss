@@ -1,0 +1,23 @@
+
+ .login-header{
+     height: 30%;
+     position: relative;
+    text-align: center;
+  }
+  .login-content /deep/{
+    width: 500px;
+    margin: 0px auto;
+    overflow: visible!important;
+    .el-form{
+      margin: 50px 80px 0 0;
+    }
+    .el-select{
+      display: block;
+    }
+    .el-button{
+      width: 100%;
+    }
+    .el-checkbox{
+      float: right;
+    }
+  }

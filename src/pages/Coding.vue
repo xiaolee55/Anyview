@@ -1,13 +1,14 @@
 <template>
   <div class="code-pane" v-loading="loading"
                          element-loading-text="题目加载中"
-                         element-loading-background="rgba(0, 0, 0, 0)">
+                         element-loading-background="rgba(0, 0, 0, 0)"
+                         ref="coding">
     <qi-list v-if="questionDetailOpen" 
              :list='questionList'
              @getContent="_getQuestionContent"></qi-list>
     <template v-else>
       <transition name="el-fade-in-linear">
-        <debug-pane  v-if="debugStatus" class="init-debP-place"/>
+        <debug-pane  v-if="debugStatus" class="init-debP-place" id="debugPane"/>
       </transition>
       <el-drawer :visible.sync="listStatus" 
                   direction="rtl"
@@ -34,7 +35,8 @@
             <pane size=40>
               <splitpanes  watch-slots>
                 <pane size=50>
-                  <stack-variate-pane/>
+                  <variate-pane/>
+                  <!-- <stack-variate-show/> -->
                 </pane>
                 <pane size=50>
                 <watch-pane/>
@@ -98,7 +100,7 @@ import VariatePane from 'components/variate-pane'
 import WrongData from 'components/wrong-data'
 import DebugPane from 'components/debug-pane'
 import QiList from 'components/qi-list'
-import StackVariatePane from 'components/stack-variate-pane'
+import stackVariateShow from 'components/stack-variate/data-controller.vue'
 
 import * as fun from '@/api/coding'
 import * as types from '@/api/config'
@@ -112,6 +114,18 @@ export default {
       this.initHeight = `${document.documentElement.clientHeight*0.15}px`  //初始化输出框的高度
     },
     mounted() {
+        // this.$nextTick(()=>{
+        //   const codePane = this.$refs.coding
+        //   codePane.addEventListener("click",(e)=>{
+        //     if(!e.target.className.includes("tiaoshi")&&this.debugStatus){
+        //       e.stopPropagation()
+        //       this.$confirm("朋友，关闭调试", {
+        //                 center: true,
+        //                 showClose: false
+        //               })
+        //     }
+        //   },true)
+        // })
       if(!this.courseName){
         this.getCacheData()
       }
@@ -233,7 +247,7 @@ export default {
           return new Map(this.openQuestionsArr)
         },
         debugStatus() {
-            return this.currentQuestion.debugStatus
+          return this.currentQuestion.debugStatus
         },
         listStatus: {
           get() {
@@ -285,59 +299,21 @@ export default {
         VariatePane,
         WrongData,
         QiList,
-        StackVariatePane
+        stackVariateShow,
    }
 }
 </script>
 
 <style>
-   @import '../../common/css/base.css';
-   /* 这个组件不一定嵌套在code-pane里面，所以不能嵌套修改 */
-  .el-drawer {    
-    padding: 15px;
-    overflow: auto!important;
-  }
-  .el-drawer__header {
-    margin-bottom: 10px;
-  }
+  @import '../assets/css/base.css';
+ .el-drawer {    
+  padding: 15px;
+  overflow: auto!important;
+}
+.el-drawer__header {
+  margin-bottom: 10px;
+} 
 </style>
-
 <style lang="scss" scoped>
-.code-pane /deep/ {
-  canvas {
-      position: absolute;
-      left: -10px;
-      z-index: 33;
-  }
-  li {
-    display: inline-block;
-  }
-  .el-tabs__header{
-    margin-bottom: 0px!important;
-    border-bottom: 1px solid transparent!important;
-  }
-  .el-tabs__item {
-    padding: 0 10px;
-    line-height: 30px;
-    height: 30px;
-    font-size: 13px;
-    font-family: 'Lato', 'Lucida Grande', 'Lucida Sans Unicode', Tahoma, Sans-Serif;
-  }
-  /* #pane-desc{
-    display: flex;
-  } */
-  .el-tabs {
-    display: flex;
-    flex-direction: column;
-  }
-  .el-tabs__content,.el-tab-pane{
-    flex: 1;
-    display: flex;
-  }
-}
-.init-debP-place{
-  left: 65%;
-  bottom: calc(25% - 30px);
-}
-
+   @import '../assets/css/coding.scss';
 </style>

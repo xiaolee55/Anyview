@@ -131,10 +131,6 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         })
       },
       compile(event,_fun=()=>{}) {
-        if(this.debugStatus){
-          this.promptCloseDebug('请先关闭调试')
-          return
-        }
         if(!this.checkIconStatus())   //有其他动作未结束则返回
           return
         this.changeIconStatus("compile")  //进行中，修改图标样式
@@ -182,10 +178,6 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
 
       },
       runGroup() {
-        if(this.debugStatus){
-          this.promptCloseDebug('请先关闭调试')
-          return
-        }
         const _runGroup = () => {
         if(!this.checkIconStatus())
           return
@@ -264,12 +256,13 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
               //更新调试行号
               const index = this.currentIndex
               const _obj = {}
-              _obj.lineNum = e.content.lineNum
-              _obj.variate = e.content.variables.map(item=>item.variate)
-              _obj.dataStruct = e.content.dataStruct
-              _obj.watchPoint = e.content.watchPoint
-              _obj.backTrace = e.content.backTrace
-              _obj.output = e.content.output
+              const {lineNum,variables,dataStruct,watchPoint,backtrace,output} = e.content
+              _obj.lineNum = lineNum
+              _obj.variate = variables
+              _obj.dataStruct = dataStruct
+              _obj.watchPoint = watchPoint
+              _obj.backTrace = backtrace
+              _obj.output = output
               this.setDebugData({index,_obj})
               this.setCurrentTestOrder(e.content.order+1)
               this.setErrorTestData({data:e.content.errorOrder,id:index})     //更新错误数据
@@ -324,7 +317,7 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
                 })
       },
       promptCloseDebug(message) {
-        return this.$alert(message, {
+        return this.$confirm(message, {
           confirmButtonText: '确定',
           center: true,
           showClose: false
@@ -338,10 +331,6 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
         this.setCurrentQuestion(newQuestion)
       },
       beforeLeave(item) {
-        if(this.debugStatus){
-         this.promptCloseDebug('请先关闭调试')
-         return false
-        }
         this.clickTab(item)
       },
       removeTab(e) {
@@ -461,77 +450,5 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
 </script>
 
 <style lang="scss" scoped>
-/*将editor-tabs的大滚动条调小，因为如果大的话会和el-tab-pane的滚动条相近，效果不好*/
-  .editor-tabs::-webkit-scrollbar   {
-    width: 0.01px;
-    background-color: white;
-  }
-  .editor-tabs::-webkit-scrollbar-thumb
-  {
-    background-color: white;
-  }
-  .editor-tabs {
-    width: 100%;
-    height: 100%;
-    overflow-y: scroll;
-    position: relative;
-  }
-  .editor-tabs /deep/{
-    // 修改element默认样式
-    .el-icon-close {
-      transition: none;
-      width: 12px!important;
-    }
-    .el-tabs__content {
-      position: static;
-    }
-    .el-tabs__nav-scroll {
-      width: calc(100% - 184px);
-    }
-    .el-tabs__nav-next{
-      right: 189px;
-    }
-    .el-tabs__nav-next, .el-tabs__nav-prev {
-        line-height: 32px;
-        font-size: 17px;
-        color: #409EFF;
-    }
-    .el-tabs__nav-next:active, .el-tabs__nav-prev:active{
-      color: #F56C6C;
-    }
-  }
-  /*按钮栏处理*/
-  .fun-menu{
-    position: absolute;
-    top: 0;
-    right: 0;
-    margin: 5px 10px 0 0;
-  }
-  .horizontal-list{
-    position: relative;  /*设置层级需定位 */
-    height: 30px;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    z-index: 2;
-  }
-  .horizontal-list li{
-    margin-left: 10px;
-    float: right;
-  }
-  .ing {
-    animation: rotating 2s linear infinite;
-  }
-  .ing:before {
-    color: #F56C6C;
-  }
-  .not-ing:before {
-    color: grey;
-  }
-  .lb-bar{
-    position:absolute;
-    bottom:0;
-    left:0;
-    z-index:12
-  }
+  @import '../assets/css/components/editor-pane.scss';
 </style>

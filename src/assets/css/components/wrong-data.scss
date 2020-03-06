@@ -1,0 +1,44 @@
+.wrd-pane {
+  height: 100%;
+}
+.wrong-data-container {
+  height: calc(100% - 20px);
+  margin-top: 5px;
+  overflow: auto;
+}
+.wrong-data-item {
+  position: relative;
+  cursor: pointer;
+  margin-bottom: 5px;
+  .wrong-data-icon {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      i {
+          padding: 5px;
+      }
+  }
+  .wrong-data-show {
+      padding: 10px;
+      margin: 0;
+  }
+}
+.not-test-data{  
+  border: 1px solid#e6a23c;;
+}
+.not-pass-data{
+ border: 1px solid #F56C6C
+}
+.ban-data {
+  border: 1px solid #909399;
+  color: #909399;
+}
+.pass-data {
+  border:  1px solid#67c23a;
+  color: #67c23a;   
+}
+.current-data {
+  border:  1px solid#409eff;
+  font-weight: bolder;
+  color: #409eff;
+}

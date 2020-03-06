@@ -1,0 +1,33 @@
+/* 问题列表开始 */
+.question-list ::v-deep{
+  .el-collapse-item__header{
+    font-size: 18px;
+  }
+}
+.list-title{
+  // display: flex;
+  // justify-content: space-around;
+  color: #606266
+}
+.question-name{
+  font-size: 14px;
+  padding: 5px 5px; 
+  cursor: pointer;
+}
+.question-name span{
+  display: block;
+}
+.quest-situation i{
+  padding: 1px;
+  font-size: 12px;
+}
+.question-name:hover{
+    background-color: #f5f7fa;
+    color: #409eff;
+}
+.close-btn{
+  position: absolute;
+  top: 1%;
+  right: 4%;
+}
+/* 问题列表结束 */

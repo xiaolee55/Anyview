@@ -1,31 +1,28 @@
-/*
-路由器对象模块
- */
+
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Login from '../pages/Login/Login.vue'
-import work from '../pages/Work/Work.vue'
-import Coding from '../pages/Coding/Coding.vue'
-import PersonalCenter from '../pages/PersonalCenter/PersonalCenter.vue'
+
+const Login = () => import('@/pages/Login.vue')
+const Work = () => import('@/pages/Work.vue')
+const Coding = () => import('@/pages/Coding.vue')
+const PersonalCenter = () => import('@/pages/PersonalCenter.vue')
+const wrong404 = () => import('@/pages/404.vue')
+
 // 声明使用插件
 Vue.use(VueRouter)
 
 export default new VueRouter({
-  mode: 'history',    //使用路由的history模式，去除#号
-  // 所有路由
+  mode: 'history',  
   routes: [
     {
       path: '/login',
       name: 'login',
-      component: Login, // 返回路由组件的函数, 只有执行此函数才会加载路由组件, 这个函数在请求对应的路由路径时才会执行
-      meta: {
-        requiresAuth: true
-      }
+      component: Login
     },
     {
       path: '/work',
       name: 'work',
-      component: work,
+      component: Work,
       meta: {
         requiresAuth: true
       }
@@ -42,18 +39,13 @@ export default new VueRouter({
       path: '/PersonalCenter',
       name: 'personalCenter',
       component: PersonalCenter,
-      children: [
-        {
-          // 当 /user/:id/profile 匹配成功，
-          // UserProfile 会被渲染在 User 的 <router-view> 中
-          path: 'a',
-          name:'a',
-          component: work
-        },{
-          path: 'bd',
-          name:'bd',
-          component: Login
-        }]
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/404',
+      component: wrong404
     },
     {
       path: '/',
@@ -62,7 +54,7 @@ export default new VueRouter({
     },
     {
       path: '**',   // 错误路由
-      redirect: '/login'   //重定向
+      redirect: '/404'   //重定向
     },
   ]
 })

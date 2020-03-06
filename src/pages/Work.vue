@@ -139,44 +139,8 @@ export default {
 </script>
 
 <style>
-  @import "../../assets/css/base.css";
+  @import "../assets/css/base.css";
 </style>
 <style lang="scss" scoped>
-    #canvas{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
-    }
-   .w{
-     width: 80%;
-     margin: 0 auto;
-   }
-   .work-header{
-     height: 20%!important;   //组件库由于有默认样式，加important覆盖
-     margin-top: 30px;
-     .header-logo{
-       cursor: pointer;
-       margin-top: -100px;
-       height: 250px;
-       width: 250px;
-     }
-     div{
-       text-align: center;
-     }
-     .header-avatar{
-       cursor: pointer;
-     }
-     .user-name{
-      color: rgb(144, 164, 174);
-      cursor: pointer;
-      padding: 5px;
-      font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;
-     }
-   }
-  .el-card{
-     margin-bottom:100px;
-  }
+  @import "../assets/css/work.scss";
 </style>

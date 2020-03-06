@@ -63,7 +63,6 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
 import log from 'common/js/log.js'
 import  Velocity from 'velocity-animate'
 import paneHeader from 'components/pane-header'
-
 export default {
   directives: {
     change: {
@@ -104,6 +103,7 @@ export default {
     }
   },
   methods: {
+    /*动画相关函数*/
     containerBeforeEnter(el){   //堆栈整体出现前
       el.style.opacity = 0
     },
@@ -145,7 +145,9 @@ export default {
       Velocity(el, 'stop');
       el.velocity({marginBottom:bottom}, { duration: 700,complete: done})
     },
-    getOldVal(data) {       //返回该变量变化之前的值
+
+    /*缓存旧函数栈相关函数 */
+    getOldVal(data) {       //获取该变量变化之前的值
       const changeVar = this.changeVarArr.find(item=>item.id == data.id)
       this.cacheOldValue(changeVar)
       const val = this.changeVarMap[data.id]
@@ -158,6 +160,8 @@ export default {
       const arr = this.cacheVarArr
       this.changeVarMap[_var.id] = _var.oldVal
     },
+
+    /*树展开收缩相关的逻辑*/
     nodeExpand(data) {       //点击结点的展开图标
       this.createExpandElement(data.id); // 在节点展开是添加到默认展开数组
     },
@@ -178,6 +182,8 @@ export default {
     clearExpandList(id){    //清空展开结点的数组
       id?this.expandedNodeList = []: ''
     },
+
+    /*样式设置相关的逻辑*/
     stackClass({index,item,node},flag) {      //设置函数栈的样式
       const level = node.level
       const id = node.id
@@ -224,10 +230,11 @@ export default {
       }else if(item.charAt(0)==0&&item[1]=="x"){  //变量值为指针
         varClass = 'point-val' 
       }else{   //普通变量值
-
       }
       return varClass
     },
+
+    /*结点动画相关逻辑*/
     setChangeDomAnimation(node) {        //设置变化结点的动画
       this.$nextTick(()=>{
         const changeId = this.setChangeDomId(node)
@@ -245,6 +252,8 @@ export default {
           return this.setChangeDomId(node.parent)
       }
     },
+
+    /*函数栈数据清洗逻辑*/
     isNextData(output) {     //判断本次调试是否是一组新的数据
       if(output.includes("<br>========RIGHT========<br>")||output.includes("<br>--------ERROR--------<br>"))
         return true
@@ -284,6 +293,8 @@ export default {
       })
       return stacksName
     },
+
+    /*做diff，处理变化变量的逻辑 */
     findChangeVar(newVars,oldVars) {    //寻找发生变化的变量
       newVars = Array.isArray(newVars) ? newVars : [newVars]
       oldVars = Array.isArray(oldVars) ? oldVars : [oldVars]
@@ -317,6 +328,8 @@ export default {
       this.setChangeVarsArr()   //提交mutation，清空vuex中对应的值
       this.changeIdArr = []     //这个标识该变量是否已进行动画过，因为会有多次对比
     },
+
+
     setStackTop(stacks,backTrace) {   //设置栈顶
       const stackTop = {}
       stackTop.varInfo = stacks[0].name
@@ -377,7 +390,9 @@ export default {
     setFinalShow(val){   //设置最终用以展示的堆栈数据
       this.finalShow = val
     },
-    setAnimation(newLen,oldLen,isNewGroup) {   //控制全部动画的总开关
+
+    /*控制全部动画的总开关*/
+    setAnimation(newLen,oldLen,isNewGroup) {   
       return new Promise((resolve,reject)=>{
         if(isNewGroup){
           this.showcontainer = false
@@ -407,6 +422,8 @@ export default {
         }
       })
     },
+    
+    /*函数出栈还是入栈，或者是还在当前函数 */
     setPushStack(newLen,oldLen){      //判断本次调试的行为是函数入栈，函数出栈或者是没有出入栈
       if(newLen>oldLen)
         this.pushStack=1
@@ -415,6 +432,8 @@ export default {
       else
         this.pushStack=-1
     },
+
+    /*入口函数 */
     mainFun(backTrace,variates,output) {    //主入口函数
       this.clearChangeVar()   //清空上次发生变化的变量的缓存，防止影响下次变化
       const isNewGroup = this.isNextData(output)    //判断是否是新的一组调试数据
@@ -422,7 +441,9 @@ export default {
       const stacksName = this.formatStacksName(backTrace)     //格式化所有函数的函数名
       this.resetChangeVarMap(isNewGroup)    //重置保存变量旧值的对象
       const newStacks = this.setNewStacks(stacksName,this.oldStacks,stackTopVariates,isNewGroup)  //设置新的函数栈
+      console.log("newStacks",newStacks)
       const stackTop = this.setStackTop(newStacks,backTrace)  //设置最终的栈顶函数
+      console.log("stackTop",stackTop)
       const notStackTop = this.setNotStackTop(newStacks,backTrace)    //设置最终的非栈顶函数
       const first = notStackTop.length?[notStackTop[0]]:[]
       const other = notStackTop.filter((_,index)=>index!=0)
@@ -433,6 +454,7 @@ export default {
         this.setFinalShow({stackTop,first,other})   //设置最终用于展示的值
       })
     },
+
     ...mapMutations({
       setChangeVarsArr :"SET_CHANGE_VARS_ARR",
     })  
@@ -444,7 +466,7 @@ export default {
       handler(backTrace){  //这里使用箭头函数的话使用this是不能访问到组件实例的,因为箭头函数绑定的是父级作用域的上下文，而匿名函数是指向全局
         //这里监听backTrace而不是currentDebug是为了防止watch面板的变量和variate面板相互干扰
         const currentDebug = this.currentDebug  //当前题目的调试类
-        const variates =  currentDebug.variate  //当前函数栈的局部变量
+        const variates =  currentDebug.variate.map(item=>item.variate)  //当前函数栈的局部变量
         const output = currentDebug.output      //输出数据，主要是用来判断数据是否为一组全新的调试数据
         setTimeout(()=>{
           this.mainFun(backTrace,variates,output)   //调用主函数
