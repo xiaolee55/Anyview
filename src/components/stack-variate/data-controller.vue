@@ -7,14 +7,21 @@
       <div class="stacks-container" 
         v-if= "showcontainer">
         <active-stack 
-          v-if= "showTop"
+          ref= "activeStack"
           :stack-top= "finalShow.stackTop"
-          :diff= "diff"/>
-        <inactive-stack-top 
-          v-if= "showNotTop"
-          :in-stack-top= "finalShow.first"/>
-        <inactive-stack-other
-          :in-stack-top= "finalShow.other"/>
+          :diff.sync= "diff"
+          :showTop= "showTop"
+          :pushStack= "pushStack"
+          :oldLen= "oldStacks.length"
+          :clearSign= "clearSign"/>
+        <div class="not-stack-top">
+          <inactive-stack-top 
+            :in-stack-top= "finalShow.first"
+            :showNotTop= "showNotTop"
+            :oldLen= "oldStacks.length"/>
+          <inactive-stack-other
+            :in-stack-other= "finalShow.other"/>
+        </div>
       </div>
     </transition>
   </div>
@@ -32,23 +39,26 @@ export default {
   mixins: [mixin],
   data() {
     return {
+      controlDiff: false,
       topEnterClass: '' ,
       topLeaveClass: '' , 
       notTopEnterClass: '',
       notTopLeaveClass: '',
       showcontainer: true,
-      showTop: true,
-      showNotTop: true,
       pushStack: 1, 
       changeDom: '',
       changeIdArr: [],
       oldStacks: [],
       cacheVarArr: [],
       finalShow: {},
-      diff: false
+      diff: false,
+      showTop: true,
+      showNotTop: true,
+      clearSign: false
     }
   },
   methods: {
+    /*整个栈变化的逻辑，出现在刚开启调试或者是整组数据切换 时 */
     containerBeforeEnter(el){   //堆栈整体出现前
       el.style.opacity = 0
     },
@@ -58,9 +68,10 @@ export default {
     containerLeave(el,done){    //堆栈整体离开时的动画
       el.velocity({opacity: 0},{duration: 700,complete: done})
     },
+
     /*函数栈数据清洗逻辑*/
-    isNextData(output) {     //判断本次调试是否是一组新的数据
-      if(output.includes("<br>========RIGHT========<br>")||output.includes("<br>--------ERROR--------<br>"))
+    isNextData(output) {     //判断本次调试是否是一组新的数据(这种判断方式不标准，建议后端添加相应标志)
+      if(output.includes("--------ERROR--------")||output.includes("--------RIGHT--------"))
         return true
       return false
     },
@@ -106,14 +117,13 @@ export default {
       stackTop.sign = backTrace[0]
       stackTop.id = backTrace[0]
       stackTop.varChild = stacks[0].variates
-      // this.createExpandElement(stackTop.id)
       return [stackTop]
     },
     setNotStackTop(stacks,fullNames) {  //设置非栈顶
       return stacks.filter((item,index)=>index!=0).map((item,i)=>{
         const stack = {}
         stack.varInfo = item.name
-        stack.sign = fullNames[i]
+        stack.sign = fullNames[i+1]
         stack.varChild = item.variates
         return stack
       })
@@ -124,7 +134,7 @@ export default {
       const newStacks = []
       const newLen = stacksName.length
       const oldLen = oldStacks.length
-      let clearSign = true      //是否要清空已展开数据
+      this.clearSign = true      //是否要清空已展开数据
       if(newLen>oldLen){
         stacksName.forEach((item,i)=>{
           const oldVariates = oldStacks[i-1] ? oldStacks[i-1].variates : []
@@ -132,11 +142,10 @@ export default {
           newStacks.push({name:item,variates:variates})
         })
       }else if(newLen==oldLen){
-        clearSign = false   //只有在栈顶函数未发生变化时才不清空
+        this.clearSign = false   //只有在栈顶函数未发生变化时才不清空
         stacksName.forEach((item, i)=>{
           const oldVariates = oldStacks[i].variates
           const variates = (i==0) ? stackTopVariates : oldVariates
-          // i==0&&(this.diff=true)
           newStacks.push({name:item,variates:variates})
         })
       }else{
@@ -145,17 +154,13 @@ export default {
           newStacks.push({name:item,variates:variates})
         })       
       }
-      // this.clearExpandList(clearSign)
       return newStacks
     },
     setOldStacks(newStacks){    //设置旧函数栈
       this.oldStacks = newStacks
     },
-    setOldVariates(variates){   //设置旧变量
-      this.oldVariates = variates
-    },
 
-    /*控制全部动画的总开关*/
+    /*控制全部动画的总开关(为了触发transition的钩子函数，只能通过切换v-if来触发)*/
     setAnimation(newLen,oldLen,isNewGroup) {   
       return new Promise((resolve,reject)=>{
         if(isNewGroup){
@@ -170,19 +175,22 @@ export default {
             this.showTop = true
             resolve()
           }
+          if(!this.pushStack){
+            resolve()
+          }
           else if(this.pushStack!=0)
               this.showTop = false
-              setTimeout(()=>{    
-                this.showTop = true
-                resolve()
-              },690)
-            if(this.pushStack==-1){
-              this.showNotTop = false
-              setTimeout(()=>{    
-                this.showNotTop = true
-                resolve()
-              },690)
-            }
+          setTimeout(()=>{    
+            this.showTop = true
+            resolve()
+          },690)
+          if(this.pushStack==-1){
+            this.showNotTop = false
+            setTimeout(()=>{    
+              this.showNotTop = true
+              resolve()
+            },690)
+        }
         }
       })
     },
@@ -190,42 +198,44 @@ export default {
     /*函数出栈还是入栈，或者是还在当前函数 */
     getPushStack(newLen,oldLen){      //判断本次调试的行为是函数入栈，函数出栈或者是没有出入栈
       let pushStack = 0
-      if(newLen>oldLen)
+      if(newLen>oldLen)       //函数入栈
         pushStack=1
-      else if(newLen==oldLen)
+      else if(newLen==oldLen)   //未出栈和入栈
         pushStack=0
       else
-        pushStack=-1
+        pushStack=-1       //函数出栈
       return pushStack
     },
 
     /*入口函数 */
-    mainFun(backTrace,variates,output) {   
+    mainFun(backTrace,variates,output) {  
+      //每次都对栈顶做清空操作 
       //判断本步调试是否是一组全新的数据
       const isNewGroup = this.isNextData(output)    //判断是否是新的一组调试数据
-
-      // console.log("backTrace",backTrace,"variates",variates);
       //清洗数据
       const stackTopVariates = this.formatVariates(variates)  //格式化栈顶函数的变量
       const stacksName = this.formatStacksName(backTrace)     //格式化所有函数的函数名
 
-      // console.log("stackTopVariates",stackTopVariates,"stacksName",stacksName);
-
       //计算最新的函数栈
       const newStacks = this.setNewStacks(stacksName,this.oldStacks,stackTopVariates,isNewGroup)  //设置新的函数栈
+
       const stackTop = this.setStackTop(newStacks,backTrace)  //设置最终的栈顶函数
       const notStackTop = this.setNotStackTop(newStacks,backTrace)    //设置最终的非栈顶函数
-      this.pushStack=this.getPushStack(newStacks.length,this.oldStacks.length)
       //非活跃函数拆分
       const first = notStackTop.length?[notStackTop[0]]:[]
       const other = notStackTop.slice(1)
-
+      
+      //计算本地动作
+      this.pushStack=this.getPushStack(newStacks.length,this.oldStacks.length)
+      
+      // this.$refs.activeStack&&this.$refs.activeStack.clearCache()  
       //动画设置，并在动画执行结束后缓存函数栈，以便下次做对比，同时设置最终用于展示的数据
       this.setAnimation(newStacks.length,this.oldStacks.length,isNewGroup).then(()=>{
-        //判断函数是否有出栈入栈，进而判断函数内变量是否修改
-        this.setOldVariates(variates)   //设置旧栈顶函数变量（未经格式化的）
+        this.$refs.activeStack.clearCache()
         this.setOldStacks(newStacks)    //设置旧函数栈
+        //拆分完成的值，将用于分配至子组件
         this.finalShow = {stackTop,first,other}
+        //根据pushStack决定是否对栈顶组件做diff
         !this.pushStack&&(this.diff=true)
       })
     },
@@ -239,11 +249,9 @@ export default {
         const currentDebug = this.currentDebug  
         const variates =  currentDebug.variate.map(item=>item.variate) 
         const output = currentDebug.output
-        setTimeout(()=>{
-          this.mainFun(backTrace,variates,output)   //调用主函数
-        },500)    //调试布局完成后再加载数据，防止卡顿现象的出现
+        this.mainFun(backTrace,variates,output)   //调用主函数
       }
-    }
+    },
   },
   components:{
     ActiveStack,
@@ -276,6 +284,9 @@ export default {
     .el-tree__empty-block{
       display: none;
     }
+    .el-tree-node__content:hover {
+        background-color: #dcdcdc;
+    }
   } 
   .stacks-container {
     position: relative;
@@ -287,26 +298,5 @@ export default {
     position: absolute;
     bottom: 10px;
     width: 100%;
-  }
-  .stack-top {    //防止子元素设置margin-top影响父元素
-    height: 100%;
-    border: 0.1px white solid; 
-  }
-  .stack-top-var-name {
-    color: rgb(255,255,0)!important
-  }
-  .not-stack-top-var-name {
-    color: #0089BD
-  }
-  .var-name {
-    transition: color 1s ease;
-    color: rgb(112,48,160);
-  }
-  .point-val {
-    transition: color 1s ease;
-    color: rgb(127, 127, 127)
-  }
-  .change-var{
-    color: red;
   }
 </style>

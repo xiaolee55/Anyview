@@ -7,6 +7,7 @@ export default {
     currentQuestion: null,
     currentIndex: 0,
     openQuestions: new Map(),
+    
     studentAnswer: "",
     outputData: {},
     debugData: {},

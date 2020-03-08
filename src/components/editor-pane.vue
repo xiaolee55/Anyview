@@ -241,15 +241,16 @@ import {mapGetters,mapMutations,mapActions} from 'vuex'
             if(e.type == types.START_DEBUG_SUCCESS_TYPE){
               console.log('start',e)
               // analyseToVisual(e)
+              this.resetIconStatus()  //动作结束，修改图标样式
+              this.updateOutputData()   //移除“调试中”的标签
               if(e.content.exception){
                 this.setOutput({
                                 style: "danger",
                                 label: "调试异常",
                                 _content: e.content.output
                 })
+                return
               }
-              this.resetIconStatus()  //动作结束，修改图标样式
-              this.updateOutputData()   //移除“调试中”的标签
               const _content = e.content.output
               this.updateOutputData("success", "开启调试成功", _content)    //更新在输出窗口的消息
               this.updateStatus("debugStatus", true)                //更新本道题的调试状态

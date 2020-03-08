@@ -35,8 +35,8 @@
             <pane size=40>
               <splitpanes  watch-slots>
                 <pane size=50>
-                  <variate-pane/>
-                  <!-- <stack-variate-show/> -->
+                  <!-- <variate-pane/> -->
+                  <stack-variate-show/>
                 </pane>
                 <pane size=50>
                 <watch-pane/>

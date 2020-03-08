@@ -11,13 +11,14 @@
                 @node-collapse= "nodeCollapse"
                 :default-expanded-keys= "expandedNodeList"
                 :render-after-expand= false
-                :props= "defaultProps">
+                :props= "defaultProps"
+                 v-if= "showTop">
         <span 
           class="custom-tree-node" 
           :class="{'tree-title-class': node.level==1}" 
           slot-scope="{ node,data }" 
           :id= "node.level==1?'stackName':''" 
-          v-change="node">
+          v-change= "node">
           <span 
             v-for= "(item,index) in node.label" 
             :key= "item">
@@ -42,24 +43,23 @@
 import minxin from './mixin'
 
 export default {
-  mixins: [minxin],
-  updated() {
-    this.oldStackTop = this.stackTop
-    // console.log("oldStackTop",this.oldStackTop)
-  },
   directives: {
     change: {
       // 指令的定义
-      // update: function (el,binding,vnode) {
-      //   const node = binding.value
-      //   const changeObj = vnode.context.changeVarArr.find(element=>element.id==node.data.id)  //查找是否是变化对象
-      //   const changeId = vnode.context.changeIdArr.find(item=>item==node.data.id)       //查找该DOM是否已经动画过
-      //   if(changeObj&&!changeId){   //只有是变化对象且没有动画过过才发生动画
-      //    vnode.context.changeIdArr.push(changeObj.id)
-      //    vnode.context.setChangeDomAnimation(node)
-      //   }
-      // }
+      update: function (el,binding,vnode) {  //用来产生在直接可视结点的背景动画
+        const node = binding.value
+        const id = Object.keys(vnode.context.changeVarMap).find(id=>id==node.data.id)  //查找是否为变化的结点
+        const animateId= vnode.context.animateIdArr.find(item=>item==node.data.id)       //看是否已经进行过动画
+        if(id&&!animateId){   //只有是变化对象且没有动画过过才发生动画
+         vnode.context.animateIdArr.push(id)
+         vnode.context.setChangeDomAnimation(node)  //动画（冒泡递归，红色背景动画）
+        }
+      }
     }
+  },
+  mixins: [minxin],
+  updated() {
+    this.oldStackTop = this.stackTop
   },
   props:{
     stackTop:{
@@ -69,13 +69,30 @@ export default {
     diff: {
       type: Boolean,
       default: false
+    },
+    showTop: {
+      type: Boolean,
+      default: true   
+    },
+    pushStack:{
+      type: Number,
+      default: 0      
+    },
+    oldLen: {
+      type: Number,
+      default: 0
+    },
+    clearSign: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
       expandedNodeList: [],
-      changeVarArr: [],
-      changeVarMap: {},
+      changeVarMap: {},   //存储所有本次操作变化的值
+      copyVarMap: {},
+      animateIdArr:[]   //因为自定义指令会被多次触发，这个数组是用来在动画触发一次后屏蔽掉后面的触发
     }
   },
   methods: {
@@ -95,7 +112,7 @@ export default {
     stackLeave(el, done){ //栈顶函数的离开有两种情况，1.函数出栈，则慢慢淡去直至消失，2.新函数入栈，则向下移动至非栈顶区域
       if(this.pushStack==1){
         const stackHeight = 26
-        const moveDistance = document.getElementsByClassName("stacks-container")[0].clientHeight - (this.oldStacks.length-1)*stackHeight-30
+        const moveDistance = document.getElementsByClassName("stacks-container")[0].clientHeight - (this.oldLen-1)*stackHeight-30
         Velocity(el, 'stop');
         el
         .velocity({height: 30,overflow:'hidden'}, {duration: 10})
@@ -134,9 +151,10 @@ export default {
           return this.setChangeDomId(node.parent)
       }
     },
+
     /*缓存旧函数栈相关函数 */
     getOldVal(id) {       //获取该变量变化之前的值
-      const changeVar = this.changeVarMap[id]
+      const changeVar = this.copyVarMap[id]
       let newVal
       let oldVal
       if(changeVar){
@@ -145,20 +163,6 @@ export default {
       }
       let value = newVal ===oldVal ?  "未变化" : oldVal
       return `上一次的值：${value}`
-    },
-    cacheOldValue(_var) {    //缓存变量本次的值，以供变量发生变化后查看上次的值
-      if(!_var)
-        return
-      const arr = this.cacheVarArr
-      this.changeVarMap[_var.id] = _var.oldVal
-    },
-    clearChangeVar() {      //清空收集变化变量的数组
-      this.changeVarArr = []   //这个变量是标志每点击一次调试的变化变量的ID
-      this.setChangeVarsArr()   //提交mutation，清空vuex中对应的值
-      this.changeIdArr = []     //这个标识该变量是否已进行动画过，因为会有多次对比
-    },
-    resetChangeVarMap(flag){  //重置保存变化变量的集合
-      flag?this.changeVarMap = {}:''
     },
 
     /*做diff，处理变化变量的逻辑 */
@@ -172,6 +176,8 @@ export default {
     compareVal(newItem,oldVars){     //根据新变量的ID和对应旧变量对比
       for(let item of oldVars){
         if(item.id==newItem.id){
+          //移除上次发生变化的变量的高亮显示（红色）  
+          this.restoreClass(item.id)
           const newVal = newItem.varInfo[2]
           const oldVal = item.varInfo[2]
           if(newVal!=oldVal){
@@ -187,11 +193,21 @@ export default {
     },
     setChangeVar(id,newVal,oldVal){   //收集在本次调试中发生了变化的变量
       this.changeVarMap[id]={newVal,oldVal}
+      this.copyVarMap[id] = {newVal,oldVal}
+      this.setChangeVarsArr({id,newVal,oldVal})  //提交vuex，用于监视变量模块的动画
       this.$nextTick(()=>{
          document.getElementById(id).parentNode.parentNode.classList.add("change-var")
+         document.getElementById(id).classList.add("change-var")
       })
-      // !this.changeVarArr.includes(id)&&this.changeVarArr.push({id,newVal,oldVal})
-      // this.setChangeVarsArr({id,newVal,oldVal})  //提交mutation
+    },
+    restoreClass(id){
+      this.$nextTick(()=>{
+        const domClass = Array.from(document.getElementById(id).classList)||[]
+        if(domClass.includes("change-var")){
+          document.getElementById(id).parentNode.parentNode.classList.remove("change-var")
+          document.getElementById(id).classList.remove("change-var")    
+        }
+      })
     },
     /*树展开收缩相关的逻辑*/
     nodeExpand(data) {       //点击结点的展开图标
@@ -211,27 +227,40 @@ export default {
         })   
       }
     },
-    clearExpandList(id){    //清空展开结点的数组
-      id&&(this.expandedNodeList=[])
+    //如果下一步的操作还在本函数中，那么只清空记录已经动画的id数组，清空用于标识动画的对象，清空vuex中的记录防止影响watch面板
+    //如果下一步的操作进行了切换函数的操作，那么一同清空用于展示旧变量的对象，和已展开变量的对象
+    clearCache() {
+      this.animateIdArr=[]    
+      this.changeVarMap={}
+      this.setChangeVarsArr()
+      if(this.pushStack){
+        this.copyVarMap = {}
+        //将展开的树形结构收回来
+        this.expandedNodeList=[]
+      }
     },
   },
   watch: {
     diff(val){
-      val&&this.findChangeVar(this.stackTop,this.oldStackTop) //只有栈中的函数数量不变化才需要查找变化的变量
+      val&&this.findChangeVar(this.stackTop,this.oldStackTop)//只有栈中的函数数量不变化才需要查找变化的变量
+      this.$emit('update:diff', false)  //将diff置为false，防止下次变化时diff的watch无法触发
     },
     stackTop:{
       handler(val){
         val.length&&this.expandedNodeList.push(val[0].id);
-        console.log("子组件拿到值",val)
       },
       deep: true,
       immediate: true
-    }
+    },
   },
 }
 </script>
 
 <style lang="scss" scoped>
+  .stack-top {    //防止子元素设置margin-top影响父元素
+    height: 100%;
+    border: 0.1px white solid; 
+  }
   .tree-title-class{
     background-color: rgb(51,153,102);
     display: inline-block;
@@ -258,6 +287,7 @@ export default {
     color: rgb(127, 127, 127)
   }
   .change-var{
+    transition: color 1s;
     color: red!important;
   }
 </style>

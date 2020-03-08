@@ -118,12 +118,14 @@ export default {
       })
     },
     commitStopDebug(e) {
+      !e.content&&(e.content= {})
       this.setStatus({type:"debugStatus",status:false}).then(()=>{
         let style = "warning"
         let label = "调试已关闭"
         const index = this.currentIndex
         this.setOutput({style, label})
-        if(Object.keys(e.content.errorOrder).length===0&&this.initTestDataLength!=0){   //调试结束后如果测试数据全部通过，则提示用户再次运行
+        const len = e.content.errorOrder?Object.keys(e.content.errorOrder).length:0
+        if(len===0&&this.initTestDataLength!=0){   //调试结束后如果测试数据全部通过，则提示用户再次运行
           style = 'success'
           label = '本次测试数据已通过，但仍需新生成数据进行测试，请再次运行程序'
           this.setOutput({style, label})
@@ -163,6 +165,7 @@ export default {
       })
     },
     commitDebugData(e) {
+      !e.content&&(e.content= {output:"调试结束"})
       if(e.content.exception){
         this.setOutput({
                         style: "danger",
